@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+openai
+pydantic
+pydantic-settings
+PyYAML
+databases[sqlite]
+sqlalchemy

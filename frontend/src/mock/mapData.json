@@ -1,0 +1,1623 @@
+{
+  "project_name": "ActivityDiary",
+  "units": [
+    {
+      "unit_id": "SettingsFragment",
+      "unit_type": "Fragment",
+      "layout": "fragment_settings",
+      "all_layouts": [
+        "fragment_settings"
+      ],
+      "ui_elements": [
+        {
+          "id": "R.id.action_settings",
+          "location": "menu",
+          "type": "MenuItem",
+          "text": "Settings",
+          "source": "code_discovery",
+          "business_logic": "点击后跳转到设置页面",
+          "interaction": {
+            "type": "NAVIGATE_TO",
+            "target_unit": "SettingsActivity"
+          }
+        },
+        {
+          "id": "R.id.action_help",
+          "location": "menu",
+          "type": "MenuItem",
+          "text": "Help",
+          "source": "code_discovery",
+          "business_logic": "点击后显示帮助对话框",
+          "interaction": {
+            "type": "SHOW_DIALOG",
+            "target_unit": "showHelpDialog()"
+          }
+        },
+        {
+          "id": "R.id.action_about",
+          "location": "menu",
+          "type": "MenuItem",
+          "text": "About",
+          "source": "code_discovery",
+          "business_logic": "点击后跳转到关于页面",
+          "interaction": {
+            "type": "NAVIGATE_TO",
+            "target_unit": "AboutActivity"
+          }
+        }
+      ],
+      "interactions": [],
+      "file_path": "app/src/main/java/de/rampro/activitydiary/ui/settings/SettingsFragment.java",
+      "is_entry_point": false
+    },
+    {
+      "unit_id": "SettingsActivity",
+      "unit_type": "Activity",
+      "layout": "activity_settings",
+      "all_layouts": [
+        "activity_settings",
+        "drawer_header",
+        "activity_base"
+      ],
+      "ui_elements": [
+        {
+          "tag": "element",
+          "id": "settings_fragment",
+          "type": "fragment",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_settings"
+        },
+        {
+          "tag": "element",
+          "id": "activity_diary_logo",
+          "type": "ImageView",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "drawer_header"
+        },
+        {
+          "tag": "element",
+          "id": "content_frame",
+          "type": "RelativeLayout",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "element",
+          "id": "main_toolbar",
+          "type": "android.support.v7.widget.Toolbar",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "element",
+          "id": "drawer_layout",
+          "type": "android.support.v4.widget.DrawerLayout",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "element",
+          "id": "content_fragment",
+          "type": "FrameLayout",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "element",
+          "id": "navigation_view",
+          "type": "android.support.design.widget.NavigationView",
+          "text": "",
+          "associated_menu": "main_drawer",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_main",
+          "type": "MenuItem",
+          "text": "Select Activity",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base",
+          "business_logic": "点击后跳转到 MainActivity，用于选择活动",
+          "interaction": {
+            "type": "NAVIGATE_TO",
+            "target_unit": "MainActivity"
+          }
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_diary",
+          "type": "MenuItem",
+          "text": "Diary",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base",
+          "business_logic": "点击后跳转到 HistoryActivity，用于查看日记历史",
+          "interaction": {
+            "type": "NAVIGATE_TO",
+            "target_unit": "HistoryActivity"
+          }
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_add_activity",
+          "type": "MenuItem",
+          "text": "Add Activity",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base",
+          "business_logic": "点击后跳转到 EditActivity，用于添加新活动",
+          "interaction": {
+            "type": "NAVIGATE_TO",
+            "target_unit": "EditActivity"
+          }
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_activity_manager",
+          "type": "MenuItem",
+          "text": "Edit Activities",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base",
+          "business_logic": "点击后跳转到 ManageActivity，用于管理活动",
+          "interaction": {
+            "type": "NAVIGATE_TO",
+            "target_unit": "ManageActivity"
+          }
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_settings",
+          "type": "MenuItem",
+          "text": "Settings",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_about",
+          "type": "MenuItem",
+          "text": "About",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base",
+          "business_logic": "点击后跳转到 AboutActivity，用于查看关于信息",
+          "interaction": {
+            "type": "NAVIGATE_TO",
+            "target_unit": "AboutActivity"
+          }
+        }
+      ],
+      "interactions": [
+        {
+          "line": 24,
+          "code_snippet": "\nimport android.content.Context;\nimport android.content.Intent;\nimport android.content.SharedPreferences;\nimport android.net.Uri;\nimport android.os.Build;\nimport android.os.Bundle;\nimport android.support.v7.preference.Preference;\nimport android.support.v7.preference.PreferenceManager;\nimport android.text.format.DateFormat;\nimport android.util.Log;\nimport android.view.LayoutInflater;\nimport android.view.View;\nimport android.widget.Toast;"
+        },
+        {
+          "line": 173,
+          "code_snippet": "        LayoutInflater inflater = (LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);\n\n        View contentView = inflater.inflate(R.layout.activity_settings, null, false);\n\n        setContent(contentView);\n        SettingsFragment sf = (SettingsFragment)getSupportFragmentManager().findFragmentById(R.id.settings_fragment);\n\n        mPreferenceManager = sf.getPreferenceManager();\n        dateformatPref = mPreferenceManager.findPreference(KEY_PREF_DATE_FORMAT);\n\n        String def = getResources().getString(R.string.default_datetime_format);\n\n        dateformatPref.setSummary(DateFormat.format(\n                PreferenceManager"
+        },
+        {
+          "line": 198,
+          "code_snippet": "                /* export database */\n                if (Build.VERSION.SDK_INT >= 19) {\n                    Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);\n                    intent.setType(\"application/x-sqlite3\");\n                    intent.putExtra(Intent.EXTRA_TITLE, getResources().getString(R.string.db_export_name_suggestion) + \".sqlite3\");\n                    intent.addCategory(Intent.CATEGORY_OPENABLE);\n\n                    startActivityForResult(Intent.createChooser(intent, getResources().getString(R.string.db_export_selection)), ACTIVITIY_RESULT_EXPORT);\n                }else{\n                    Toast.makeText(SettingsActivity.this, getResources().getString(R.string.unsupported_on_api_level, 19), Toast.LENGTH_SHORT).show();\n                }\n\n                return true;\n            }"
+        },
+        {
+          "line": 216,
+          "code_snippet": "                /* import database */\n                if (Build.VERSION.SDK_INT >= 19) {\n                    Intent intent = new Intent(Intent.ACTION_GET_CONTENT);\n                    intent.setType(\"application/x-sqlite3\");\n                    intent.addCategory(Intent.CATEGORY_OPENABLE);\n                    startActivityForResult(Intent.createChooser(intent, getResources().getString(R.string.db_import_selection)), ACTIVITIY_RESULT_IMPORT);\n                }else{\n                    Toast.makeText(SettingsActivity.this, getResources().getString(R.string.unsupported_on_api_level, 19), Toast.LENGTH_SHORT).show();\n                }\n\n                return true;\n            }\n        });\n"
+        },
+        {
+          "line": 244,
+          "code_snippet": "    @Override\n    public void onResume(){\n        mNavigationView.getMenu().findItem(R.id.nav_settings).setChecked(true);\n        super.onResume();\n        mPreferenceManager.getPreferenceScreen().getSharedPreferences()\n                .registerOnSharedPreferenceChangeListener(this);\n\n    }\n\n    @Override\n    protected void onPause() {\n        super.onPause();\n        mPreferenceManager.getPreferenceScreen().getSharedPreferences()\n                .unregisterOnSharedPreferenceChangeListener(this);"
+        },
+        {
+          "line": 259,
+          "code_snippet": "\n    @Override\n    protected void onActivityResult(int requestCode, int resultCode, Intent data) {\n        super.onActivityResult(requestCode, resultCode, data);\n        if(requestCode == ACTIVITIY_RESULT_IMPORT && resultCode == RESULT_OK) {\n            Uri selectedfile = data.getData(); //The uri with the location of the file\n            // import\n            // TODO: replace /data by Context.getFilesDir().getPath() -> see lint\n            File db = new File(\"/data/data/\" + getPackageName() + \"/databases/\" + ActivityDiaryContract.AUTHORITY);\n            try {\n                String s = getResources().getString(R.string.db_import_success, data.getData().toString());\n                InputStream inputStream = getContentResolver().openInputStream(data.getData());\n                OutputStream outputStream = new FileOutputStream(db);\n                byte[] buff = new byte[4048];"
+        },
+        {
+          "line": 278,
+          "code_snippet": "                outputStream.close();\n                inputStream.close();\n                Toast.makeText(SettingsActivity.this, s, Toast.LENGTH_LONG).show();\n            }catch (Exception e){\n                Log.e(TAG,\"error on database impport: \"+e.getMessage());\n                String s = getResources().getString(R.string.db_import_error, data.getData().toString());\n                Toast.makeText(SettingsActivity.this, s, Toast.LENGTH_LONG).show();\n            }\n\n        }\n        if(requestCode == ACTIVITIY_RESULT_EXPORT && resultCode == RESULT_OK) {\n\n            // export\n            // TODO: replace /data by Context.getFilesDir().getPath() -> see lint"
+        },
+        {
+          "line": 303,
+          "code_snippet": "                outputStream.close();\n                inputStream.close();\n                Toast.makeText(SettingsActivity.this, s, Toast.LENGTH_LONG).show();\n            }catch (Exception e){\n                Log.e(TAG,\"error on database export: \"+e.getMessage());\n                String s = getResources().getString(R.string.db_export_error, data.getData().toString());\n                Toast.makeText(SettingsActivity.this, s, Toast.LENGTH_LONG).show();\n            }\n        }\n    }\n}\n"
+        },
+        {
+          "line": 21,
+          "code_snippet": "package de.rampro.activitydiary.ui.generic;\n\nimport android.content.Intent;\nimport android.content.res.Configuration;\nimport android.os.Bundle;\nimport android.support.design.widget.NavigationView;\nimport android.support.v4.widget.DrawerLayout;\nimport android.support.v7.app.ActionBarDrawerToggle;\nimport android.support.v7.app.AppCompatActivity;\nimport android.support.v7.widget.Toolbar;\nimport android.view.MenuItem;\nimport android.view.View;\nimport android.widget.FrameLayout;\nimport android.widget.Toast;"
+        },
+        {
+          "line": 54,
+          "code_snippet": "        setContentView(R.layout.activity_base);\n\n        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);\n        Toolbar mainToolbar = (Toolbar) findViewById(R.id.main_toolbar);\n        setSupportActionBar(mainToolbar);\n        mNavigationView = (NavigationView) findViewById(R.id.navigation_view);\n\n//        View logoView = getLayoutInflater().inflate(R.layout.drawer_header, mNavigationView, false);\n\n//        mNavigationView.addHeaderView(logoView);\n        mDrawerToggle = new ActionBarDrawerToggle(\n                this,\n                mDrawerLayout,\n                R.string.drawer_open,"
+        },
+        {
+          "line": 78,
+          "code_snippet": "                boolean highlight = true;\n                switch (menuItem.getItemId()) {\n                    case R.id.nav_main:\n                        if(!menuItem.isChecked()) {\n                            // start activity only if it is not currently checked\n                            Intent intentmain = new Intent(BaseActivity.this, MainActivity.class);\n                            intentmain.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);\n                            startActivity(intentmain);\n                        }\n                        break;\n                    case R.id.nav_add_activity:\n                        Intent intentaddact = new Intent(BaseActivity.this, EditActivity.class);\n                        startActivity(intentaddact);\n                        break;"
+        },
+        {
+          "line": 90,
+          "code_snippet": "                        startActivity(intentaddact);\n                        break;\n                    case R.id.nav_activity_manager:\n                        Intent intentmanage = new Intent(BaseActivity.this, ManageActivity.class);\n                        startActivity(intentmanage);\n                        break;\n                    case R.id.nav_diary:\n                        Intent intentdiary = new Intent(BaseActivity.this, HistoryActivity.class);\n                        startActivity(intentdiary);\n                        break;\n                    case R.id.nav_about:\n                        Intent intentabout = new Intent(BaseActivity.this, AboutActivity.class);\n                        startActivity(intentabout);\n                        break;"
+        },
+        {
+          "line": 102,
+          "code_snippet": "                        startActivity(intentabout);\n                        break;\n                    case R.id.nav_settings:\n                        Intent intentsettings = new Intent(BaseActivity.this, SettingsActivity.class);\n                        startActivity(intentsettings);\n                        break;\n                    default:\n                        Toast.makeText(BaseActivity.this, menuItem.getTitle() + \" is not yet implemented :-(\", Toast.LENGTH_LONG).show();\n                        break;\n                }\n                mDrawerLayout.closeDrawers();\n                return highlight;\n            }\n        });"
+        },
+        {
+          "line": 135,
+          "code_snippet": "        if (mDrawerToggle.onOptionsItemSelected(item)) {\n            return true;\n        }else if(item.getItemId() == android.R.id.home){\n            finish();\n        }\n\n        return super.onOptionsItemSelected(item);\n    }\n\n    protected void setContent(View contentView){\n        FrameLayout content = ((FrameLayout)findViewById(R.id.content_fragment));\n        content.removeAllViews();\n        content.addView(contentView);\n    }"
+        }
+      ],
+      "file_path": "app/src/main/java/de/rampro/activitydiary/ui/settings/SettingsActivity.java",
+      "is_entry_point": false
+    },
+    {
+      "unit_id": "ManageActivity",
+      "unit_type": "Activity",
+      "layout": "activity_manage_content",
+      "all_layouts": [
+        "activity_base",
+        "activity_row",
+        "activity_manage_content",
+        "drawer_header"
+      ],
+      "ui_elements": [
+        {
+          "tag": "element",
+          "id": "activity_background",
+          "type": "RelativeLayout",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_main_content",
+          "business_logic": "长按触发编辑当前活动",
+          "interaction": {
+            "type": "NAVIGATE_TO",
+            "target_unit": "EditActivity"
+          },
+          "location": "layout"
+        },
+        {
+          "tag": "element",
+          "id": "activity_image",
+          "type": "ImageView",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_main_content",
+          "business_logic": "显示活动图像",
+          "interaction": {
+            "type": "INTERNAL_FUNCTION",
+            "target_unit": "setImageResource()"
+          },
+          "location": "layout"
+        },
+        {
+          "tag": "element",
+          "id": "activity_name",
+          "type": "TextView",
+          "text": "<No Activity>",
+          "source": "resource_file",
+          "from_layout": "activity_main_content",
+          "business_logic": "显示活动名称",
+          "interaction": {
+            "type": "INTERNAL_FUNCTION",
+            "target_unit": "setText()"
+          },
+          "location": "layout"
+        },
+        {
+          "tag": "element",
+          "id": "manage_activity_list",
+          "type": "ListView",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_manage_content",
+          "business_logic": "显示活动列表",
+          "interaction": {
+            "type": "INTERNAL_FUNCTION",
+            "target_unit": "setOnItemClickListener()"
+          },
+          "location": "layout"
+        },
+        {
+          "tag": "element",
+          "id": "content_frame",
+          "type": "RelativeLayout",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "element",
+          "id": "main_toolbar",
+          "type": "android.support.v7.widget.Toolbar",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "element",
+          "id": "drawer_layout",
+          "type": "android.support.v4.widget.DrawerLayout",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "element",
+          "id": "content_fragment",
+          "type": "FrameLayout",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "element",
+          "id": "navigation_view",
+          "type": "android.support.design.widget.NavigationView",
+          "text": "",
+          "associated_menu": "main_drawer",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_main",
+          "type": "MenuItem",
+          "text": "Select Activity",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base",
+          "business_logic": "导航到主活动",
+          "interaction": {
+            "type": "NAVIGATE_TO",
+            "target_unit": "MainActivity"
+          }
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_diary",
+          "type": "MenuItem",
+          "text": "Diary",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_add_activity",
+          "type": "MenuItem",
+          "text": "Add Activity",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_activity_manager",
+          "type": "MenuItem",
+          "text": "Edit Activities",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_settings",
+          "type": "MenuItem",
+          "text": "Settings",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_about",
+          "type": "MenuItem",
+          "text": "About",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "element",
+          "id": "activity_diary_logo",
+          "type": "ImageView",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "drawer_header"
+        }
+      ],
+      "interactions": [
+        {
+          "line": 24,
+          "code_snippet": "import android.app.LoaderManager;\nimport android.content.Context;\nimport android.content.Intent;\nimport android.content.Loader;\nimport android.content.CursorLoader;\nimport android.database.Cursor;\nimport android.os.Bundle;\nimport android.view.LayoutInflater;\nimport android.view.Menu;\nimport android.view.MenuInflater;\nimport android.view.MenuItem;\nimport android.view.View;\nimport android.widget.AdapterView;\nimport android.widget.ImageView;"
+        },
+        {
+          "line": 71,
+          "code_snippet": "            int textColor = 0;\n\n            TextView actName = (TextView) view.findViewById(R.id.activity_name);\n            actName.setText(name);\n            RelativeLayout bgrd = (RelativeLayout) view.findViewById(R.id.activity_background);\n            bgrd.setBackgroundColor(color);\n            actName.setTextColor(GraphicsHelper.textColorOnBackground(color));\n\n            ImageView imageView = (ImageView) view.findViewById(R.id.activity_image);\n    /* TODO #33 fill image here */\n        }\n    }\n\n    private DiaryActivityAdapter mActivitiyListAdapter;"
+        },
+        {
+          "line": 90,
+          "code_snippet": "        LayoutInflater inflater = (LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);\n\n        View contentView = inflater.inflate(R.layout.activity_manage_content, null, false);\n\n        setContent(contentView);\n        mList = (ListView)findViewById(R.id.manage_activity_list);\n        mActivitiyListAdapter = new DiaryActivityAdapter();\n        mList.setAdapter(mActivitiyListAdapter);\n\n        mList.setOnItemClickListener(mOnClickListener);\n\n        // Prepare the loader.  Either re-connect with an existing one,\n        // or start a new one.\n    /* TODO: refactor to use the ActivityHelper instead of directly a Loader; 2017-12-02, RMk: not sure whether we should do this... */"
+        },
+        {
+          "line": 110,
+          "code_snippet": "    public boolean onCreateOptionsMenu(Menu menu) {\n        MenuInflater inflater = getMenuInflater();\n        inflater.inflate(R.menu.manage_menu, menu);\n        return true;\n    }\n\n    @Override\n    public boolean onOptionsItemSelected(MenuItem item) {\n        // Handle your other action bar items...\n        switch(item.getItemId()) {\n            case R.id.action_add_activity:\n                Intent intentaddact = new Intent(ManageActivity.this, EditActivity.class);\n                startActivity(intentaddact);\n                break;"
+        },
+        {
+          "line": 122,
+          "code_snippet": "                startActivity(intentaddact);\n                break;\n            case android.R.id.home:\n                finish();\n                break;\n        }\n        return super.onOptionsItemSelected(item);\n    }\n\n    // Called when a new Loader needs to be created\n    public Loader<Cursor> onCreateLoader(int id, Bundle args) {\n        // Now create and return a CursorLoader that will take care of\n        // creating a Cursor for the data being displayed.\n        return new CursorLoader(this, ActivityDiaryContract.DiaryActivity.CONTENT_URI,"
+        },
+        {
+          "line": 156,
+          "code_snippet": "        {\n            Cursor c = (Cursor)parent.getItemAtPosition(position);\n            Intent i = new Intent(ManageActivity.this, EditActivity.class);\n            i.putExtra(\"activityID\", c.getInt(c.getColumnIndex(ActivityDiaryContract.DiaryActivity._ID)));\n            startActivity(i);\n        }\n    };\n\n    /* TODO #24: implement swipe for parent / child navigation */\n    /* TODO #24: add number of child activities in view */\n\n    @Override\n    public void onResume(){\n        mNavigationView.getMenu().findItem(R.id.nav_activity_manager).setChecked(true);"
+        },
+        {
+          "line": 21,
+          "code_snippet": "package de.rampro.activitydiary.ui.generic;\n\nimport android.content.Intent;\nimport android.content.res.Configuration;\nimport android.os.Bundle;\nimport android.support.design.widget.NavigationView;\nimport android.support.v4.widget.DrawerLayout;\nimport android.support.v7.app.ActionBarDrawerToggle;\nimport android.support.v7.app.AppCompatActivity;\nimport android.support.v7.widget.Toolbar;\nimport android.view.MenuItem;\nimport android.view.View;\nimport android.widget.FrameLayout;\nimport android.widget.Toast;"
+        },
+        {
+          "line": 54,
+          "code_snippet": "        setContentView(R.layout.activity_base);\n\n        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);\n        Toolbar mainToolbar = (Toolbar) findViewById(R.id.main_toolbar);\n        setSupportActionBar(mainToolbar);\n        mNavigationView = (NavigationView) findViewById(R.id.navigation_view);\n\n//        View logoView = getLayoutInflater().inflate(R.layout.drawer_header, mNavigationView, false);\n\n//        mNavigationView.addHeaderView(logoView);\n        mDrawerToggle = new ActionBarDrawerToggle(\n                this,\n                mDrawerLayout,\n                R.string.drawer_open,"
+        },
+        {
+          "line": 78,
+          "code_snippet": "                boolean highlight = true;\n                switch (menuItem.getItemId()) {\n                    case R.id.nav_main:\n                        if(!menuItem.isChecked()) {\n                            // start activity only if it is not currently checked\n                            Intent intentmain = new Intent(BaseActivity.this, MainActivity.class);\n                            intentmain.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);\n                            startActivity(intentmain);\n                        }\n                        break;\n                    case R.id.nav_add_activity:\n                        Intent intentaddact = new Intent(BaseActivity.this, EditActivity.class);\n                        startActivity(intentaddact);\n                        break;"
+        },
+        {
+          "line": 90,
+          "code_snippet": "                        startActivity(intentaddact);\n                        break;\n                    case R.id.nav_activity_manager:\n                        Intent intentmanage = new Intent(BaseActivity.this, ManageActivity.class);\n                        startActivity(intentmanage);\n                        break;\n                    case R.id.nav_diary:\n                        Intent intentdiary = new Intent(BaseActivity.this, HistoryActivity.class);\n                        startActivity(intentdiary);\n                        break;\n                    case R.id.nav_about:\n                        Intent intentabout = new Intent(BaseActivity.this, AboutActivity.class);\n                        startActivity(intentabout);\n                        break;"
+        },
+        {
+          "line": 102,
+          "code_snippet": "                        startActivity(intentabout);\n                        break;\n                    case R.id.nav_settings:\n                        Intent intentsettings = new Intent(BaseActivity.this, SettingsActivity.class);\n                        startActivity(intentsettings);\n                        break;\n                    default:\n                        Toast.makeText(BaseActivity.this, menuItem.getTitle() + \" is not yet implemented :-(\", Toast.LENGTH_LONG).show();\n                        break;\n                }\n                mDrawerLayout.closeDrawers();\n                return highlight;\n            }\n        });"
+        },
+        {
+          "line": 135,
+          "code_snippet": "        if (mDrawerToggle.onOptionsItemSelected(item)) {\n            return true;\n        }else if(item.getItemId() == android.R.id.home){\n            finish();\n        }\n\n        return super.onOptionsItemSelected(item);\n    }\n\n    protected void setContent(View contentView){\n        FrameLayout content = ((FrameLayout)findViewById(R.id.content_fragment));\n        content.removeAllViews();\n        content.addView(contentView);\n    }"
+        }
+      ],
+      "file_path": "app/src/main/java/de/rampro/activitydiary/ui/generic/ManageActivity.java",
+      "is_entry_point": false
+    },
+    {
+      "unit_id": "EditActivity",
+      "unit_type": "Activity",
+      "layout": "activity_edit_content",
+      "all_layouts": [
+        "activity_edit_content",
+        "drawer_header",
+        "activity_base"
+      ],
+      "ui_elements": [
+        {
+          "tag": "element",
+          "id": "edit_activity_name_til",
+          "type": "android.support.design.widget.TextInputLayout",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_edit_content"
+        },
+        {
+          "tag": "element",
+          "id": "edit_activity_name",
+          "type": "android.support.design.widget.TextInputEditText",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_edit_content",
+          "business_logic": "输入活动名称，并添加文本监听器以检查约束条件",
+          "interaction": {
+            "type": "INTERNAL_FUNCTION",
+            "target_unit": "checkConstraints()"
+          },
+          "location": "layout"
+        },
+        {
+          "tag": "element",
+          "id": "edit_activity_color_label",
+          "type": "TextView",
+          "text": "Activity Color",
+          "source": "resource_file",
+          "from_layout": "activity_edit_content"
+        },
+        {
+          "tag": "element",
+          "id": "edit_activity_color",
+          "type": "ImageView",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_edit_content",
+          "business_logic": "点击显示颜色选择器以选择活动颜色",
+          "interaction": {
+            "type": "SHOW_DIALOG",
+            "target_unit": "mCp.show()"
+          },
+          "location": "layout"
+        },
+        {
+          "tag": "element",
+          "id": "activity_diary_logo",
+          "type": "ImageView",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "drawer_header"
+        },
+        {
+          "tag": "element",
+          "id": "content_frame",
+          "type": "RelativeLayout",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "element",
+          "id": "main_toolbar",
+          "type": "android.support.v7.widget.Toolbar",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "element",
+          "id": "drawer_layout",
+          "type": "android.support.v4.widget.DrawerLayout",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "element",
+          "id": "content_fragment",
+          "type": "FrameLayout",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "element",
+          "id": "navigation_view",
+          "type": "android.support.design.widget.NavigationView",
+          "text": "",
+          "associated_menu": "main_drawer",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_main",
+          "type": "MenuItem",
+          "text": "Select Activity",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base",
+          "business_logic": "在导航菜单中点击时启动MainActivity以选择活动",
+          "interaction": {
+            "type": "NAVIGATE_TO",
+            "target_unit": "MainActivity"
+          }
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_diary",
+          "type": "MenuItem",
+          "text": "Diary",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_add_activity",
+          "type": "MenuItem",
+          "text": "Add Activity",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base",
+          "business_logic": "在导航菜单中点击时启动EditActivity以添加新活动",
+          "interaction": {
+            "type": "NAVIGATE_TO",
+            "target_unit": "EditActivity"
+          }
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_activity_manager",
+          "type": "MenuItem",
+          "text": "Edit Activities",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base",
+          "business_logic": "在导航菜单中点击时启动ManageActivity以管理活动",
+          "interaction": {
+            "type": "NAVIGATE_TO",
+            "target_unit": "ManageActivity"
+          }
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_settings",
+          "type": "MenuItem",
+          "text": "Settings",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_about",
+          "type": "MenuItem",
+          "text": "About",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        }
+      ],
+      "interactions": [
+        {
+          "line": 23,
+          "code_snippet": "import android.content.AsyncQueryHandler;\nimport android.content.Context;\nimport android.content.Intent;\nimport android.database.Cursor;\nimport android.os.Bundle;\nimport android.support.annotation.ColorInt;\nimport android.support.annotation.Nullable;\nimport android.support.design.widget.TextInputLayout;\nimport android.text.Editable;\nimport android.text.TextWatcher;\nimport android.view.LayoutInflater;\nimport android.view.Menu;\nimport android.view.MenuInflater;\nimport android.view.MenuItem;"
+        },
+        {
+          "line": 97,
+          "code_snippet": "        super.onCreate(savedInstanceState);\n        LayoutInflater inflater = (LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);\n        Intent i = getIntent();\n        int actId = i.getIntExtra(\"activityID\", -1);\n        if(actId == -1) {\n            currentActivity = null;\n        }else {\n            currentActivity = ActivityHelper.helper.activityWithId(actId);\n        }\n\n        View contentView = inflater.inflate(R.layout.activity_edit_content, null, false);\n\n        setContent(contentView);\n        mActivityName = (EditText) contentView.findViewById(R.id.edit_activity_name);"
+        },
+        {
+          "line": 111,
+          "code_snippet": "        mActivityName.addTextChangedListener(new TextWatcher(){\n            @Override\n            public void beforeTextChanged(CharSequence s, int start, int count, int after) {\n\n            }\n\n            @Override\n            public void onTextChanged(CharSequence s, int start, int before, int count) {\n\n            }\n\n            @Override\n            public void afterTextChanged(Editable s) {\n                checkConstraints();"
+        },
+        {
+          "line": 125,
+          "code_snippet": "            }\n        });\n        mActivityNameTIL = (TextInputLayout) findViewById(R.id.edit_activity_name_til);\n\n        mActivityColorImg = (ImageView) contentView.findViewById(R.id.edit_activity_color);\n        mActivityColorImg.setOnClickListener(new View.OnClickListener() {\n            public void onClick(View v) {\n                mCp.show();\n            }\n        });\n\n        if(savedInstanceState != null) {\n            String name = savedInstanceState.getString(NAME_KEY);\n            mActivityColor = savedInstanceState.getInt(COLOR_KEY);"
+        },
+        {
+          "line": 169,
+          "code_snippet": "    public void onResume(){\n        if(currentActivity == null) {\n            mNavigationView.getMenu().findItem(R.id.nav_add_activity).setChecked(true);\n        }\n        super.onResume();\n    }\n\n    @Override\n    public void onSaveInstanceState(Bundle outState) {\n        outState.putString(NAME_KEY, mActivityName.getText().toString());\n        outState.putInt(COLOR_KEY, mActivityColor);\n        // call superclass to save any view hierarchy\n        super.onSaveInstanceState(outState);\n    }"
+        },
+        {
+          "line": 185,
+          "code_snippet": "    public boolean onCreateOptionsMenu(Menu menu) {\n        MenuInflater inflater = getMenuInflater();\n        inflater.inflate(R.menu.edit_menu, menu);\n        return true;\n    }\n\n    @Override\n    public boolean onOptionsItemSelected(MenuItem item) {\n        switch(item.getItemId()){\n            case R.id.action_edit_delete:\n                if(currentActivity != null){\n                    ActivityHelper.helper.deleteActivity(currentActivity);\n                }\n                finish();"
+        },
+        {
+          "line": 198,
+          "code_snippet": "                finish();\n                break;\n            case R.id.action_edit_done:\n                CharSequence error = mActivityNameTIL.getError();\n                if(error != null && error.length() > 0)\n                {\n                    Toast.makeText(EditActivity.this,\n                            error,\n                            Toast.LENGTH_LONG\n                    ).show();\n                }\n                else {\n                    if (currentActivity == null) {\n                        ActivityHelper.helper.insertActivity(new DiaryActivity(-1, mActivityName.getText().toString(), mActivityColor));"
+        },
+        {
+          "line": 218,
+          "code_snippet": "                }\n                break;\n            case android.R.id.home:\n                finish();\n                break;\n        }\n        return super.onOptionsItemSelected(item);\n    }\n\n    private void checkConstraints(){\n        if(currentActivity == null) {\n            mQHandler.startQuery(QUERY_NAMES,\n                    null,\n                    ActivityDiaryContract.DiaryActivity.CONTENT_URI,"
+        },
+        {
+          "line": 235,
+          "code_snippet": "        }else{\n            /* activity already there */\n            mQHandler.startQuery(QUERY_NAMES,\n                    null,\n                    ActivityDiaryContract.DiaryActivity.CONTENT_URI,\n                    new String[]{ActivityDiaryContract.DiaryActivity.NAME},\n                    ActivityDiaryContract.DiaryActivity.NAME + \"=? AND \" +\n                    ActivityDiaryContract.DiaryActivity._ID + \" != ?\",\n                    new String[]{mActivityName.getText().toString(), Long.toString(currentActivity.getId())},\n                    null);\n        }\n    }\n}\n"
+        },
+        {
+          "line": 21,
+          "code_snippet": "package de.rampro.activitydiary.ui.generic;\n\nimport android.content.Intent;\nimport android.content.res.Configuration;\nimport android.os.Bundle;\nimport android.support.design.widget.NavigationView;\nimport android.support.v4.widget.DrawerLayout;\nimport android.support.v7.app.ActionBarDrawerToggle;\nimport android.support.v7.app.AppCompatActivity;\nimport android.support.v7.widget.Toolbar;\nimport android.view.MenuItem;\nimport android.view.View;\nimport android.widget.FrameLayout;\nimport android.widget.Toast;"
+        },
+        {
+          "line": 54,
+          "code_snippet": "        setContentView(R.layout.activity_base);\n\n        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);\n        Toolbar mainToolbar = (Toolbar) findViewById(R.id.main_toolbar);\n        setSupportActionBar(mainToolbar);\n        mNavigationView = (NavigationView) findViewById(R.id.navigation_view);\n\n//        View logoView = getLayoutInflater().inflate(R.layout.drawer_header, mNavigationView, false);\n\n//        mNavigationView.addHeaderView(logoView);\n        mDrawerToggle = new ActionBarDrawerToggle(\n                this,\n                mDrawerLayout,\n                R.string.drawer_open,"
+        },
+        {
+          "line": 78,
+          "code_snippet": "                boolean highlight = true;\n                switch (menuItem.getItemId()) {\n                    case R.id.nav_main:\n                        if(!menuItem.isChecked()) {\n                            // start activity only if it is not currently checked\n                            Intent intentmain = new Intent(BaseActivity.this, MainActivity.class);\n                            intentmain.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);\n                            startActivity(intentmain);\n                        }\n                        break;\n                    case R.id.nav_add_activity:\n                        Intent intentaddact = new Intent(BaseActivity.this, EditActivity.class);\n                        startActivity(intentaddact);\n                        break;"
+        },
+        {
+          "line": 90,
+          "code_snippet": "                        startActivity(intentaddact);\n                        break;\n                    case R.id.nav_activity_manager:\n                        Intent intentmanage = new Intent(BaseActivity.this, ManageActivity.class);\n                        startActivity(intentmanage);\n                        break;\n                    case R.id.nav_diary:\n                        Intent intentdiary = new Intent(BaseActivity.this, HistoryActivity.class);\n                        startActivity(intentdiary);\n                        break;\n                    case R.id.nav_about:\n                        Intent intentabout = new Intent(BaseActivity.this, AboutActivity.class);\n                        startActivity(intentabout);\n                        break;"
+        },
+        {
+          "line": 102,
+          "code_snippet": "                        startActivity(intentabout);\n                        break;\n                    case R.id.nav_settings:\n                        Intent intentsettings = new Intent(BaseActivity.this, SettingsActivity.class);\n                        startActivity(intentsettings);\n                        break;\n                    default:\n                        Toast.makeText(BaseActivity.this, menuItem.getTitle() + \" is not yet implemented :-(\", Toast.LENGTH_LONG).show();\n                        break;\n                }\n                mDrawerLayout.closeDrawers();\n                return highlight;\n            }\n        });"
+        },
+        {
+          "line": 135,
+          "code_snippet": "        if (mDrawerToggle.onOptionsItemSelected(item)) {\n            return true;\n        }else if(item.getItemId() == android.R.id.home){\n            finish();\n        }\n\n        return super.onOptionsItemSelected(item);\n    }\n\n    protected void setContent(View contentView){\n        FrameLayout content = ((FrameLayout)findViewById(R.id.content_fragment));\n        content.removeAllViews();\n        content.addView(contentView);\n    }"
+        }
+      ],
+      "file_path": "app/src/main/java/de/rampro/activitydiary/ui/generic/EditActivity.java",
+      "is_entry_point": false
+    },
+    {
+      "unit_id": "AboutActivity",
+      "unit_type": "Activity",
+      "layout": "activity_about",
+      "all_layouts": [
+        "drawer_header",
+        "activity_base",
+        "activity_about"
+      ],
+      "ui_elements": [
+        {
+          "tag": "element",
+          "id": "aboutTextView",
+          "type": "TextView",
+          "text": "\n        <h1>%1$s</h1>\n        <br />version <b>%2$s</b></p>\n        <p>A diary for any kind of activities - organize your tasks in agile way and get reminded if something is expected to reoccur.</p>\n        <h1>License</h1>\n        <p>%1$s is free software: you can redistribute it and/or modify it under the terms of the <a href=\"https://www.gnu.org/licenses/gpl-3.0.en.html\">GNU General Public License</a> as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.</p>\n        <p>This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.</p>\n        <h1>Contact</h1>\n        <p>For bugs and suggestions use the <a href=\"https://github.com/ramack/ActivityDiary/issues\">issue tacker</a>.</p>\n        <p>Source Code can be found on <a href=\"https://github.com/ramack/ActivityDiary\">Github</a>.</p>\n        <h1>Contributors</h1>\n        %3$s\n        <p>We are looking forward to mention your name in this list, too.</p>\n        <h1>Libraries</h1>\n        The following libraries are used by this application and licensed under the named licenses.\n        %4$s\n        \n    ",
+          "source": "resource_file",
+          "from_layout": "activity_about"
+        },
+        {
+          "tag": "element",
+          "id": "activity_diary_logo",
+          "type": "ImageView",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "drawer_header"
+        },
+        {
+          "tag": "element",
+          "id": "content_frame",
+          "type": "RelativeLayout",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "element",
+          "id": "main_toolbar",
+          "type": "android.support.v7.widget.Toolbar",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "element",
+          "id": "drawer_layout",
+          "type": "android.support.v4.widget.DrawerLayout",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "element",
+          "id": "content_fragment",
+          "type": "FrameLayout",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "element",
+          "id": "navigation_view",
+          "type": "android.support.design.widget.NavigationView",
+          "text": "",
+          "associated_menu": "main_drawer",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_main",
+          "type": "MenuItem",
+          "text": "Select Activity",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base",
+          "business_logic": "点击后跳转到主活动页面，如果当前未选中则启动 MainActivity 并清除顶部活动栈",
+          "interaction": {
+            "type": "NAVIGATE_TO",
+            "target_unit": "MainActivity"
+          }
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_diary",
+          "type": "MenuItem",
+          "text": "Diary",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base",
+          "business_logic": "点击后跳转到历史活动页面，查看日记记录",
+          "interaction": {
+            "type": "NAVIGATE_TO",
+            "target_unit": "HistoryActivity"
+          }
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_add_activity",
+          "type": "MenuItem",
+          "text": "Add Activity",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base",
+          "business_logic": "点击后跳转到编辑活动页面，用于添加新活动",
+          "interaction": {
+            "type": "NAVIGATE_TO",
+            "target_unit": "EditActivity"
+          }
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_activity_manager",
+          "type": "MenuItem",
+          "text": "Edit Activities",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base",
+          "business_logic": "点击后跳转到管理活动页面，用于编辑现有活动",
+          "interaction": {
+            "type": "NAVIGATE_TO",
+            "target_unit": "ManageActivity"
+          }
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_settings",
+          "type": "MenuItem",
+          "text": "Settings",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_about",
+          "type": "MenuItem",
+          "text": "About",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base",
+          "business_logic": "点击后跳转到关于页面，显示应用信息和许可证详情",
+          "interaction": {
+            "type": "NAVIGATE_TO",
+            "target_unit": "AboutActivity"
+          }
+        }
+      ],
+      "interactions": [
+        {
+          "line": 42,
+          "code_snippet": "        LayoutInflater inflater = (LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);\n\n        View contentView = inflater.inflate(R.layout.activity_about, null, false);\n\n        setContent(contentView);\n        TextView aboutText = (TextView)findViewById(R.id.aboutTextView);\n\n        String appName = getResources().getString(R.string.app_name);\n        String contributors = getResources().getString(R.string.contributors);\n        String libraries = getResources().getString(R.string.libraries);\n        String versionName = BuildConfig.VERSION_NAME;\n\n        String mergedAboutText = getResources().getString(R.string.about_text, appName, versionName, contributors, libraries);\n        if (Build.VERSION.SDK_INT >= 24) {"
+        },
+        {
+          "line": 66,
+          "code_snippet": "    @Override\n    public void onResume(){\n        mNavigationView.getMenu().findItem(R.id.nav_about).setChecked(true);\n        super.onResume();\n    }\n}\n"
+        },
+        {
+          "line": 21,
+          "code_snippet": "package de.rampro.activitydiary.ui.generic;\n\nimport android.content.Intent;\nimport android.content.res.Configuration;\nimport android.os.Bundle;\nimport android.support.design.widget.NavigationView;\nimport android.support.v4.widget.DrawerLayout;\nimport android.support.v7.app.ActionBarDrawerToggle;\nimport android.support.v7.app.AppCompatActivity;\nimport android.support.v7.widget.Toolbar;\nimport android.view.MenuItem;\nimport android.view.View;\nimport android.widget.FrameLayout;\nimport android.widget.Toast;"
+        },
+        {
+          "line": 54,
+          "code_snippet": "        setContentView(R.layout.activity_base);\n\n        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);\n        Toolbar mainToolbar = (Toolbar) findViewById(R.id.main_toolbar);\n        setSupportActionBar(mainToolbar);\n        mNavigationView = (NavigationView) findViewById(R.id.navigation_view);\n\n//        View logoView = getLayoutInflater().inflate(R.layout.drawer_header, mNavigationView, false);\n\n//        mNavigationView.addHeaderView(logoView);\n        mDrawerToggle = new ActionBarDrawerToggle(\n                this,\n                mDrawerLayout,\n                R.string.drawer_open,"
+        },
+        {
+          "line": 78,
+          "code_snippet": "                boolean highlight = true;\n                switch (menuItem.getItemId()) {\n                    case R.id.nav_main:\n                        if(!menuItem.isChecked()) {\n                            // start activity only if it is not currently checked\n                            Intent intentmain = new Intent(BaseActivity.this, MainActivity.class);\n                            intentmain.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);\n                            startActivity(intentmain);\n                        }\n                        break;\n                    case R.id.nav_add_activity:\n                        Intent intentaddact = new Intent(BaseActivity.this, EditActivity.class);\n                        startActivity(intentaddact);\n                        break;"
+        },
+        {
+          "line": 90,
+          "code_snippet": "                        startActivity(intentaddact);\n                        break;\n                    case R.id.nav_activity_manager:\n                        Intent intentmanage = new Intent(BaseActivity.this, ManageActivity.class);\n                        startActivity(intentmanage);\n                        break;\n                    case R.id.nav_diary:\n                        Intent intentdiary = new Intent(BaseActivity.this, HistoryActivity.class);\n                        startActivity(intentdiary);\n                        break;\n                    case R.id.nav_about:\n                        Intent intentabout = new Intent(BaseActivity.this, AboutActivity.class);\n                        startActivity(intentabout);\n                        break;"
+        },
+        {
+          "line": 102,
+          "code_snippet": "                        startActivity(intentabout);\n                        break;\n                    case R.id.nav_settings:\n                        Intent intentsettings = new Intent(BaseActivity.this, SettingsActivity.class);\n                        startActivity(intentsettings);\n                        break;\n                    default:\n                        Toast.makeText(BaseActivity.this, menuItem.getTitle() + \" is not yet implemented :-(\", Toast.LENGTH_LONG).show();\n                        break;\n                }\n                mDrawerLayout.closeDrawers();\n                return highlight;\n            }\n        });"
+        },
+        {
+          "line": 135,
+          "code_snippet": "        if (mDrawerToggle.onOptionsItemSelected(item)) {\n            return true;\n        }else if(item.getItemId() == android.R.id.home){\n            finish();\n        }\n\n        return super.onOptionsItemSelected(item);\n    }\n\n    protected void setContent(View contentView){\n        FrameLayout content = ((FrameLayout)findViewById(R.id.content_fragment));\n        content.removeAllViews();\n        content.addView(contentView);\n    }"
+        }
+      ],
+      "file_path": "app/src/main/java/de/rampro/activitydiary/ui/generic/AboutActivity.java",
+      "is_entry_point": false
+    },
+    {
+      "unit_id": "HistoryActivity",
+      "unit_type": "Activity",
+      "layout": "activity_history_content",
+      "all_layouts": [
+        "drawer_header",
+        "activity_base",
+        "activity_history_content"
+      ],
+      "ui_elements": [
+        {
+          "tag": "element",
+          "id": "history_list",
+          "type": "android.support.v7.widget.RecyclerView",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_history_content",
+          "business_logic": "显示历史记录列表，使用StaggeredGridLayoutManager进行垂直布局",
+          "interaction": {
+            "type": "INTERNAL_FUNCTION",
+            "target_unit": "setLayoutManager()"
+          },
+          "location": "layout"
+        },
+        {
+          "tag": "element",
+          "id": "activity_diary_logo",
+          "type": "ImageView",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "drawer_header"
+        },
+        {
+          "tag": "element",
+          "id": "content_frame",
+          "type": "RelativeLayout",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "element",
+          "id": "main_toolbar",
+          "type": "android.support.v7.widget.Toolbar",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "element",
+          "id": "drawer_layout",
+          "type": "android.support.v4.widget.DrawerLayout",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "element",
+          "id": "content_fragment",
+          "type": "FrameLayout",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "element",
+          "id": "navigation_view",
+          "type": "android.support.design.widget.NavigationView",
+          "text": "",
+          "associated_menu": "main_drawer",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_main",
+          "type": "MenuItem",
+          "text": "Select Activity",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base",
+          "business_logic": "导航到主活动（MainActivity），如果当前未选中",
+          "interaction": {
+            "type": "NAVIGATE_TO",
+            "target_unit": "MainActivity"
+          }
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_diary",
+          "type": "MenuItem",
+          "text": "Diary",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base",
+          "business_logic": "导航到历史活动（HistoryActivity）以查看日记记录，并在onResume中设置为选中状态",
+          "interaction": {
+            "type": "NAVIGATE_TO",
+            "target_unit": "HistoryActivity"
+          }
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_add_activity",
+          "type": "MenuItem",
+          "text": "Add Activity",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base",
+          "business_logic": "导航到编辑活动（EditActivity）以添加新活动",
+          "interaction": {
+            "type": "NAVIGATE_TO",
+            "target_unit": "EditActivity"
+          }
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_activity_manager",
+          "type": "MenuItem",
+          "text": "Edit Activities",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base",
+          "business_logic": "导航到管理活动（ManageActivity）以编辑活动",
+          "interaction": {
+            "type": "NAVIGATE_TO",
+            "target_unit": "ManageActivity"
+          }
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_settings",
+          "type": "MenuItem",
+          "text": "Settings",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_about",
+          "type": "MenuItem",
+          "text": "About",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        }
+      ],
+      "interactions": [
+        {
+          "line": 26,
+          "code_snippet": "import android.content.ContentValues;\nimport android.content.Context;\nimport android.content.Intent;\nimport android.content.Loader;\nimport android.content.CursorLoader;\nimport android.database.Cursor;\nimport android.net.Uri;\nimport android.os.Bundle;\nimport android.support.v4.app.DialogFragment;\nimport android.support.v7.widget.RecyclerView;\nimport android.support.v7.widget.StaggeredGridLayoutManager;\nimport android.view.LayoutInflater;\nimport android.view.Menu;\nimport android.view.MenuInflater;"
+        },
+        {
+          "line": 77,
+          "code_snippet": "    public void onItemClick(HistoryViewHolders viewHolder, int adapterPosition, int diaryID) {\n        /* TODO: #25 filter history to show only entries of the clicked activity */\n        Toast.makeText(HistoryActivity.this, \"changing the activity in the history is not yet supported, maybe we filter the history one day for \" + viewHolder.mName.getText(), Toast.LENGTH_LONG).show();\n    }\n\n    public boolean onItemLongClick(HistoryViewHolders viewHolder, int adapterPosition, int diaryID){\n        NoteEditDialog dialog = new NoteEditDialog();\n        dialog.setDiaryId(diaryID);\n        dialog.setText(viewHolder.mNoteLabel.getText().toString());\n        dialog.show(getSupportFragmentManager(), \"NoteEditDialogFragment\");\n        return true;\n    }\n\n    protected class QHandler extends AsyncQueryHandler {"
+        },
+        {
+          "line": 105,
+          "code_snippet": "        LayoutInflater inflater = (LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);\n\n        View contentView = inflater.inflate(R.layout.activity_history_content, null, false);\n\n        setContent(contentView);\n\n        RecyclerView historyRecyclerView = (RecyclerView)findViewById(R.id.history_list);\n        StaggeredGridLayoutManager detailLayoutManager = new StaggeredGridLayoutManager(1, StaggeredGridLayoutManager.VERTICAL);\n\n        detailLayoutManager.setAutoMeasureEnabled(true);\n\n        historyRecyclerView.setLayoutManager(detailLayoutManager);\n\n        historyAdapter = new HistoryRecyclerViewAdapter(HistoryActivity.this, this, null);"
+        },
+        {
+          "line": 120,
+          "code_snippet": "\n        // Prepare the loader.  Either re-connect with an existing one,\n        // or start a new one.\n        // and yes, for performance reasons it is good to do it the relational way and not with an OO design\n        getLoaderManager().initLoader(LOADER_ID_HISTORY, null, this);\n        mDrawerToggle.setDrawerIndicatorEnabled(false);\n    }\n\n    @Override\n    public boolean onCreateOptionsMenu(Menu menu) {\n        MenuInflater inflater = getMenuInflater();\n        /* todo change menu */\n        /* TODO #25: ADD a search */\n/*        inflater.inflate(R.menu.manage_menu, menu);*/"
+        },
+        {
+          "line": 139,
+          "code_snippet": "        // Handle your other action bar items...\n        switch(item.getItemId()) {\n            case R.id.action_add_activity:\n                Intent intentaddact = new Intent(HistoryActivity.this, EditActivity.class);\n                startActivity(intentaddact);\n                break;\n            case android.R.id.home:\n                finish();\n                break;\n        }\n        return super.onOptionsItemSelected(item);\n    }\n\n    // Called when a new Loader needs to be created"
+        },
+        {
+          "line": 205,
+          "code_snippet": "        values.put(ActivityDiaryContract.Diary.NOTE, str);\n\n        mQHandler.startUpdate(0,\n                null,\n                Uri.withAppendedPath(ActivityDiaryContract.Diary.CONTENT_URI,\n                                     Long.toString(dlg.getDiaryId())),\n                values,\n                null, null);\n\n    }\n\n    @Override\n    public void onResume(){\n        mNavigationView.getMenu().findItem(R.id.nav_diary).setChecked(true);"
+        },
+        {
+          "line": 21,
+          "code_snippet": "package de.rampro.activitydiary.ui.generic;\n\nimport android.content.Intent;\nimport android.content.res.Configuration;\nimport android.os.Bundle;\nimport android.support.design.widget.NavigationView;\nimport android.support.v4.widget.DrawerLayout;\nimport android.support.v7.app.ActionBarDrawerToggle;\nimport android.support.v7.app.AppCompatActivity;\nimport android.support.v7.widget.Toolbar;\nimport android.view.MenuItem;\nimport android.view.View;\nimport android.widget.FrameLayout;\nimport android.widget.Toast;"
+        },
+        {
+          "line": 54,
+          "code_snippet": "        setContentView(R.layout.activity_base);\n\n        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);\n        Toolbar mainToolbar = (Toolbar) findViewById(R.id.main_toolbar);\n        setSupportActionBar(mainToolbar);\n        mNavigationView = (NavigationView) findViewById(R.id.navigation_view);\n\n//        View logoView = getLayoutInflater().inflate(R.layout.drawer_header, mNavigationView, false);\n\n//        mNavigationView.addHeaderView(logoView);\n        mDrawerToggle = new ActionBarDrawerToggle(\n                this,\n                mDrawerLayout,\n                R.string.drawer_open,"
+        },
+        {
+          "line": 78,
+          "code_snippet": "                boolean highlight = true;\n                switch (menuItem.getItemId()) {\n                    case R.id.nav_main:\n                        if(!menuItem.isChecked()) {\n                            // start activity only if it is not currently checked\n                            Intent intentmain = new Intent(BaseActivity.this, MainActivity.class);\n                            intentmain.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);\n                            startActivity(intentmain);\n                        }\n                        break;\n                    case R.id.nav_add_activity:\n                        Intent intentaddact = new Intent(BaseActivity.this, EditActivity.class);\n                        startActivity(intentaddact);\n                        break;"
+        },
+        {
+          "line": 90,
+          "code_snippet": "                        startActivity(intentaddact);\n                        break;\n                    case R.id.nav_activity_manager:\n                        Intent intentmanage = new Intent(BaseActivity.this, ManageActivity.class);\n                        startActivity(intentmanage);\n                        break;\n                    case R.id.nav_diary:\n                        Intent intentdiary = new Intent(BaseActivity.this, HistoryActivity.class);\n                        startActivity(intentdiary);\n                        break;\n                    case R.id.nav_about:\n                        Intent intentabout = new Intent(BaseActivity.this, AboutActivity.class);\n                        startActivity(intentabout);\n                        break;"
+        },
+        {
+          "line": 102,
+          "code_snippet": "                        startActivity(intentabout);\n                        break;\n                    case R.id.nav_settings:\n                        Intent intentsettings = new Intent(BaseActivity.this, SettingsActivity.class);\n                        startActivity(intentsettings);\n                        break;\n                    default:\n                        Toast.makeText(BaseActivity.this, menuItem.getTitle() + \" is not yet implemented :-(\", Toast.LENGTH_LONG).show();\n                        break;\n                }\n                mDrawerLayout.closeDrawers();\n                return highlight;\n            }\n        });"
+        },
+        {
+          "line": 135,
+          "code_snippet": "        if (mDrawerToggle.onOptionsItemSelected(item)) {\n            return true;\n        }else if(item.getItemId() == android.R.id.home){\n            finish();\n        }\n\n        return super.onOptionsItemSelected(item);\n    }\n\n    protected void setContent(View contentView){\n        FrameLayout content = ((FrameLayout)findViewById(R.id.content_fragment));\n        content.removeAllViews();\n        content.addView(contentView);\n    }"
+        }
+      ],
+      "file_path": "app/src/main/java/de/rampro/activitydiary/ui/history/HistoryActivity.java",
+      "is_entry_point": false
+    },
+    {
+      "unit_id": "MainActivity",
+      "unit_type": "Activity",
+      "layout": "activity_main_content",
+      "all_layouts": [
+        "activity_main_content",
+        "drawer_header",
+        "activity_base"
+      ],
+      "ui_elements": [
+        {
+          "tag": "element",
+          "id": "main_layout",
+          "type": "android.support.design.widget.CoordinatorLayout",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_main_content",
+          "business_logic": "显示Snackbar用于撤销活动选择",
+          "interaction": {
+            "type": "INTERNAL_FUNCTION",
+            "target_unit": "undoLastActivitySelection()"
+          },
+          "location": "layout"
+        },
+        {
+          "tag": "element",
+          "id": "header_area",
+          "type": "android.support.constraint.ConstraintLayout",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_main_content"
+        },
+        {
+          "tag": "element",
+          "id": "card",
+          "type": "android.support.v7.widget.CardView",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_main_content"
+        },
+        {
+          "tag": "element",
+          "id": "activity_background",
+          "type": "RelativeLayout",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_main_content",
+          "business_logic": "长按触发编辑当前活动",
+          "interaction": {
+            "type": "NAVIGATE_TO",
+            "target_unit": "EditActivity"
+          },
+          "location": "layout"
+        },
+        {
+          "tag": "element",
+          "id": "activity_image",
+          "type": "ImageView",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_main_content",
+          "business_logic": "显示活动图像",
+          "interaction": {
+            "type": "INTERNAL_FUNCTION",
+            "target_unit": "setImageResource()"
+          },
+          "location": "layout"
+        },
+        {
+          "tag": "element",
+          "id": "activity_name",
+          "type": "TextView",
+          "text": "<No Activity>",
+          "source": "resource_file",
+          "from_layout": "activity_main_content",
+          "business_logic": "显示活动名称",
+          "interaction": {
+            "type": "INTERNAL_FUNCTION",
+            "target_unit": "setText()"
+          },
+          "location": "layout"
+        },
+        {
+          "tag": "element",
+          "id": "duration_label",
+          "type": "TextView",
+          "text": "Duration: ?h",
+          "source": "resource_file",
+          "from_layout": "activity_main_content"
+        },
+        {
+          "tag": "element",
+          "id": "note",
+          "type": "TextView",
+          "text": "--",
+          "source": "resource_file",
+          "from_layout": "activity_main_content"
+        },
+        {
+          "tag": "element",
+          "id": "detail_recycler",
+          "type": "android.support.v7.widget.RecyclerView",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_main_content"
+        },
+        {
+          "tag": "element",
+          "id": "select_recycler",
+          "type": "android.support.v7.widget.RecyclerView",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_main_content"
+        },
+        {
+          "tag": "element",
+          "id": "fab_edit_note",
+          "type": "android.support.design.widget.FloatingActionButton",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_main_content",
+          "business_logic": "点击编辑当前活动的笔记",
+          "interaction": {
+            "type": "SHOW_DIALOG",
+            "target_unit": "NoteEditDialog()"
+          },
+          "location": "layout"
+        },
+        {
+          "tag": "element",
+          "id": "fab_attach_picture",
+          "type": "android.support.design.widget.FloatingActionButton",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_main_content",
+          "business_logic": "点击拍照并附加到当前活动",
+          "interaction": {
+            "type": "INTERNAL_FUNCTION",
+            "target_unit": "createImageFile()"
+          },
+          "location": "layout"
+        },
+        {
+          "tag": "element",
+          "id": "activity_diary_logo",
+          "type": "ImageView",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "drawer_header"
+        },
+        {
+          "tag": "element",
+          "id": "content_frame",
+          "type": "RelativeLayout",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "element",
+          "id": "main_toolbar",
+          "type": "android.support.v7.widget.Toolbar",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "element",
+          "id": "drawer_layout",
+          "type": "android.support.v4.widget.DrawerLayout",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "element",
+          "id": "content_fragment",
+          "type": "FrameLayout",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "element",
+          "id": "navigation_view",
+          "type": "android.support.design.widget.NavigationView",
+          "text": "",
+          "associated_menu": "main_drawer",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_main",
+          "type": "MenuItem",
+          "text": "Select Activity",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base",
+          "business_logic": "点击导航到主活动",
+          "interaction": {
+            "type": "NAVIGATE_TO",
+            "target_unit": "MainActivity"
+          }
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_diary",
+          "type": "MenuItem",
+          "text": "Diary",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_add_activity",
+          "type": "MenuItem",
+          "text": "Add Activity",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_activity_manager",
+          "type": "MenuItem",
+          "text": "Edit Activities",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_settings",
+          "type": "MenuItem",
+          "text": "Settings",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        },
+        {
+          "tag": "menu_item",
+          "id": "nav_about",
+          "type": "MenuItem",
+          "text": "About",
+          "showAsAction": "never",
+          "is_action_button": false,
+          "parent_id": "navigation_view",
+          "location": "menu",
+          "source": "resource_file",
+          "from_layout": "activity_base"
+        }
+      ],
+      "interactions": [
+        {
+          "line": 27,
+          "code_snippet": "import android.content.Context;\nimport android.content.DialogInterface;\nimport android.content.Intent;\nimport android.content.pm.PackageManager;\nimport android.database.Cursor;\nimport android.graphics.Point;\nimport android.net.Uri;\nimport android.os.Bundle;\nimport android.provider.MediaStore;\nimport android.support.design.widget.FloatingActionButton;\nimport android.support.design.widget.Snackbar;\nimport android.support.media.ExifInterface;\nimport android.support.v4.app.ActivityCompat;\nimport android.support.v4.app.DialogFragment;"
+        },
+        {
+          "line": 152,
+          "code_snippet": "        LayoutInflater inflater = (LayoutInflater) this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);\n\n        View contentView = inflater.inflate(R.layout.activity_main_content, null, false);\n\n        setContent(contentView);\n// TODO: check whether there is some way to use instead of inflating with root null...\n//        setContentView(R.layout.activity_main_content);\n        selectRecyclerView = (RecyclerView)findViewById(R.id.select_recycler);\n\n        View selector = findViewById(R.id.activity_background);\n        selector.setOnLongClickListener(this);\n\n        int rows;\n"
+        },
+        {
+          "line": 177,
+          "code_snippet": "        likelyhoodSort();\n\n        durationLabel = findViewById(R.id.duration_label);\n        mNoteTextView = findViewById(R.id.note);\n\n        FloatingActionButton fabNoteEdit = (FloatingActionButton) findViewById(R.id.fab_edit_note);\n        FloatingActionButton fabAttachPicture = (FloatingActionButton) findViewById(R.id.fab_attach_picture);\n\n        fabNoteEdit.setOnClickListener(new View.OnClickListener() {\n            @Override\n            public void onClick(View v) {\n                // Handle the click on the FAB\n                if(mCurrentActivity != null) {\n                    NoteEditDialog dialog = new NoteEditDialog();"
+        },
+        {
+          "line": 190,
+          "code_snippet": "                    NoteEditDialog dialog = new NoteEditDialog();\n                    dialog.setText(mNoteTextView.getText().toString());\n                    dialog.show(getSupportFragmentManager(), \"NoteEditDialogFragment\");\n                }else{\n                    Toast.makeText(MainActivity.this, getResources().getString(R.string.no_active_activity_error), Toast.LENGTH_LONG).show();\n                }\n            }\n        });\n\n        fabAttachPicture.setOnClickListener(new View.OnClickListener() {\n            @Override\n            public void onClick(View v) {\n                // Handle the click on the FAB\n                if(mCurrentActivity != null) {"
+        },
+        {
+          "line": 202,
+          "code_snippet": "                // Handle the click on the FAB\n                if(mCurrentActivity != null) {\n                    Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);\n\n                    if (takePictureIntent.resolveActivity(getPackageManager()) != null) {\n                        File photoFile = null;\n                        try {\n                            photoFile = createImageFile();\n                            Log.i(TAG, \"create file for image capture \" + (photoFile == null ? \"\" : photoFile.getAbsolutePath()));\n\n                        } catch (IOException ex) {\n                            // Error occurred while creating the File\n                            Toast.makeText(MainActivity.this, getResources().getString(R.string.camera_error), Toast.LENGTH_LONG).show();\n                        }"
+        },
+        {
+          "line": 222,
+          "code_snippet": "                                    BuildConfig.APPLICATION_ID + \".fileprovider\",\n                                    photoFile);\n                            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);\n                            takePictureIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);\n                            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);\n                        }\n\n                    }\n                }else{\n                    Toast.makeText(MainActivity.this, getResources().getString(R.string.no_active_activity_error), Toast.LENGTH_LONG).show();\n                }\n            }\n        });\n"
+        },
+        {
+          "line": 234,
+          "code_snippet": "        });\n\n        fabNoteEdit.show();\n        PackageManager pm = getPackageManager();\n\n        if(pm.hasSystemFeature(PackageManager.FEATURE_CAMERA)) {\n            fabAttachPicture.show();\n        }else{\n            fabAttachPicture.hide();\n        }\n\n        detailRecyclerView = (RecyclerView)findViewById(R.id.detail_recycler);\n        LinearLayoutManager detailLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false) {\n"
+        },
+        {
+          "line": 329,
+          "code_snippet": "\n        // Get the intent, verify the action and get the search query\n        Intent intent = getIntent();\n        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {\n            String query = intent.getStringExtra(SearchManager.QUERY);\n            filterActivityView(query);\n        }\n\n        onActivityChanged(); /* do this at the very end to ensure that no Loader finishes its data loading before */\n    }\n\n    private File createImageFile() throws IOException {\n        // Create an image file name\n        String timeStamp = new SimpleDateFormat(\"yyyyMMdd_HHmmss\").format(new Date());"
+        },
+        {
+          "line": 356,
+          "code_snippet": "                    Manifest.permission.WRITE_EXTERNAL_STORAGE)) {\n\n                Toast.makeText(this,R.string.perm_write_external_storage_xplain, Toast.LENGTH_LONG).show();\n            }\n            ActivityCompat.requestPermissions(this,\n                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},\n                    PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);\n            storageDir = null;\n        }\n\n        if(storageDir != null){\n            File image = new File(storageDir, imageFileName + \".jpg\");\n            image.createNewFile();\n/* #80            File image = File.createTempFile("
+        },
+        {
+          "line": 382,
+          "code_snippet": "    @Override\n    public void onResume() {\n        mNavigationView.getMenu().findItem(R.id.nav_main).setChecked(true);\n        ActivityHelper.helper.evaluateAllConditions(); // this is quite heavy and I am not so sure whether it is a good idea to do it unconditionally here...\n        ActivityHelper.helper.registerDataChangeListener(this);\n        super.onResume();\n        onActivityChanged(); // refresh mainly the duration_label\n        selectAdapter.notifyDataSetChanged(); // redraw the complete recyclerview\n    }\n\n    @Override\n    public void onPause() {\n        ActivityHelper.helper.unregisterDataChangeListener(this);\n"
+        },
+        {
+          "line": 399,
+          "code_snippet": "    @Override\n    public boolean onLongClick(View view) {\n        Intent i = new Intent(MainActivity.this, EditActivity.class);\n        if(mCurrentActivity != null) {\n            i.putExtra(\"activityID\", mCurrentActivity.getId());\n        }\n        startActivity(i);\n        return true;\n    }\n\n    @Override\n    public boolean onItemLongClick(int adapterPosition){\n        Intent i = new Intent(MainActivity.this, EditActivity.class);\n        if(mCurrentActivity != null) {"
+        },
+        {
+          "line": 413,
+          "code_snippet": "            i.putExtra(\"activityID\", selectAdapter.item(adapterPosition).getId());\n        }\n        startActivity(i);\n        return true;\n    }\n\n    @Override\n    public void onItemClick(int adapterPosition) {\n        DiaryActivity newAct = selectAdapter.item(adapterPosition);\n        ActivityHelper.helper.setCurrentActivity(newAct);\n\n        SpannableStringBuilder snackbarText = new SpannableStringBuilder();\n        snackbarText.append(newAct.getName());\n        int end = snackbarText.length();"
+        },
+        {
+          "line": 429,
+          "code_snippet": "        snackbarText.setSpan(new RelativeSizeSpan((float)1.4152), 0, end, Spannable.SPAN_INCLUSIVE_INCLUSIVE);\n\n        Snackbar undoSnackBar = Snackbar.make(findViewById(R.id.main_layout),\n                snackbarText, Snackbar.LENGTH_LONG);\n        undoSnackBar.setAction(R.string.action_undo, new View.OnClickListener() {\n            /**\n             * Called when a view has been clicked.\n             *\n             * @param v The view that was clicked.\n             */\n            @Override\n            public void onClick(View v) {\n                Log.v(TAG, \"UNDO Activity Selection\");\n                ActivityHelper.helper.undoLastActivitySelection();"
+        },
+        {
+          "line": 443,
+          "code_snippet": "            }\n        });\n        undoSnackBar.show();\n    }\n\n    @Override\n    public void onDetailItemClick(int adapterPosition) {\n        Toast.makeText(this, \"picture \" + Integer.toString(adapterPosition) + \" clicked -> please create a ticket and tell what you expect to be done here\", Toast.LENGTH_LONG).show();\n    }\n\n    @Override\n    public boolean onDetailItemLongClick(final int adapterPosition) {\n        //TODO: generalize the DetailView to include this code also\n        //      such that it is not duplicated between MainActivity and HistoryRecyclerViewAdapter"
+        },
+        {
+          "line": 464,
+          "code_snippet": "                        values.put(ActivityDiaryContract.DiaryImage._DELETED, 1);\n\n                        mQHandler.startUpdate(0,\n                                null,\n                                ActivityDiaryContract.DiaryImage.CONTENT_URI,\n                                values,\n                                ActivityDiaryContract.DiaryImage._ID + \"=?\",\n                                new String[]{Long.toString(detailAdapter.getDiaryImageIdAt(adapterPosition))}\n                                );\n\n                    }})\n                .setNegativeButton(android.R.string.no, null);\n\n        builder.create().show();"
+        },
+        {
+          "line": 488,
+          "code_snippet": "        if(mCurrentActivity != null) {\n            mCurrentDiaryUri = ActivityHelper.helper.getCurrentDiaryUri();\n            TextView aName = (TextView) findViewById(R.id.activity_name);\n            aName.setText(mCurrentActivity.getName());\n            findViewById(R.id.activity_background).setBackgroundColor(mCurrentActivity.getColor());\n            aName.setTextColor(GraphicsHelper.textColorOnBackground(mCurrentActivity.getColor()));\n\n            String duration = getResources().getString(R.string.duration_description);\n            duration += \" \";\n            duration += FuzzyTimeSpanFormatter.format(ActivityHelper.helper.getCurrentActivityStartTime(), new Date());\n            durationLabel.setText(duration);\n            mNoteTextView.setText(ActivityHelper.helper.getCurrentNote());\n            /* TODO: move note and starttime from ActivityHelper to here\n             * register a listener to get updates directly from the ContentProvider */"
+        },
+        {
+          "line": 502,
+          "code_snippet": "\n        }else{\n            /* This should be really seldom, actually only at very first start or if something went wrong.\n             * In those cases we keep the default text from the xml. */\n            mCurrentDiaryUri = null;\n        }\n        getSupportLoaderManager().restartLoader(0, null, this);\n        selectorLayoutManager.scrollToPosition(0);\n    }\n\n    /**\n     * Called on change of the activity order due to likelyhood.\n     */\n    @Override"
+        },
+        {
+          "line": 557,
+          "code_snippet": "    public boolean onCreateOptionsMenu(Menu menu) {\n        MenuInflater inflater = getMenuInflater();\n        inflater.inflate(R.menu.main_menu, menu);\n\n        // Get the SearchView and set the searchable configuration\n        SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);\n        SearchView searchView = (SearchView) menu.findItem(R.id.action_filter).getActionView();\n        // Assumes current activity is the searchable activity\n        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));\n\n        searchView.setOnCloseListener(this);\n        searchView.setOnQueryTextListener(this);\n        // setOnSuggestionListener -> for selection of a suggestion\n        // setSuggestionsAdapter"
+        },
+        {
+          "line": 576,
+          "code_snippet": "    public boolean onOptionsItemSelected(MenuItem item) {\n        switch(item.getItemId()){\n            case R.id.action_add_activity:\n                startActivity(new Intent(this, EditActivity.class));\n                break;\n            /* filtering is handled by the SearchView widget\n            case R.id.action_filter:\n            */\n        }\n        return super.onOptionsItemSelected(item);\n    }\n\n    protected void onNewIntent(Intent intent) {\n        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {"
+        },
+        {
+          "line": "traced",
+          "source_func": "onNewIntent",
+          "code_snippet": "/* 追踪到的函数定义: onNewIntent */\nvoid onNewIntent(Intent intent) {\n        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {\n            String query = intent.getStringExtra(SearchManager.QUERY);\n            filterActivityView(query);\n        }\n    }\n\n    private void filterActivityView(String query){\n        this.filter = query;\n        // TODO: do in separate thread?\n        ArrayList<DiaryActivity> filtered = new ArrayList<DiaryActivity>(ActivityHelper.helper.getActivities().size());\n        ArrayList<Integer> filteredDist = new ArrayList<Integer>(ActivityHelper.helper.getActivities().size());\n\n        for(DiaryActivity a : ActivityHelper.helper.getActivities()){\n            int dist = ActivityHelper.searchDistance(query, a.getName());\n            int pos = 0;\n            // search where to enter it\n            for(Integer i : filteredDist){\n                if(dist > i.intValue()){\n                    pos++;\n                }else{\n                    break;\n                }\n            }\n"
+        },
+        {
+          "line": 646,
+          "code_snippet": "        values.put(ActivityDiaryContract.Diary.NOTE, str);\n\n        mQHandler.startUpdate(0,\n                null,\n                mCurrentDiaryUri,\n                values,\n                null, null);\n        mNoteTextView.setText(str);\n        ActivityHelper.helper.setCurrentNote(str);\n    }\n\n    @Override\n    protected void onActivityResult(int requestCode, int resultCode, Intent data) {\n        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {"
+        },
+        {
+          "line": 667,
+          "code_snippet": "                values.put(ActivityDiaryContract.DiaryImage.DIARY_ID, mCurrentDiaryUri.getLastPathSegment());\n\n                mQHandler.startInsert(0,\n                        null,\n                        ActivityDiaryContract.DiaryImage.CONTENT_URI,\n                        values);\n\n                if(PreferenceManager\n                        .getDefaultSharedPreferences(ActivityDiaryApplication.getAppContext())\n                        .getBoolean(SettingsActivity.KEY_PREF_TAG_IMAGES, true)) {\n                    try {\n                        ExifInterface exifInterface = new ExifInterface(mCurrentPhotoPath);\n                        if (mCurrentActivity != null) {\n                            /* TODO: #24: when using hierarchical activities tag them all here, seperated with comma */"
+        },
+        {
+          "line": 21,
+          "code_snippet": "package de.rampro.activitydiary.ui.generic;\n\nimport android.content.Intent;\nimport android.content.res.Configuration;\nimport android.os.Bundle;\nimport android.support.design.widget.NavigationView;\nimport android.support.v4.widget.DrawerLayout;\nimport android.support.v7.app.ActionBarDrawerToggle;\nimport android.support.v7.app.AppCompatActivity;\nimport android.support.v7.widget.Toolbar;\nimport android.view.MenuItem;\nimport android.view.View;\nimport android.widget.FrameLayout;\nimport android.widget.Toast;"
+        },
+        {
+          "line": 54,
+          "code_snippet": "        setContentView(R.layout.activity_base);\n\n        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);\n        Toolbar mainToolbar = (Toolbar) findViewById(R.id.main_toolbar);\n        setSupportActionBar(mainToolbar);\n        mNavigationView = (NavigationView) findViewById(R.id.navigation_view);\n\n//        View logoView = getLayoutInflater().inflate(R.layout.drawer_header, mNavigationView, false);\n\n//        mNavigationView.addHeaderView(logoView);\n        mDrawerToggle = new ActionBarDrawerToggle(\n                this,\n                mDrawerLayout,\n                R.string.drawer_open,"
+        },
+        {
+          "line": 78,
+          "code_snippet": "                boolean highlight = true;\n                switch (menuItem.getItemId()) {\n                    case R.id.nav_main:\n                        if(!menuItem.isChecked()) {\n                            // start activity only if it is not currently checked\n                            Intent intentmain = new Intent(BaseActivity.this, MainActivity.class);\n                            intentmain.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);\n                            startActivity(intentmain);\n                        }\n                        break;\n                    case R.id.nav_add_activity:\n                        Intent intentaddact = new Intent(BaseActivity.this, EditActivity.class);\n                        startActivity(intentaddact);\n                        break;"
+        },
+        {
+          "line": 90,
+          "code_snippet": "                        startActivity(intentaddact);\n                        break;\n                    case R.id.nav_activity_manager:\n                        Intent intentmanage = new Intent(BaseActivity.this, ManageActivity.class);\n                        startActivity(intentmanage);\n                        break;\n                    case R.id.nav_diary:\n                        Intent intentdiary = new Intent(BaseActivity.this, HistoryActivity.class);\n                        startActivity(intentdiary);\n                        break;\n                    case R.id.nav_about:\n                        Intent intentabout = new Intent(BaseActivity.this, AboutActivity.class);\n                        startActivity(intentabout);\n                        break;"
+        },
+        {
+          "line": 102,
+          "code_snippet": "                        startActivity(intentabout);\n                        break;\n                    case R.id.nav_settings:\n                        Intent intentsettings = new Intent(BaseActivity.this, SettingsActivity.class);\n                        startActivity(intentsettings);\n                        break;\n                    default:\n                        Toast.makeText(BaseActivity.this, menuItem.getTitle() + \" is not yet implemented :-(\", Toast.LENGTH_LONG).show();\n                        break;\n                }\n                mDrawerLayout.closeDrawers();\n                return highlight;\n            }\n        });"
+        },
+        {
+          "line": 135,
+          "code_snippet": "        if (mDrawerToggle.onOptionsItemSelected(item)) {\n            return true;\n        }else if(item.getItemId() == android.R.id.home){\n            finish();\n        }\n\n        return super.onOptionsItemSelected(item);\n    }\n\n    protected void setContent(View contentView){\n        FrameLayout content = ((FrameLayout)findViewById(R.id.content_fragment));\n        content.removeAllViews();\n        content.addView(contentView);\n    }"
+        }
+      ],
+      "file_path": "app/src/main/java/de/rampro/activitydiary/ui/main/MainActivity.java",
+      "is_entry_point": true
+    },
+    {
+      "unit_id": "NoteEditDialog",
+      "unit_type": "Dialog",
+      "layout": "dialog_note_editor",
+      "all_layouts": [
+        "dialog_note_editor"
+      ],
+      "ui_elements": [
+        {
+          "tag": "element",
+          "id": "noteText",
+          "type": "EditText",
+          "text": "",
+          "source": "resource_file",
+          "from_layout": "dialog_note_editor",
+          "business_logic": "用于编辑笔记内容的文本输入框，支持从保存状态或现有笔记中恢复文本，并自动将光标移至文本末尾。",
+          "interaction": {
+            "type": "INTERNAL_FUNCTION",
+            "target_unit": "setText()"
+          },
+          "location": "layout"
+        }
+      ],
+      "interactions": [
+        {
+          "line": 55,
+          "code_snippet": "        builder.setTitle(R.string.dialog_title_note);\n\n        View dlgView = inflater.inflate(R.layout.dialog_note_editor, null);\n        input = (EditText) dlgView.findViewById(R.id.noteText);\n        if(savedInstanceState != null){\n            input.setText(savedInstanceState.getString(\"Note\"));\n        }else{\n            input.setText(note);\n        }\n        input.setSelection(input.getText().length());\n        builder.setView(dlgView)\n                // Add action buttons\n                .setPositiveButton(R.string.dlg_ok, new DialogInterface.OnClickListener() {\n                    @Override"
+        }
+      ],
+      "file_path": "app/src/main/java/de/rampro/activitydiary/ui/main/NoteEditDialog.java",
+      "is_entry_point": false
+    }
+  ]
+}

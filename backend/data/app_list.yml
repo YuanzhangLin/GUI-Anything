@@ -1,0 +1,16 @@
+# backend/data/app_list.yml
+apps:
+  - id: "activitydiary"
+    name: "Activity Diary"
+    description: "Android 活动记录与分析工具"
+    icon: "Book"
+  
+  - id: "simple-contacts"
+    name: "Simple Contacts"
+    description: "开源联系人管理应用"
+    icon: "Users"
+
+  - id: "simple-dialer"
+    name: "Simple Dialer"
+    description: "简约风格拨号与通话管理"
+    icon: "Phone"

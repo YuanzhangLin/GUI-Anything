@@ -1,0 +1,24 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: gui-anything-frontend
+    ports:
+      - "3001:5173"  # 修改这里：宿主机 3001 -> 容器 5173
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    stdin_open: true
+    tty: true
+
+  backend:
+      build: ./backend
+      container_name: gui-anything-backend
+      ports:
+        - "8002:8000"  # 宿主机用 8002，容器内保持 8000
+      volumes:
+        - ./backend:/app
+      restart: always
