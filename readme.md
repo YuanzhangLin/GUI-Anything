@@ -13,6 +13,28 @@
 
 ---
 
+## 📖 Usage Guide
+
+Here is a typical security audit interaction example, demonstrating how the platform answers specific operational questions based on static source code topology analysis:
+
+> The user submits the following query: **"If I want to delete the logs with images from the history in this app, what user actions should I take?"**, and selects the target application **"Activity Diary"**.
+>
+> Based on the application's static analysis results (Activity transition chains, component dependencies, and database operation logic), the system generates the following reasoning response:
+>
+> <p align="center">
+>   <img src="./images/screenshot.png" alt="Audit Interaction Example" width="800">
+> </p>
+>
+> The platform output includes:
+> - **Clear step-by-step actions**: Navigate from the side menu to `HistoryActivity` and locate the target log entry;
+> - **UI interaction details**: Long-press on an image to trigger the deletion confirmation dialog;
+> - **Code-level evidence**: Points to the deletion logic at `MainActivity.java` lines 464–488, which implements a soft-delete mechanism (`_DELETED = 1`);
+> - **Limitation disclosure**: Notes that the current implementation does not support batch deletion of entire log entries — only individual images can be deleted.
+>
+> This example showcases **GUI-Anything**'s ability to combine static topology mapping with LLM reasoning, delivering traceable and verifiable audit conclusions.
+
+---
+
 ## ✨ Features
 * **🧠 Intelligent Audit**: Deep analysis of Android logic flaws using LLM reasoning based on app topology.
 * **📊 Interactive UI Map**: Visualize activity transitions and component relationships in real-time.
