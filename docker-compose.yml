@@ -17,6 +17,8 @@ services:
   backend:
       build: ./backend
       container_name: gui-anything-backend
+      env_file:
+      - ./backend/.env
       ports:
         - "8002:8000"  # 宿主机用 8002，容器内保持 8000
       volumes:
