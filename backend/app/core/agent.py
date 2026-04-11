@@ -1,109 +1,111 @@
 import json
 import os
+import yaml
 from openai import OpenAI
-from app.core.config import config
 from dotenv import load_dotenv
+# 导入你的执行工具
+from app.skills.github_tool import get_github_issues, get_github_issue_details
 
-# 加载环境变量
 load_dotenv()
-
 chat_history = {}
 
 class GuiAgent:
     def __init__(self):
-        # 从环境变量读取
-        api_key = os.getenv("OPENAI_API_KEY")
-        base_url = os.getenv("OPENAI_BASE_URL", "https://api.deepseek.com")
-        self.model_name = os.getenv("MODEL_NAME", "deepseek-chat")
-
-        if not api_key:
-            raise ValueError("OPENAI_API_KEY is not set in environment variables")
-
-        self.client = OpenAI(api_key=api_key, base_url=base_url)
-
-    # --- 关键：补上这个缺失的方法 ---
-    def _load_app_context(self, app_id: str):
-        """加载 APP 静态拓扑数据"""
-        try:
-            # 这里的路径要确保在容器内是正确的
-            file_path = f"data/{app_id}.json"
-            if not os.path.exists(file_path):
-                return {"error": f"Data file {file_path} not found"}
-                
-            with open(file_path, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception as e:
-            return {"error": f"Failed to load context: {str(e)}"}
-
-    async def chat(self, user_input: str, session_id: str, app_id: str):
-        # 这个方法是你之前的非流式实现，保留或删除均可
-        app_context = self._load_app_context(app_id)
-        if session_id not in chat_history:
-            chat_history[session_id] = [
-                {"role": "system", "content": f"你是一个 Android 源码分析助手。当前分析项目: {app_id}。上下文: {json.dumps(app_context)}"}
-            ]
-        chat_history[session_id].append({"role": "user", "content": user_input})
-        response = self.client.chat.completions.create(
-            model=self.model_name,
-            messages=chat_history[session_id][-10:]
+        self.client = OpenAI(
+            api_key=os.getenv("OPENAI_API_KEY"), 
+            base_url=os.getenv("OPENAI_BASE_URL", "https://api.deepseek.com")
         )
-        reply = response.choices[0].message.content
-        chat_history[session_id].append({"role": "assistant", "content": reply})
-        return reply
+        self.model_name = os.getenv("MODEL_NAME", "deepseek-chat")
+        
+        # --- 重点：从外部 YAML 加载工具描述 ---
+        self.skills_file = "app/skills/skills_schema.yaml"
+        self.tools = self._load_tools_schema()
+
+    def _load_tools_schema(self):
+        """动态加载 YAML 中的工具定义"""
+        try:
+            with open(self.skills_file, "r", encoding="utf-8") as f:
+                return yaml.safe_load(f)
+        except Exception as e:
+            print(f"警告：加载 skills_schema.yaml 失败: {e}")
+            return []
+
+    def _load_app_context(self, app_id: str):
+        try:
+            with open(f"data/{app_id}.json", "r", encoding="utf-8") as f:
+                return json.load(f)
+        except:
+            return {"error": "未找到项目的静态分析拓扑数据"}
 
     async def chat_stream(self, user_input: str, session_id: str, app_id: str):
-        # 1. 构造系统角色与静态知识锚点
+        # 1. 组装初始上下文
         app_context = self._load_app_context(app_id)
-        
         system_prompt = (
-            "你是一个专业的 Android 安全审计专家。请根据提供的静态分析数据回答问题。\n\n"
-            "<StaticAnalysisContext>\n"
-            f"目标项目 ID: {app_id}\n"
-            f"应用拓扑与组件数据: {json.dumps(app_context, ensure_ascii=False)}\n"
-            "</StaticAnalysisContext>\n\n"
-            "注意：在分析时，请务必结合上述静态上下文。如果用户提到的组件在数据中不存在，请如实告知。"
+            f"你是一个 Android 专家。当前分析项目 ID: {app_id}。\n"
+            f"你可以分析代码拓扑，也可以利用提供的工具查看 GitHub Issue。\n"
+            f"静态数据: {json.dumps(app_context, ensure_ascii=False)}"
         )
-
-        # 2. 构造审计会话历史
-        if session_id not in chat_history:
-            chat_history[session_id] = []
         
-        raw_history = chat_history[session_id][-8:]
-        formatted_messages = [{"role": "system", "content": system_prompt}]
+        messages = [{"role": "system", "content": system_prompt}]
+        if session_id in chat_history:
+            messages.extend(chat_history[session_id][-6:])
+        messages.append({"role": "user", "content": user_input})
 
-        for msg in raw_history:
-            role_label = "以往审计指令" if msg["role"] == "user" else "之前分析结论"
-            formatted_messages.append({
-                "role": msg["role"],
-                "content": f"<{role_label}>\n{msg['content']}\n</{role_label}>"
-            })
-
-        # 3. 构造当前审计任务
-        current_query = {
-            "role": "user",
-            "content": f"""
-# 当前指令：
-请根据以下任务进行分析，仅回复本次分析的内容。
--------
-<CurrentAuditTask>\n{user_input}\n</CurrentAuditTask>
--------"""
-        }
-        formatted_messages.append(current_query)
-
-        # 4. 调用接口
+        # 2. 第一轮请求：意图判定
         response = self.client.chat.completions.create(
             model=self.model_name,
-            messages=formatted_messages,
-            stream=True 
+            messages=messages,
+            tools=self.tools,  # 这里直接使用从 YAML 加载的内容
+            tool_choice="auto" 
         )
 
-        full_reply = ""
-        for chunk in response:
-            if chunk.choices[0].delta.content:
-                content = chunk.choices[0].delta.content
-                full_reply += content
-                yield content
+        msg_obj = response.choices[0].message
+        
+        # 3. 核心 ReAct 逻辑：处理工具调用
+        if msg_obj.tool_calls:
+            messages.append(msg_obj) 
+            
+            for tool_call in msg_obj.tool_calls:
+                func_name = tool_call.function.name
+                args = json.loads(tool_call.function.arguments)
+                
+                # 动态映射执行函数
+                # 这里如果工具多了，可以用 dict 来映射，现在只有两个，直接用 if 也很清晰
+                if func_name == "get_github_issues":
+                    result = get_github_issues(**args)
+                elif func_name == "get_github_issue_details":
+                    result = get_github_issue_details(**args)
+                else:
+                    result = "未知工具调用"
+                
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": tool_call.id,
+                    "content": json.dumps(result, ensure_ascii=False)
+                })
+            
+            # 4. 第二轮请求：基于工具返回结果生成最终流式回答
+            final_stream = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=messages,
+                stream=True
+            )
+        else:
+            # 没有工具调用意图，直接生成普通流式回答
+            final_stream = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=messages,
+                stream=True
+            )
 
-        # 5. 持久化
+        # 5. 处理流式输出并持久化历史
+        full_reply = ""
+        for chunk in final_stream:
+            if chunk.choices[0].delta.content:
+                c = chunk.choices[0].delta.content
+                full_reply += c
+                yield c
+
+        if session_id not in chat_history: chat_history[session_id] = []
         chat_history[session_id].append({"role": "user", "content": user_input})
         chat_history[session_id].append({"role": "assistant", "content": full_reply})

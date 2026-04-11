@@ -2,6 +2,7 @@
 apps:
   - id: "activitydiary"
     name: "Activity Diary"
+    repo_url: "https://github.com/ramack/ActivityDiary/"
     description: "Android 活动记录与分析工具"
     icon: "Book"
   

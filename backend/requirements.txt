@@ -6,3 +6,4 @@ pydantic-settings
 PyYAML
 databases[sqlite]
 sqlalchemy
+requests

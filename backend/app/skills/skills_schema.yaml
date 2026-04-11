@@ -1,0 +1,22 @@
+# backend/app/skills/skills_schema.yaml
+- type: "function"
+  function:
+    name: "get_github_issues"
+    description: "获取仓库最近的 Issue 列表，用于了解已知缺陷的概况。支持指定返回条数。"
+    parameters:
+      type: "object"
+      properties:
+        repo_url: {type: "string", description: "仓库地址"}
+        limit: {type: "integer", description: "条数,默认5,最大50"}
+      required: ["repo_url"]
+
+- type: "function"
+  function:
+    name: "get_github_issue_details"
+    description: "获取指定 Issue 的详细正文和评论内容，用于深入分析具体的报错原因。"
+    parameters:
+      type: "object"
+      properties:
+        repo_url: {type: "string", description: "仓库地址"}
+        issue_number: {type: "integer", description: "Issue 编号"}
+      required: ["repo_url", "issue_number"]
