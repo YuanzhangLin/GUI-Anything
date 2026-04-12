@@ -9,10 +9,13 @@ from pydantic import BaseModel
 from typing import List, Optional
 from fastapi.responses import StreamingResponse
 from app.core.agent import GuiAgent
-
+from app.services.code_manager import CodeManager
+from app.services.issue_service import IssueService
 app = FastAPI(title="GUI-Anything Multi-Project")
 agent = GuiAgent()
+from app.services.issue_solver import IssueSolver
 
+issue_solver = IssueSolver()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -162,3 +165,76 @@ async def get_docs():
     except Exception as e:
         logger.error(f"读取文档失败: {e}")
         return {"content": f"# 错误\n读取文件失败: {str(e)}"}
+
+# 初始化 manager
+code_manager = CodeManager()
+
+async def get_app_info(app_id: str):
+    apps = await get_app_list()  # 复用你已有的函数
+    for app in apps:
+        if app.get('id') == app_id:
+            return app
+    return None
+
+@app.get("/api/admin/status/{app_id}")
+async def get_app_status(app_id: str):
+    """查询该项目在宿主机/容器内的物理下载状态"""
+    status = code_manager.check_status(app_id)
+    return {"app_id": app_id, "status": status}
+
+
+issue_service = IssueService()
+
+@app.post("/api/admin/task/{app_id}")
+async def run_admin_task(app_id: str, payload: dict):
+    task_type = payload.get("type")
+    app_info = await get_app_info(app_id)
+    
+    if not app_info:
+        raise HTTPException(status_code=404, detail="项目不存在")
+
+    # --- 逻辑分发 ---
+    if task_type == "download":
+        result = code_manager.download_repo(app_info['repo_url'], app_id)
+        result["repo_status"] = code_manager.check_status(app_id)
+        return result
+        
+    elif task_type == "update":
+        result = code_manager.update_repo(app_id)
+        result["repo_status"] = code_manager.check_status(app_id)
+        return result
+
+    # 新增：处理 Issue 同步任务
+    elif task_type == "sync_issues":
+        repo_url = app_info.get("repo_url")
+        if not repo_url:
+            return {"status": "error", "message": "该项目未配置仓库地址"}
+        return issue_service.fetch_and_save_issues(repo_url, app_id)
+
+    return {"status": "error", "message": "未知任务类型"}
+
+@app.post("/api/admin/analyze_issue")
+async def analyze_issue(payload: dict):
+    """
+    召唤 AI 专家：针对特定的 Issue 调用 IssueSolver 进行诊断
+    """
+    app_id = payload.get("app_id")
+    title = payload.get("title")
+    body = payload.get("body")
+    issue_number = payload.get("issue_number") 
+    if not app_id or not body:
+        raise HTTPException(status_code=400, detail="缺少必要参数 (app_id 或内容)")
+
+    try:
+        solution = await issue_solver.solve(
+        agent=agent, 
+        app_id=app_id, 
+        title=payload.get("title"), 
+        body=payload.get("body"),
+        issue_number=issue_number 
+        )
+        
+        return {"analysis": solution}
+    except Exception as e:
+        logger.error(f"AI 诊断失败: {e}")
+        return {"analysis": f"### ❌ 诊断服务异常\n原因: {str(e)}"}

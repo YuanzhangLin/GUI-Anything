@@ -1,0 +1,210 @@
+[
+  {
+    "id": 2786514787,
+    "number": 320,
+    "title": "Deletion Failure After Search",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/320",
+    "body": "# Smartphone\r\n* App version: 1.4.2\r\n* Android version/rom: Android 14.0\r\n* Device: vivo S18 Pro\r\n\r\n## Steps to Reproduce\r\nExplain what you did to encounter the issue\r\n1. Tap on the 'Search' button.\r\n2. Enter any character in the search bar and perform the search.\r\n3. Select any activity from the search results.\r\n4. Tap on the 'Delete' button to attempt to delete the selected activity.\r\n5. Notice that the activity still exists in the list or diary.\r\n\r\n## Expected behavior\r\nThe expected behavior is that after selecting an activity from search results and clicking the delete button, the activity should be permanently removed from the diary or list.\r\n\r\n## Video\r\n![bug2-ezgif com-video-to-gif-converter](https://github.com/user-attachments/assets/20714ba3-e9db-46de-9b44-569f15a398bf)\r\n"
+  },
+  {
+    "id": 2232738261,
+    "number": 319,
+    "title": "The activity added from the menu search page is not displayed",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/319",
+    "body": "**To Reproduce**\r\n\t1. Go to the menu page\r\n\t2. Click search icon and input text\r\n\t3. Click add button\r\n\t4. Save the added activity\r\n\t5. The newly added activity is not displayed\r\nor：\r\n        1. Go to the menu page\r\n\t2. Click search icon and input text\r\n\t3. Click “Add Activity” from menu page\r\n\t4. Save the added activity\r\n\t5. The newly added activity is not displayed\r\n\t\r\n**Expected behavior**\r\nThe activity added from the menu search page should display\r\n\r\n**Record** \r\n[untitled.webm](https://github.com/ramack/ActivityDiary/assets/111285450/7c6c1e8b-464f-4855-b528-61f6eff0ccc0)\r\n[untitled.webm](https://github.com/ramack/ActivityDiary/assets/111285450/7aacd8c7-5236-4572-a092-de6305c7006b)\r\n\r\n\r\n\r\nEnvironment\r\nDevice: pixel (Android Emulator)\r\nAndroid Version: Android8.0\r\nApp Version: 1.4.2"
+  },
+  {
+    "id": 2232706083,
+    "number": 318,
+    "title": "Delete a note during the search process on the main page, the note will not disappear",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/318",
+    "body": "To Reproduce\r\n1. Click search icon\r\n2. Edit text in search box\r\n3. Click on the activity on the page\r\n4. Click the delete icon\r\n5. The deleted activity is still on the page\r\n6. The deleted activity disappears when the search is canceled\r\n\r\nExpected behavior\r\nThe deleted activity should disappear during search\r\n\r\nRecord\r\n[search-delete.webm](https://github.com/ramack/ActivityDiary/assets/111285450/7263530b-6582-4282-8f43-dcb0fb1d3556)\r\n\r\n\r\nEnvironment\r\nDevice: pixel (Android Emulator)\r\nAndroid Version: Android8.0\r\nApp Version: 1.4.2"
+  },
+  {
+    "id": 2232698391,
+    "number": 317,
+    "title": "Main page failed to add a note during search",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/317",
+    "body": "**To Reproduce**\r\n\t1. Click search icon\r\n\t2. Edit text in search box\r\n\t3. Click add icon\r\n\t4. Input the new activity title\r\n\t5. Click the \"√\" icon\r\n\t6. the added activity is not presented\r\n\t\r\n**Expected behavior**\r\nThe added activity is presented during search\r\n\r\n**Record**\r\n[search-add.webm](https://github.com/ramack/ActivityDiary/assets/111285450/23e47e95-7973-45ee-bd5b-39b624a3d7d7)\r\n\r\nEnvironment\r\nDevice: pixel (Android Emulator)\r\nAndroid Version: Android8.0\r\nApp Version: 1.4.2"
+  },
+  {
+    "id": 1931682378,
+    "number": 315,
+    "title": "Targeting S+ (version 31 and above) requires that one of FLAG_IMMUTABLE or FLAG_MUTABLE be specified",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/315",
+    "body": "App crashes at runtime with the following error :\r\n\r\n```java\r\njava.lang.IllegalArgumentException: de.rampro.activitydiary: Targeting S+ (version 31 and above) requires that one of FLAG_IMMUTABLE or FLAG_MUTABLE be specified when creating a PendingIntent.\r\nStrongly consider using FLAG_IMMUTABLE, only use FLAG_MUTABLE if some functionality depends on the PendingIntent being mutable, e.g. if it needs to be used with inline replies or bubbles.\r\n\tat android.app.PendingIntent.checkFlags(PendingIntent.java:404)\r\n\tat android.app.PendingIntent.getActivityAsUser(PendingIntent.java:487)\r\n\tat android.app.PendingIntent.getActivity(PendingIntent.java:473)\r\n\tat android.app.PendingIntent.getActivity(PendingIntent.java:437)\r\n\tat de.rampro.activitydiary.helpers.ActivityHelper.showCurrentActivityNotification(ActivityHelper.java:457)\r\n\tat de.rampro.activitydiary.helpers.ActivityHelper.setCurrentActivity(ActivityHelper.java:424)\r\n\tat de.rampro.activitydiary.ui.main.MainActivity.onItemClick(MainActivity.java:367)\r\n\tat de.rampro.activitydiary.ui.main.SelectViewHolders.onClick(SelectViewHolders.java:50)\r\n\tat android.view.View.performClick(View.java:7545)\r\n\tat android.view.View.performClickInternal(View.java:7522)\r\n\tat android.view.View.-$$Nest$mperformClickInternal(Unknown Source:0)\r\n\tat android.view.View$PerformClick.run(View.java:29562)\r\n\tat android.os.Handler.handleCallback(Handler.java:942)\r\n\tat android.os.Handler.dispatchMessage(Handler.java:99)\r\n\tat android.os.Looper.loopOnce(Looper.java:210)\r\n\tat android.os.Looper.loop(Looper.java:299)\r\n\tat android.app.ActivityThread.main(ActivityThread.java:8235)\r\n\tat java.lang.reflect.Method.invoke(Native Method)\r\n\tat com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:559)\r\n\tat com.android.internal.os.ZygoteInit.main(ZygoteInit.java:954)\r\n```"
+  },
+  {
+    "id": 1394714507,
+    "number": 312,
+    "title": "replace ColorPicker and then re dependency on jcenter()",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/312",
+    "body": "color-picker-dialog library is dead, see: https://github.com/Pes8/android-material-color-picker-dialog/issues/43\r\nso we need to replace it, or integrate it into our codebase?"
+  },
+  {
+    "id": 1328543158,
+    "number": 311,
+    "title": "Deleted activity cannot be recovered correctly",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/311",
+    "body": "# Smartphone\r\n* App version: 1.4.2\r\n* Android version/rom: Android 11.0\r\n* Device: OnePlus 8T\r\n\r\n## Steps to Reproduce\r\nExplain what you did to encounter the issue\r\n1. Add a new activity \"test\"\r\n2. Delete the activity \"test\"\r\n3. Open \"Edit Activities\"\r\n4. Click \"show deleted\"\r\n5. Click the deleted activity \"test\"\r\n6. Click on \"ok\"\r\n7. The activity \"test\" still does not exist in the main interface\r\n8. Open the activity from \"Edit Activities\"\r\n9. Enter \"test\"\r\n10. Click \"save\"\r\n11. Click on the \"Reject current edit and open existing activity with same name instead\"\r\n12. Crash\r\n\r\n## Expected behavior\r\nThe deleted activity can be restored without crashing\r\n\r\n## Video\r\nhttps://user-images.githubusercontent.com/15941953/182846376-a3dc4c9c-7073-4517-872f-180e4efdc440.mp4\r\n\r\n## Logcat\r\n```\r\n08-04 11:54:59.035   525   525 E AndroidRuntime: FATAL EXCEPTION: main\r\n08-04 11:54:59.035   525   525 E AndroidRuntime: Process: de.rampro.activitydiary, PID: 525\r\n08-04 11:54:59.035   525   525 E AndroidRuntime: java.lang.NullPointerException: Attempt to invoke virtual method 'java.lang.String de.rampro.activitydiary.model.DiaryActivity.getName()' on a null object reference\r\n08-04 11:54:59.035   525   525 E AndroidRuntime:        at de.rampro.activitydiary.ui.generic.EditActivity$QHandler$3.onClick(EditActivity.java:202)\r\n08-04 11:54:59.035   525   525 E AndroidRuntime:        at android.view.View.performClick(View.java:6256)\r\n08-04 11:54:59.035   525   525 E AndroidRuntime:        at android.view.View$PerformClick.run(View.java:24701)\r\n08-04 11:54:59.035   525   525 E AndroidRuntime:        at android.os.Handler.handleCallback(Handler.java:789)\r\n08-04 11:54:59.035   525   525 E AndroidRuntime:        at android.os.Handler.dispatchMessage(Handler.java:98)\r\n08-04 11:54:59.035   525   525 E AndroidRuntime:        at android.os.Looper.loop(Looper.java:164)\r\n08-04 11:54:59.035   525   525 E AndroidRuntime:        at android.app.ActivityThread.main(ActivityThread.java:6541)\r\n08-04 11:54:59.035   525   525 E AndroidRuntime:        at java.lang.reflect.Method.invoke(Native Method)\r\n08-04 11:54:59.035   525   525 E AndroidRuntime:        at com.android.internal.os.Zygote$MethodAndArgsCaller.run(Zygote.java:240)\r\n08-04 11:54:59.035   525   525 E AndroidRuntime:        at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:767)\r\n```"
+  },
+  {
+    "id": 1240070725,
+    "number": 310,
+    "title": "Rotating the screen after entering an incorrectly formatted date in the search bar causes a crash",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/310",
+    "body": "\r\n### Description\r\n\r\nRotating the screen after entering an incorrectly formatted date in the search bar causes a crash\r\n\r\n### There is a video:\r\n\r\n\r\n\r\nhttps://user-images.githubusercontent.com/92309998/169066990-73be76b6-8a54-4998-9c63-8d43793c34a3.mov\r\n\r\n\r\n\r\n\r\n\r\n### Steps to reproduce\r\n\r\n1. click on \"Diary\" on the main menu\r\n2. click to search\r\n3. input \" \"\r\n4. choose \"serach ' ' in dates\" to search\r\n5. rotate the screen\r\n6. crash and exit\r\n\r\n\r\n### Information\r\n\r\nAndroid version: Android 8\r\nDevice: Google Pixel 4\r\nApp Version: 136\r\n\r\n### Stack Trace\r\n\r\n: java.lang.RuntimeException: Unable to start activity ComponentInfo{de.rampro.activitydiary/de.rampro.activitydiary.ui.history.HistoryActivity}: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.View android.view.View.findViewById(int)' on a null object reference\r\n: \tat android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2817)\r\n: \tat android.app.ActivityThread.handleLaunchActivity(ActivityThread.java:2892)\r\n: \tat android.app.ActivityThread.handleRelaunchActivity(ActivityThread.java:4754)\r\n: \tat android.app.ActivityThread.-wrap18(Unknown Source:0)\r\n: \tat android.app.ActivityThread$H.handleMessage(ActivityThread.java:1599)\r\n: \tat android.os.Handler.dispatchMessage(Handler.java:105)\r\n: \tat android.os.Looper.loop(Looper.java:164)\r\n: \tat android.app.ActivityThread.main(ActivityThread.java:6541)\r\n: \tat java.lang.reflect.Method.invoke(Native Method)\r\n: \tat com.android.internal.os.Zygote$MethodAndArgsCaller.run(Zygote.java:240)\r\n: \tat com.android.internal.os.ZygoteInit.main(ZygoteInit.java:767)\r\n: Caused by: java.lang.NullPointerException: Attempt to invoke virtual method 'android.view.View android.view.View.findViewById(int)' on a null object reference\r\n: \tat de.rampro.activitydiary.ui.history.HistoryActivity.setWrongColorSearchText(HistoryActivity.java:523)\r\n: \tat de.rampro.activitydiary.ui.history.HistoryActivity.checkDateFormatAndParse(HistoryActivity.java:505)\r\n: \tat de.rampro.activitydiary.ui.history.HistoryActivity.filterHistoryDates(HistoryActivity.java:338)\r\n: \tat de.rampro.activitydiary.ui.history.HistoryActivity.handleIntent(HistoryActivity.java:231)\r\n: \tat de.rampro.activitydiary.ui.history.HistoryActivity.onCreate(HistoryActivity.java:192)\r\n: \tat android.app.Activity.performCreate(Activity.java:6975)\r\n: \tat android.app.Instrumentation.callActivityOnCreate(Instrumentation.java:1213)\r\n: \tat android.app.ActivityThread.performLaunchActivity(ActivityThread.java:2770)\r\n: \t... 10 more\r\n"
+  },
+  {
+    "id": 962657224,
+    "number": 302,
+    "title": "A confusing icon on \"Activity Diary\" 's UI",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/302",
+    "body": "@ramack \r\n\r\nHello, I found a problem with the app's UI design. When I created a new activity, I thought the widget in the upper right corner would be used to clear my inputs. But the \"trash\" button can delete the total activity and return to the homepage. The common \"trash\" icon I saw in other popular apps may usually delete all items on one page but do not return to the previous page. In short, I think the \"delete\" button is necessary on the \"modify\" page, but may not be needed on the \"New Activity'' page because users can directly delete it by clicking the \"X\" button. So, just as a suggestion, if you can redesign it, it may greatly improve the user experience. Could you try to fix this issue?\r\n\r\n![ActivityDiary (1)](https://user-images.githubusercontent.com/78015408/128504529-ff3db064-ffea-4bca-a11a-222a5557f7c7.png) ![ActivityDiary (2)](https://user-images.githubusercontent.com/78015408/128504533-0adcd1fc-3875-4958-9774-4333b408bc90.png)\r\n"
+  },
+  {
+    "id": 771666665,
+    "number": 300,
+    "title": "Duplicated color activity does not display properly",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/300",
+    "body": "After deleting an activity, if you create an activity of the same color but different, and then restore the previously deleted activity, it will not display properly\r\n\r\nhttps://user-images.githubusercontent.com/35824518/102721956-ed18ff00-4338-11eb-9244-b5d95f0b747e.mp4\r\n\r\n"
+  },
+  {
+    "id": 675816445,
+    "number": 299,
+    "title": "Erase an activity in history",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/299",
+    "body": "Hi, tank tout very much for your app, it is very helpful ans simple to use !\r\nIs it possible to erase the last activity selected in case this activity was started by error ?\r\nThanks for your answer.\r\nBest regard, \r\nPischum"
+  },
+  {
+    "id": 593679504,
+    "number": 297,
+    "title": "Activity Acronyms/Shortname",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/297",
+    "body": "For those of us who add a lot of activities, can we display a shortname for the activities, instead?  We need to be able to have a regular name for usage everywhere else and the ability to enable just shortnames in the selection area.  ie: \"Killing a Body And Hiding It In a Bush\", could be shortened to, \"KaBAHITAB\".  This makes it easier to look at a lot of activities at once and make a selection quicker."
+  },
+  {
+    "id": 593677077,
+    "number": 296,
+    "title": "Automatic Backups",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/296",
+    "body": "Could we get automatic backups, set at a custom interval?  I lost three months of backups because my phone bootlooped and I had to format it.  I couldn't gain access to the system directory to grab the raw file, and it was very frustrating to lose that much data all at once."
+  },
+  {
+    "id": 593676530,
+    "number": 295,
+    "title": "Add Timestamp To Backup Function",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/295",
+    "body": "When you click the \"Export\" button, could we get a timestamp automatically added to the filename?  It's nicer to get an incremental backup than to just keep getting the same filename.  Besides, in case file timestamps change, it's best to have the updates' timestamp in the filename."
+  },
+  {
+    "id": 593676038,
+    "number": 294,
+    "title": "Searching Only Rearranges",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/294",
+    "body": "Using the search function shouldn't just rearrange the activities; it should just show the ones that have a string matching what was typed in."
+  },
+  {
+    "id": 593672633,
+    "number": 293,
+    "title": "Warning for Name Being Too Similar For The Same Thing You're Renaming",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/293",
+    "body": "The feature that warns you that what you're choosing to name something as is too similar to something else needs some tweaking.\r\n\r\nFor instance, if you're renaming, \"Gardening\", and you try to rename it to, \"Gardening (Indoors)\", it shouldn't warn you that the name is too similar to, \"Gardening\", because that's the exact activity that you are editing."
+  },
+  {
+    "id": 572066687,
+    "number": 291,
+    "title": "fail to update an active activity's pic when this activity is terminated or another activity is started",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/291",
+    "body": "- I have searched the history bug list, and have not found a similar bug.\r\n\r\n- The bug was found on the latest version 1.4.0. The bug can be reproduced on an Android emulator 6.0 and a Google Pixel 3 XL phone.\r\n\r\n - Bug description\r\n\r\n1. start an activity ``Cinema`` and take a pic\r\n2. switch to the picture column where a pic exists (correct function)\r\n3. click ``Cinema`` to terminate it (we can see the pic is still there, is this correct?)\r\n3. click another activity ``Sleeping`` to start it (we can see the pic is still there, this should be incorrect)\r\n\r\n- Video of incorrect functionality\r\n\r\n![20200227_112456](https://user-images.githubusercontent.com/3156978/75447110-02b3d700-5969-11ea-978e-b46cd67ab250.gif)\r\n\r\n\r\n"
+  },
+  {
+    "id": 572061641,
+    "number": 290,
+    "title": "A terminated activity could be unexpectedly restarted",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/290",
+    "body": "- I have searched the history bug list, and have not found a similar bug.\r\n\r\n- The bug was found on the latest version 1.4.0 (and the master branch). The bug can be reproduced on an Android emulator 6.0 and a Google Pixel 3 XL phone.\r\n\r\n- Bug description\r\n\r\nA terminated activity could be unexpectedly restarted when it is followed by a undo action on any other activity.\r\n\r\n- Video of correct functionality\r\n\r\nStart an activity ``Cinema`` and terminate it. On the history page, we can see ``Cinema`` was correctly recorded and its state is terminated (with specific start time and end time)\r\n\r\n![20200227_112750](https://user-images.githubusercontent.com/3156978/75446156-2d049500-5967-11ea-8842-5067d210183a.gif)\r\n\r\n\r\n- Video of incorrect functionality\r\n\r\nStart an activity ``Cinema`` and terminate it. Then, we start ``Sleeping`` and undo it. According to my understanding, the app now should show ``<No Activity>`` on top.  However, it shows ``Cinema``, which was already terminated. On the history page, we can also see ``Cinema`` was unexpectedly restarted (only w/ start time but wo/ end time).\r\n\r\n![20200227_112827](https://user-images.githubusercontent.com/3156978/75446163-2fff8580-5967-11ea-8509-03f7ff51d979.gif)\r\n\r\n\r\n"
+  },
+  {
+    "id": 571924772,
+    "number": 289,
+    "title": "Fail to load the pic after start-and-terminate an activity",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/289",
+    "body": "- I have searched the history bug list, and have not found a similar bug.\r\n\r\n- The bug was found on the latest version 1.4.0. The bug can be reproduced on an Android emulator 6.0 and a Google Pixel 3 XL phone.\r\n\r\n- Bug description\r\n\r\n1. start an activity ``Cinema`` and terminate it\r\n2. switch to the picture column\r\n3. restart the activity ``Cinema`` (the issue also exists if starting any other activity, e.g., ``Cleaning``).\r\n4. take a pic but cannot load the pic\r\n\r\n- Video of correct functionality\r\n\r\n![20200227_094304](https://user-images.githubusercontent.com/3156978/75428321-48ac7300-5948-11ea-99e4-52b7c44e78e5.gif)\r\n\r\n\r\n- Video of incorrect functionality\r\n\r\n![20200227_094050](https://user-images.githubusercontent.com/3156978/75428026-d045b200-5947-11ea-84fd-a06235549dc7.gif)\r\n\r\n"
+  },
+  {
+    "id": 571906949,
+    "number": 288,
+    "title": "Fail to show the correct history detail page for the current active activity",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/288",
+    "body": "- I have searched the history bug list, and have not found a similar bug.\r\n\r\n- The bug was found on the latest master branch (version 1.4.0, the apk was compiled in the debug mode). The bug can be reproduced on an Android emulator 6.0 and a Google Pixel 3 XL phone.\r\n\r\n- Bug description\r\n\r\n 1. start an activity (e.g., ``Cinema``) and rename this activity (e.g., rename it to ``Shopping``) \r\n 2. start another activity (e.g., ``Gardening``) and undo it (i.e., return back to the previous activity ``Cinema``)\r\n 3. click the ``statistics`` region to show the history detail page of ``Cinema`` (the current active activity)\r\n 4. The history detail page **incorrectly** shows the info of ``Gardening`` instead of ``Cinema``\r\n\r\n- Video of correct functionality\r\n\r\n![20200227_092229](https://user-images.githubusercontent.com/3156978/75425685-7e9b2880-5943-11ea-81af-30a10d1e183b.gif)\r\n\r\n\r\n- Video of incorrect functionality\r\n\r\n![20200227_092323](https://user-images.githubusercontent.com/3156978/75425688-80fd8280-5943-11ea-8a29-25b772c4b4a7.gif)\r\n\r\n"
+  },
+  {
+    "id": 571895608,
+    "number": 287,
+    "title": "Incorrectly show/allow a pic when no activity is active/started",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/287",
+    "body": "- I have searched the history bug list, and have not found a similar bug.\r\n\r\n- The bug was found on the latest version 1.4.0 (also on the master branch). The bug can be reproduced on an Android emulator 6.0 and a Google Pixel 3 XL phone.\r\n\r\n- Bug description\r\n\r\n When no activity is active (i.e., ``<No Activity>`` is shown on the top), if the user tries to take a picture, he/she cannot load the picture. This is a correct functionality because no activity is started. In other words, it makes senses to disallow or avoid showing a picture to be taken for an \"\\<No Activity\\>\".\r\n\r\n However, if the user selects an activity, e.g., ``Cinema`` and directly undo it. Then, he/she can successfully load a picture for ``<No Activity>``. This is an obviously incorrect/inconsistent functionality.\r\n\r\n- Video of correct functionality\r\n\r\n![20200227_085240](https://user-images.githubusercontent.com/3156978/75423836-ce77f080-593f-11ea-8fa6-ba2145beac38.gif)\r\n\r\n- Video of incorrect functionality\r\n\r\n![20200227_085707](https://user-images.githubusercontent.com/3156978/75423843-d0da4a80-593f-11ea-883f-5d5ec4462fb9.gif)\r\n"
+  },
+  {
+    "id": 569479959,
+    "number": 286,
+    "title": "Cannot terminate an activity by either clicking the activity itself or the current active activity name",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/286",
+    "body": "- I have searched the history bug list, and have not found a similar bug.\r\n\r\n- The bug was found on the latest version 1.4.0 (can be reproduced on an Android emulator 6.0 and a Google Pixel 3 XL phone)\r\n\r\n- Bug description: I freshly installed the app, and select an activity, e.g., \"Gardening\" and directly undo it. Then, if I click on \"Gardening\" again, the activity cannot be termined. It still shows \"Gardening\" in the current active activity. I expect it will change to \"\\<No Activity\\>\", which means the activity can be termined.  Note: I have not changed any setting options. \r\n\r\n- Video of correct functionality\r\n\r\n![20200223_121621](https://user-images.githubusercontent.com/3156978/75111115-9f5b3980-5636-11ea-9fe6-662464a874d6.gif)\r\n\r\n- Video of incorrect functionality\r\n\r\n![20200223_121556](https://user-images.githubusercontent.com/3156978/75111120-a41fed80-5636-11ea-9432-a1bcf76d27a8.gif)\r\n"
+  },
+  {
+    "id": 534594479,
+    "number": 284,
+    "title": "Add Icon and Title in Crash Report Dialog",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/284",
+    "body": "The ACRA dialog shall have an icon and title assigned:\r\n```\r\n        resTitle = R.string.app_name,\r\n        resIcon = R.mipmap.ic_launcher\r\n```"
+  },
+  {
+    "id": 529165339,
+    "number": 283,
+    "title": "\"Terminate Activity By Click\" Setting Doesn't Properly Disable",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/283",
+    "body": "I have noticed that when you turn off the setting to have activities terminate by clicking them again, it still allows you to terminate them and replace the activity field with the default, `<No Activity Selected>`.\r\n\r\n- Waiting for the activities to change can be slow and the app often freezes, making it appear that the new activity wasn't truly selected.  Clicking it again will finally select the activity, unfreezing the app but also registering as having clicked it twice, essentially selecting the new activity and simultaneously un-selecting it, leaving it as `<No Activity Selected>`, which defies the settings in the app's menu.  This also leads to the creation of sloppy entries in the log, with overlapping timestamps, causing strange things to happen with the \"Adjacent Entry\" algorithms, if you will. \r\n- Whenever there is an activity selected, it also still shows in the list of activities that can be selected.  Selecting that same activity will cancel itself out, leaving, `<No Activity Selected>`."
+  },
+  {
+    "id": 529162375,
+    "number": 282,
+    "title": "Switching Activities Often Leaves Sloppy Duplicates and Incorrect Activity Selection",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/282",
+    "body": "\r\n![Screenshot_20191127-Activity_Diary(c)](https://user-images.githubusercontent.com/11280085/69701194-bf5e8800-112f-11ea-9f80-23f79846fa19.png)\r\n\r\nI am using a dumby activity to show you this bug.\r\n\r\n1. My database is chock-full of occurrences much like this, in which the activities don't align with timestamps correctly, and it's often multiple activities started at once and ending in different times.\r\n2. These are all different activities being selected, yet they all ended up as the same one.\r\n\r\nNotice there are overlapping end times.  There are many instances in my database in which there are two or three starting in the same time, as well.\r\n\r\nThis is really frustrating when trying to track different project phases and they all end up being mislabeled without a way to edit those activity numbers from within the app itself.\r\n\r\nPossible ways to recreate:\r\n\r\n- Have over 5k activities in the log, causing massive lag and exponentially long load times\r\n- Minimizing the app without waiting a full minute or two\r\n- Closing the app without first waiting for over a minute\r\n- Changing activities without first leaving the app open for over a minute\r\n- Sometimes it happens anyway, even if waiting for 1~10mins with the app actively open\r\n\r\nI have had this problem for over a year.  I thought maybe once I had switched to a super high performance phone, it would compensate for the inefficient algorithms in the app.  However, even after I had gone from having a nice phone to having a _really_ nice phone (12GB RAM / Snapdragon 855 / Large storage / etc.), it still behaves very slowly and has a plethora of bugs caused by its internal algorithms which can't be switched off.\r\n\r\nIt would appear to me that instead of simply inserting a new activity into the log, which you would expect from a seemingly simple app, it also changes the most recent entry to be whatever is still stuck as the currently-selected tile.  Meaning, the algorithm takes so long to switch to whatever activity is selected as next that it updates the activities to be whatever was previously selected.\r\n\r\nIf none of that makes sense, I will try to explain in more detail."
+  },
+  {
+    "id": 523268259,
+    "number": 281,
+    "title": "Can No Longer Import Data",
+    "state": "open",
+    "html_url": "https://github.com/ramack/ActivityDiary/issues/281",
+    "body": "This is a separate issue from #280.\r\n\r\nBasically, I can no longer import my database back into ActivityDiary.  I've been trying all different methods, all day.  Before, I used to have to toy with the activities, setting new ones or deactivating, etc. to get things to clear and show the database I imported.  Now, I can no longer get it to import, at all.\r\n\r\nThings I've tried:\r\n\r\n- Uninstalling, reinstalling, importing\r\n- Killing the app, clearing cache, clearing data, importing\r\n- Killing the app, clearing cache, importing\r\n- Using root to delete all traces; trying the above, again\r\n- Using root to manually replace the data in `/data/data/...`\r\n\r\nNothing's working."
+  }
+]

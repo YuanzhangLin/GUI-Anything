@@ -79,6 +79,9 @@
         <nav class="footer-nav">
           <button @click="openDocs"><BookOpen :size="16" /> 使用手册</button>
           <button @click="showMap = !showMap"><Activity :size="16" /> 交互图谱</button>
+          <button v-if="isAdmin" @click="showAdmin = true" class="admin-entry-btn">
+    <Settings :size="16" /> 管理控制台
+  </button>
           <button @click="handleLogout" class="exit"><LogOut :size="16" /> 退出</button>
         </nav>
       </div>
@@ -146,13 +149,21 @@
       </div>
     </div>
   </div>
+    <AdminPanel 
+    v-if="showAdmin" 
+    @close="showAdmin = false" 
+    :appList="appList" 
+    :apiBase="API_BASE" 
+  />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue'
-import { Plus, Send, Activity, X, BookOpen, LogOut } from 'lucide-vue-next'
+import { Plus, Send, Activity, X, BookOpen, LogOut,Settings } from 'lucide-vue-next'
 import { marked } from 'marked'
 import MapCanvas from './components/MapCanvas.vue'
+import AdminPanel from './components/AdminPanel.vue' 
+
 
 // --- 1. 基础工具配置 ---
 marked.setOptions({
@@ -181,6 +192,9 @@ const currentSessionId = ref('')
 const inputMsg = ref('')
 const messageScroll = ref(null)
 const docsContent = ref('正在加载手册...')
+const showAdmin = ref(false) // 控制中台显示的“开关”
+const isAdmin = ref(true)    // 权限标记
+
 
 // --- 3. 计算属性 (核心修复：确保渲染实例能找到) ---
 const currentMessages = computed(() => {
@@ -380,6 +394,25 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* 让控制台按钮与其他侧边栏按钮保持风格一致 */
+.admin-entry-btn {
+  width: 100%;
+  background: none;
+  border: none;
+  color: #9ca3af; /* 与“使用手册”一样的灰色 */
+  text-align: left;
+  padding: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px; /* 图标与文字的间距 */
+  transition: color 0.2s;
+}
+
+.admin-entry-btn:hover {
+  color: #10b981; /* 悬停时变为绿色，增加点仪式感 */
+}
 .auth-container {
   position: fixed;
   inset: 0;

@@ -23,4 +23,7 @@ services:
         - "8002:8000"  # 宿主机用 8002，容器内保持 8000
       volumes:
         - ./backend:/app
+        - ./repos:/app/repos     
+      environment:
+      - REPOS_PATH=/app/repos    
       restart: always
