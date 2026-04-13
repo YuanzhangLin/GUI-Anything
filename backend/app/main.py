@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from fastapi.responses import StreamingResponse
 from app.core.agent import GuiAgent
+from app.paths import DATA_DIR
 from app.services.code_manager import CodeManager
 from app.services.issue_service import IssueService
 app = FastAPI(title="GUI-Anything Multi-Project")
@@ -68,16 +69,36 @@ class ChatRequest(BaseModel):
 @app.get("/api/apps")
 async def get_app_list():
     try:
-        with open("data/app_list.yml", "r", encoding="utf-8") as f:
+        with open(os.path.join(DATA_DIR, "app_list.yml"), "r", encoding="utf-8") as f:
             config = yaml.safe_load(f)
             return config.get("apps", [])
     except:
         # 回退：扫描 data 目录下的 json
-        return [{"id": f.replace('.json', ''), "name": f} for f in os.listdir('data') if f.endswith('.json')]
+        if not os.path.isdir(DATA_DIR):
+            return []
+        return [
+            {"id": f.replace(".json", ""), "name": f}
+            for f in os.listdir(DATA_DIR)
+            if f.endswith(".json")
+        ]
+
+@app.get("/api/issues/{app_id}")
+async def list_cached_issues(app_id: str):
+    """返回管理台「同步 Issue」后写入本地的缓存列表，供对话区附加引用。"""
+    cache_path = os.path.join(DATA_DIR, f"issues_{app_id}.json")
+    if not os.path.exists(cache_path):
+        return []
+    try:
+        with open(cache_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        logger.error("读取 Issue 缓存失败: %s", e)
+        return []
+
 
 @app.get("/api/map/{app_id}")
 async def get_map(app_id: str):
-    file_path = f"data/{app_id}.json"
+    file_path = os.path.join(DATA_DIR, f"{app_id}.json")
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="Map file not found")
     with open(file_path, "r", encoding="utf-8") as f:
@@ -157,7 +178,7 @@ async def get_docs():
     
     # 如果不是在 Docker 运行，可以保留原来的 data/docs.md
     if not os.path.exists(file_path):
-        file_path = "data/docs.md"
+        file_path = os.path.join(DATA_DIR, "docs.md")
 
     try:
         with open(file_path, "r", encoding="utf-8") as f:

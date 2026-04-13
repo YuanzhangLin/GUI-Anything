@@ -1,6 +1,8 @@
 import json
 import os
 import yaml
+
+from app.paths import DATA_DIR
 from openai import OpenAI
 from dotenv import load_dotenv
 # 导入你的执行工具
@@ -32,7 +34,7 @@ class GuiAgent:
 
     def _load_app_context(self, app_id: str):
         try:
-            with open(f"data/{app_id}.json", "r", encoding="utf-8") as f:
+            with open(os.path.join(DATA_DIR, f"{app_id}.json"), "r", encoding="utf-8") as f:
                 return json.load(f)
         except:
             return {"error": "未找到项目的静态分析拓扑数据"}
@@ -42,7 +44,9 @@ class GuiAgent:
         app_context = self._load_app_context(app_id)
         system_prompt = (
             f"你是一个 Android 专家。当前分析项目 ID: {app_id}。\n"
-            f"你可以分析代码拓扑，也可以利用提供的工具查看 GitHub Issue。\n"
+            f"用户消息中可能包含「### 附件：GitHub Issue」开头的区块（含标题与正文），"
+            f"那是用户从本系统附加的 Issue 全文，请结合其内容与下方静态拓扑作答；"
+            f"必要时也可调用工具补充 GitHub 信息。\n"
             f"静态数据: {json.dumps(app_context, ensure_ascii=False)}"
         )
         

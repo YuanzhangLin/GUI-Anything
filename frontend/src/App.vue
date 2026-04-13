@@ -73,8 +73,16 @@
         <div class="project-picker">
           <label>当前目标</label>
           <select v-model="selectedAppId" @change="onAppChange">
-            <option v-for="app in appList" :key="app.id" :value="app.id">{{ app.name }}</option>
+            <option v-for="app in appList" :key="app.id" :value="app.id">
+              {{ app.name }}（{{ app.id }}）
+            </option>
           </select>
+          <div v-if="currentAppMeta" class="project-picker-meta">
+            <p v-if="currentAppMeta.description" class="pp-desc">{{ currentAppMeta.description }}</p>
+            <p v-if="currentAppMeta.repo_url" class="pp-repo" :title="currentAppMeta.repo_url">
+              仓库：{{ currentAppMeta.repo_url }}
+            </p>
+          </div>
         </div>
         <nav class="footer-nav">
           <button @click="openDocs"><BookOpen :size="16" /> 使用手册</button>
@@ -115,18 +123,70 @@
       </div>
 
       <footer class="input-area">
-        <div class="input-container">
-          <textarea 
-            v-model="inputMsg" 
-            @keyup.enter.exact.prevent="sendMessage"
-            placeholder="输入审计指令..."
-            rows="1"
-          ></textarea>
-          <button class="send-btn" @click="sendMessage" :disabled="isLoading">
-            <Send :size="18" />
-          </button>
+        <div class="composer-card">
+          <div v-if="attachedIssues.length" class="composer-chips">
+            <span v-for="a in attachedIssues" :key="a.number" class="issue-chip">
+              <Tag :size="12" class="chip-icon" />
+              <span class="chip-label">#{{ a.number }}</span>
+              <span class="chip-title">{{ a.title }}</span>
+              <button
+                type="button"
+                class="chip-remove"
+                :aria-label="'移除 Issue ' + a.number"
+                @click="removeAttachedIssue(a.number)"
+              >
+                ×
+              </button>
+            </span>
+          </div>
+          <div class="input-container">
+            <textarea
+              ref="chatInput"
+              v-model="inputMsg"
+              @keyup.enter.exact.prevent="sendMessage"
+              placeholder="输入审计指令…（Shift+Enter 换行）"
+              rows="1"
+            ></textarea>
+            <button class="send-btn" @click="sendMessage" :disabled="isLoading">
+              <Send :size="18" />
+            </button>
+          </div>
+          <div class="composer-toolbar">
+            <button type="button" class="toolbar-attach" @click="openIssuePicker">
+              <Tag :size="15" />
+              添加 ISSUE
+            </button>
+            <span v-if="issuePickerHint" class="toolbar-hint">{{ issuePickerHint }}</span>
+          </div>
         </div>
       </footer>
+
+      <div v-if="showIssuePicker" class="issue-picker-overlay" @click.self="showIssuePicker = false">
+        <div class="issue-picker" role="dialog" aria-modal="true" aria-labelledby="issue-picker-title">
+          <div class="issue-picker-head">
+            <h3 id="issue-picker-title">选择要附加的 Issue</h3>
+            <button type="button" class="issue-picker-close" @click="showIssuePicker = false" aria-label="关闭">
+              <X :size="18" />
+            </button>
+          </div>
+          <p v-if="issuePickerLoading" class="issue-picker-status">加载中…</p>
+          <p v-else-if="!issueCatalog.length" class="issue-picker-status">
+            当前项目没有 Issue 缓存。请在「管理控制台」中同步仓库 Issue 后再试。
+          </p>
+          <ul v-else class="issue-picker-list">
+            <li
+              v-for="issue in issueCatalog"
+              :key="issue.id"
+              :class="['issue-picker-item', isIssueAttached(issue.number) ? 'attached' : '']"
+              @click="toggleAttachIssue(issue)"
+            >
+              <span class="ip-num">#{{ issue.number }}</span>
+              <span class="ip-title">{{ issue.title }}</span>
+              <span class="ip-state">{{ issue.state }}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
     </main>
 
     <div v-if="showMap" class="drawer">
@@ -158,8 +218,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
-import { Plus, Send, Activity, X, BookOpen, LogOut,Settings } from 'lucide-vue-next'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { Plus, Send, Activity, X, BookOpen, LogOut, Settings, Tag } from 'lucide-vue-next'
 import { marked } from 'marked'
 import MapCanvas from './components/MapCanvas.vue'
 import AdminPanel from './components/AdminPanel.vue' 
@@ -190,16 +250,72 @@ const appList = ref([])
 const sessions = ref([])
 const currentSessionId = ref('')
 const inputMsg = ref('')
+const chatInput = ref<HTMLTextAreaElement | null>(null)
 const messageScroll = ref(null)
+
+const MAX_CHAT_INPUT_LINES = 6
+
+const textareaLineHeightPx = (el: HTMLTextAreaElement) => {
+  const lh = getComputedStyle(el).lineHeight
+  if (lh === 'normal') {
+    const fs = parseFloat(getComputedStyle(el).fontSize) || 15
+    return fs * 1.35
+  }
+  const n = parseFloat(lh)
+  return Number.isFinite(n) && n > 0 ? n : 24
+}
+
+const adjustChatInputHeight = () => {
+  const el = chatInput.value
+  if (!el) return
+  el.style.height = '0px'
+  el.style.overflowY = 'hidden'
+  const lineH = textareaLineHeightPx(el)
+  const padY =
+    (parseFloat(getComputedStyle(el).paddingTop) || 0) +
+    (parseFloat(getComputedStyle(el).paddingBottom) || 0)
+  const maxH = lineH * MAX_CHAT_INPUT_LINES + padY
+  const natural = el.scrollHeight
+  const nextH = Math.min(Math.max(natural, lineH + padY), maxH)
+  el.style.height = `${nextH}px`
+  el.style.overflowY = natural > maxH ? 'auto' : 'hidden'
+}
 const docsContent = ref('正在加载手册...')
 const showAdmin = ref(false) // 控制中台显示的“开关”
 const isAdmin = ref(true)    // 权限标记
 
+type AttachedIssue = { number: number; title: string; body: string }
+const MAX_ATTACHED_ISSUES = 5
+const ISSUE_BODY_MAX = 6000
+const attachedIssues = ref<AttachedIssue[]>([])
+const showIssuePicker = ref(false)
+const issueCatalog = ref<
+  { id: number; number: number; title: string; state: string; body: string | null }[]
+>([])
+const issuePickerLoading = ref(false)
+
+const issuePickerHint = computed(() => {
+  if (attachedIssues.value.length >= MAX_ATTACHED_ISSUES) {
+    return `最多附加 ${MAX_ATTACHED_ISSUES} 个 Issue`
+  }
+  return ''
+})
 
 // --- 3. 计算属性 (核心修复：确保渲染实例能找到) ---
 const currentMessages = computed(() => {
   const session = sessions.value.find(s => s.id === currentSessionId.value)
   return session ? session.messages : []
+})
+
+/** 与 backend/data/app_list.yml 中当前选中项对应（name 为展示名，id 为数据/接口用标识） */
+const currentAppMeta = computed(() => {
+  const list = appList.value as {
+    id: string
+    name?: string
+    description?: string
+    repo_url?: string
+  }[]
+  return list.find((a) => a.id === selectedAppId.value) ?? null
 })
 
 // --- 4. 彻底去掉硬编码的 API 地址推导 (核心修复) ---
@@ -322,14 +438,82 @@ const switchSession = (s: any) => {
 
 const onAppChange = () => { createNewChat() }
 
+const buildMessageForApi = (userText: string) => {
+  const userPart =
+    userText ||
+    '请结合上述 GitHub Issue 进行静态分析与审计，并给出结论或修复思路。'
+  if (!attachedIssues.value.length) return userPart
+  const blocks = attachedIssues.value.map((i) => {
+    let body = (i.body || '').trim() || '（无正文）'
+    if (body.length > ISSUE_BODY_MAX) {
+      body = `${body.slice(0, ISSUE_BODY_MAX)}\n\n…（正文已截断）`
+    }
+    return `### 附件：GitHub Issue #${i.number}\n**标题：** ${i.title}\n\n${body}`
+  })
+  return `${blocks.join('\n\n---\n\n')}\n\n---\n\n### 用户指令\n${userPart}`
+}
+
+const buildMessageForDisplay = (userText: string) => {
+  const line =
+    userText ||
+    '请结合附件中的 Issue 给出分析与审计建议。'
+  if (!attachedIssues.value.length) return line
+  const head = `📎 已附加 ${attachedIssues.value.map((i) => `Issue #${i.number}`).join('、')}`
+  return `${head}\n\n${line}`
+}
+
+const openIssuePicker = async () => {
+  showIssuePicker.value = true
+  issuePickerLoading.value = true
+  try {
+    const res = await safeFetch(`${API_BASE}/issues/${selectedAppId.value}`)
+    issueCatalog.value = await res.json()
+  } catch {
+    issueCatalog.value = []
+  } finally {
+    issuePickerLoading.value = false
+  }
+}
+
+const isIssueAttached = (num: number) => attachedIssues.value.some((i) => i.number === num)
+
+const toggleAttachIssue = (issue: {
+  number: number
+  title: string
+  body: string | null
+}) => {
+  if (isIssueAttached(issue.number)) {
+    removeAttachedIssue(issue.number)
+    return
+  }
+  if (attachedIssues.value.length >= MAX_ATTACHED_ISSUES) return
+  attachedIssues.value.push({
+    number: issue.number,
+    title: issue.title,
+    body: issue.body || ''
+  })
+}
+
+const removeAttachedIssue = (num: number) => {
+  attachedIssues.value = attachedIssues.value.filter((i) => i.number !== num)
+}
+
 const sendMessage = async () => {
-  if (!inputMsg.value.trim() || isLoading.value) return
-  const text = inputMsg.value
+  if (isLoading.value) return
+  const trimmed = inputMsg.value.trim()
+  if (!trimmed && !attachedIssues.value.length) return
   const session = sessions.value.find(s => s.id === currentSessionId.value)
   if (!session) return
 
-  session.messages.push({ role: 'user', content: text })
+  const displayText = buildMessageForDisplay(trimmed)
+  const apiText = buildMessageForApi(trimmed)
+  const titleSeed = trimmed || attachedIssues.value.map((i) => `#${i.number}`).join(' ')
+
+  session.messages.push({ role: 'user', content: displayText })
+  attachedIssues.value = []
   inputMsg.value = ''
+  await nextTick()
+  adjustChatInputHeight()
   isLoading.value = true
   
   const assistantMsg = { role: 'assistant', content: '' }
@@ -341,7 +525,7 @@ const sendMessage = async () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
-        message: text, 
+        message: apiText, 
         session_id: currentSessionId.value, 
         username: currentUser.value, 
         app_id: selectedAppId.value 
@@ -367,7 +551,7 @@ const sendMessage = async () => {
     isLoading.value = false
     isStreaming.value = false
     if (session.title === '新审计会话') {
-      session.title = text.substring(0, 10)
+      session.title = titleSeed.substring(0, 10)
     }
   }
 }
@@ -383,6 +567,19 @@ const formatId = (id: string) => {
   return new Date(num).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
+watch(inputMsg, () => {
+  nextTick(() => adjustChatInputHeight())
+})
+
+watch(isLoggedIn, (loggedIn) => {
+  if (loggedIn) nextTick(() => adjustChatInputHeight())
+})
+
+watch(selectedAppId, () => {
+  attachedIssues.value = []
+  issueCatalog.value = []
+})
+
 onMounted(() => {
   const saved = localStorage.getItem('gui_user')
   if (saved) {
@@ -390,6 +587,7 @@ onMounted(() => {
     isLoggedIn.value = true
     initData()
   }
+  nextTick(() => adjustChatInputHeight())
 })
 </script>
 
@@ -536,7 +734,25 @@ onMounted(() => {
 .s-meta { font-size: 11px; color: #6b7280; margin-top: 4px; }
 .sidebar-bottom { border-top: 1px solid #1f2937; padding-top: 16px; }
 .project-picker label { font-size: 11px; color: #6b7280; display: block; margin-bottom: 8px; text-transform: uppercase; }
-.project-picker select { width: 100%; background: #111827; border: 1px solid #374151; color: white; padding: 10px; border-radius: 6px; margin-bottom: 12px; }
+.project-picker select { width: 100%; background: #111827; border: 1px solid #374151; color: white; padding: 10px; border-radius: 6px; margin-bottom: 8px; }
+.project-picker-meta {
+  margin-bottom: 12px;
+  padding: 8px 10px;
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 8px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #9ca3af;
+}
+.pp-desc { margin: 0 0 6px; color: #d1d5db; }
+.pp-desc:last-child { margin-bottom: 0; }
+.pp-repo {
+  margin: 0;
+  word-break: break-all;
+  color: #6b7280;
+  font-size: 10px;
+}
 .footer-nav button { width: 100%; background: none; border: none; color: #9ca3af; text-align: left; padding: 10px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 10px; }
 .footer-nav button:hover { color: white; }
 .chat-main { flex: 1; display: flex; flex-direction: column; background: #f9fafb; min-width: 0; }
@@ -560,9 +776,207 @@ onMounted(() => {
 .assistant :deep(.markdown-body) blockquote { border-left: 4px solid #10a37f; background: #f0fdf4; padding: 8px 12px; margin: 0.5rem 0; color: #166534; }
 .assistant :deep(.markdown-body) code { background: #f1f5f9; padding: 2px 4px; border-radius: 4px; font-family: monospace; }
 .user .msg-content { background: #111827; color: #ffffff; border-top-right-radius: 4px; white-space: pre-wrap;}
-.input-area { padding: 24px 20px 48px; background: #f9fafb; }
-.input-container { max-width: 800px; margin: 0 auto; position: relative; background: white; border: 1px solid #e5e7eb; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); padding: 12px 16px; }
-.input-container textarea { width: 100%; border: none; outline: none; resize: none; font-size: 15px; background: transparent; padding: 4px 40px 4px 0; min-height: 24px; }
+.input-area { padding: 24px 20px 40px; background: #f3f4f6; }
+.composer-card {
+  max-width: 800px;
+  margin: 0 auto;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+}
+.composer-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 12px 0;
+  border-bottom: 1px solid #e8edf3;
+}
+.issue-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 4px 6px 4px 10px;
+  font-size: 12px;
+  color: #0f172a;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 999px;
+}
+.chip-icon { flex-shrink: 0; color: #4f46e5; }
+.chip-label { font-weight: 700; color: #4338ca; flex-shrink: 0; }
+.chip-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  max-width: 220px;
+  color: #475569;
+}
+.chip-remove {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #64748b;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+.chip-remove:hover { background: rgba(99, 102, 241, 0.15); color: #312e81; }
+.input-container {
+  position: relative;
+  background: #fafbfc;
+  padding: 12px 16px 14px;
+}
+.input-container textarea {
+  width: 100%;
+  display: block;
+  border: none;
+  outline: none;
+  resize: none;
+  font-size: 15px;
+  line-height: 1.5;
+  background: transparent;
+  padding: 4px 48px 4px 4px;
+  min-height: calc(1.5em + 8px);
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+.composer-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 12px 10px;
+  background: #f1f5f9;
+  border-top: 1px solid #e2e8f0;
+}
+.toolbar-attach {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  color: #475569;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.toolbar-attach:hover {
+  color: #0f172a;
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+.toolbar-hint { font-size: 12px; color: #94a3b8; }
+.issue-picker-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(15, 23, 42, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.issue-picker {
+  width: 100%;
+  max-width: 480px;
+  max-height: min(70vh, 520px);
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.issue-picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.issue-picker-head h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.issue-picker-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+}
+.issue-picker-close:hover { background: #f1f5f9; color: #0f172a; }
+.issue-picker-status {
+  margin: 0;
+  padding: 20px 16px;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+}
+.issue-picker-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+  overflow-y: auto;
+  flex: 1;
+}
+.issue-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  border: 1px solid transparent;
+}
+.issue-picker-item:hover { background: #f8fafc; }
+.issue-picker-item.attached {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+}
+.ip-num {
+  flex-shrink: 0;
+  font-weight: 800;
+  font-family: ui-monospace, monospace;
+  color: #4f46e5;
+}
+.ip-title {
+  flex: 1;
+  min-width: 0;
+  color: #334155;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ip-state {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
 .send-btn { position: absolute; right: 12px; bottom: 12px; background: #111827; color: white; border: none; padding: 8px; border-radius: 10px; cursor: pointer; }
 .drawer { position: absolute; top: 0; right: 0; width: 42%; height: 100%; background: white; box-shadow: -10px 0 30px rgba(0,0,0,0.05); z-index: 100; display: flex; flex-direction: column; }
 .drawer-header { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; font-weight: 600; }

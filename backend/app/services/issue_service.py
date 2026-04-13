@@ -3,6 +3,8 @@ import requests
 import json
 import logging
 
+from app.paths import DATA_DIR
+
 logger = logging.getLogger(__name__)
 
 class IssueService:
@@ -49,7 +51,7 @@ class IssueService:
                     })
 
             # 4. (可选) 持久化到本地，方便 AI 后续检索
-            cache_path = f"data/issues_{app_id}.json"
+            cache_path = os.path.join(DATA_DIR, f"issues_{app_id}.json")
             with open(cache_path, "w", encoding="utf-8") as f:
                 json.dump(formatted_issues, f, ensure_ascii=False, indent=2)
 
