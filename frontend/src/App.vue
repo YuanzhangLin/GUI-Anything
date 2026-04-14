@@ -124,7 +124,7 @@
 
       <footer class="input-area">
         <div class="composer-card">
-          <div v-if="attachedIssues.length" class="composer-chips">
+          <div v-if="attachedIssues.length || attachedMap" class="composer-chips">
             <span v-for="a in attachedIssues" :key="a.number" class="issue-chip">
               <Tag :size="12" class="chip-icon" />
               <span class="chip-label">#{{ a.number }}</span>
@@ -134,6 +134,20 @@
                 class="chip-remove"
                 :aria-label="'移除 Issue ' + a.number"
                 @click="removeAttachedIssue(a.number)"
+              >
+                ×
+              </button>
+            </span>
+
+            <span v-if="attachedMap" class="issue-chip map-chip">
+              <Activity :size="12" class="chip-icon" />
+              <span class="chip-label">MAP</span>
+              <span class="chip-title">UI Map: {{ attachedMap.appId }}</span>
+              <button
+                type="button"
+                class="chip-remove"
+                aria-label="移除 UI Map"
+                @click="removeAttachedMap()"
               >
                 ×
               </button>
@@ -157,6 +171,27 @@
               添加 ISSUE
             </button>
             <span v-if="issuePickerHint" class="toolbar-hint">{{ issuePickerHint }}</span>
+            <button
+              type="button"
+              class="toolbar-attach"
+              :disabled="mapAttachLoading"
+              @click="toggleAttachMap"
+              :title="attachedMap ? '已添加，点击可移除' : '把当前项目 UI Map 作为附件加入对话'"
+            >
+              <Activity :size="15" />
+              {{ attachedMap ? '移除图谱' : (mapAttachLoading ? '加载图谱…' : '添加图谱') }}
+            </button>
+            <span v-if="mapAttachHint" class="toolbar-hint">{{ mapAttachHint }}</span>
+
+            <div v-if="toolLoopLimitReached && !isLoading" class="tool-loop-actions">
+              <button type="button" class="toolbar-attach" @click="continueToolLoop">
+                继续
+              </button>
+              <button type="button" class="toolbar-attach" @click="forceOutput">
+                强制输出
+              </button>
+              <span class="toolbar-hint">已达到工具调用上限</span>
+            </div>
           </div>
         </div>
       </footer>
@@ -205,7 +240,7 @@
         <X @click="showDocs = false" class="close-icon" />
       </div>
       <div class="drawer-view">
-        <div class="markdown-body" v-html="renderMarkdown(docsContent)"></div>
+        <div class="docs-markdown" v-html="renderMarkdown(docsContent)"></div>
       </div>
     </div>
   </div>
@@ -300,6 +335,22 @@ const issuePickerHint = computed(() => {
   }
   return ''
 })
+
+type AttachedMap = { appId: string; content: string }
+const attachedMap = ref<AttachedMap | null>(null)
+const mapAttachLoading = ref(false)
+const MAP_BODY_MAX = 12000
+
+const mapAttachHint = computed(() => {
+  if (mapAttachLoading.value) return '正在加载 UI Map…'
+  if (attachedMap.value) return 'UI Map 已附加'
+  return ''
+})
+
+// Tool-loop control (when backend reaches tool-call limit)
+const toolLoopLimitReached = ref(false)
+const lastApiTextBySession = ref<Record<string, string>>({})
+const lastToolRoundsBySession = ref<Record<string, number>>({})
 
 // --- 3. 计算属性 (核心修复：确保渲染实例能找到) ---
 const currentMessages = computed(() => {
@@ -442,7 +493,7 @@ const buildMessageForApi = (userText: string) => {
   const userPart =
     userText ||
     '请结合上述 GitHub Issue 进行静态分析与审计，并给出结论或修复思路。'
-  if (!attachedIssues.value.length) return userPart
+  if (!attachedIssues.value.length && !attachedMap.value) return userPart
   const blocks = attachedIssues.value.map((i) => {
     let body = (i.body || '').trim() || '（无正文）'
     if (body.length > ISSUE_BODY_MAX) {
@@ -450,6 +501,15 @@ const buildMessageForApi = (userText: string) => {
     }
     return `### 附件：GitHub Issue #${i.number}\n**标题：** ${i.title}\n\n${body}`
   })
+
+  if (attachedMap.value) {
+    let m = (attachedMap.value.content || '').trim()
+    if (m.length > MAP_BODY_MAX) {
+      m = `${m.slice(0, MAP_BODY_MAX)}\n\n…（图谱内容已截断）`
+    }
+    blocks.push(`### 附件：UI Map (${attachedMap.value.appId})\n\n${m}`)
+  }
+
   return `${blocks.join('\n\n---\n\n')}\n\n---\n\n### 用户指令\n${userPart}`
 }
 
@@ -457,8 +517,15 @@ const buildMessageForDisplay = (userText: string) => {
   const line =
     userText ||
     '请结合附件中的 Issue 给出分析与审计建议。'
-  if (!attachedIssues.value.length) return line
-  const head = `📎 已附加 ${attachedIssues.value.map((i) => `Issue #${i.number}`).join('、')}`
+  if (!attachedIssues.value.length && !attachedMap.value) return line
+  const parts: string[] = []
+  if (attachedIssues.value.length) {
+    parts.push(attachedIssues.value.map((i) => `Issue #${i.number}`).join('、'))
+  }
+  if (attachedMap.value) {
+    parts.push(`UI Map(${attachedMap.value.appId})`)
+  }
+  const head = `📎 已附加 ${parts.join('、')}`
   return `${head}\n\n${line}`
 }
 
@@ -472,6 +539,31 @@ const openIssuePicker = async () => {
     issueCatalog.value = []
   } finally {
     issuePickerLoading.value = false
+  }
+}
+
+const removeAttachedMap = () => {
+  attachedMap.value = null
+}
+
+const toggleAttachMap = async () => {
+  if (mapAttachLoading.value) return
+  if (attachedMap.value) {
+    removeAttachedMap()
+    return
+  }
+  mapAttachLoading.value = true
+  try {
+    const res = await safeFetch(`${API_BASE}/map/${selectedAppId.value}`)
+    const data = await res.json()
+    attachedMap.value = {
+      appId: selectedAppId.value,
+      content: JSON.stringify(data, null, 2)
+    }
+  } catch (e: any) {
+    console.error('Map attach failed:', e.message)
+  } finally {
+    mapAttachLoading.value = false
   }
 }
 
@@ -498,24 +590,35 @@ const removeAttachedIssue = (num: number) => {
   attachedIssues.value = attachedIssues.value.filter((i) => i.number !== num)
 }
 
-const sendMessage = async () => {
+const TOOL_LOOP_MARKER = '[[TOOL_LOOP_LIMIT_REACHED]]'
+
+const continueToolLoop = async () => {
+  const sid = currentSessionId.value
+  const apiText = lastApiTextBySession.value[sid]
+  if (!apiText) return
+  const rounds = (lastToolRoundsBySession.value[sid] || 6) + 6
+  lastToolRoundsBySession.value[sid] = rounds
+  toolLoopLimitReached.value = false
+  await sendMessageWithOverrides(apiText, { tool_rounds: rounds, force_no_tools: false })
+}
+
+const forceOutput = async () => {
+  const sid = currentSessionId.value
+  const apiText = lastApiTextBySession.value[sid]
+  if (!apiText) return
+  toolLoopLimitReached.value = false
+  await sendMessageWithOverrides(apiText, { tool_rounds: 0, force_no_tools: true })
+}
+
+const sendMessageWithOverrides = async (
+  apiText: string,
+  overrides: { tool_rounds?: number; force_no_tools?: boolean }
+) => {
   if (isLoading.value) return
-  const trimmed = inputMsg.value.trim()
-  if (!trimmed && !attachedIssues.value.length) return
   const session = sessions.value.find(s => s.id === currentSessionId.value)
   if (!session) return
 
-  const displayText = buildMessageForDisplay(trimmed)
-  const apiText = buildMessageForApi(trimmed)
-  const titleSeed = trimmed || attachedIssues.value.map((i) => `#${i.number}`).join(' ')
-
-  session.messages.push({ role: 'user', content: displayText })
-  attachedIssues.value = []
-  inputMsg.value = ''
-  await nextTick()
-  adjustChatInputHeight()
   isLoading.value = true
-  
   const assistantMsg = { role: 'assistant', content: '' }
   session.messages.push(assistantMsg)
   isStreaming.value = true
@@ -524,11 +627,12 @@ const sendMessage = async () => {
     const res = await safeFetch(`${API_BASE}/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        message: apiText, 
-        session_id: currentSessionId.value, 
-        username: currentUser.value, 
-        app_id: selectedAppId.value 
+      body: JSON.stringify({
+        message: apiText,
+        session_id: currentSessionId.value,
+        username: currentUser.value,
+        app_id: selectedAppId.value,
+        ...overrides
       })
     })
 
@@ -539,7 +643,13 @@ const sendMessage = async () => {
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
-      assistantMsg.content += decoder.decode(value, { stream: true })
+      const chunk = decoder.decode(value, { stream: true })
+      if (chunk.includes(TOOL_LOOP_MARKER)) {
+        toolLoopLimitReached.value = true
+        assistantMsg.content += chunk.replaceAll(TOOL_LOOP_MARKER, '')
+      } else {
+        assistantMsg.content += chunk
+      }
       await nextTick()
       if (messageScroll.value) {
         messageScroll.value.scrollTop = messageScroll.value.scrollHeight
@@ -550,9 +660,33 @@ const sendMessage = async () => {
   } finally {
     isLoading.value = false
     isStreaming.value = false
-    if (session.title === '新审计会话') {
-      session.title = titleSeed.substring(0, 10)
-    }
+  }
+}
+
+const sendMessage = async () => {
+  if (isLoading.value) return
+  const trimmed = inputMsg.value.trim()
+  if (!trimmed && !attachedIssues.value.length && !attachedMap.value) return
+  const session = sessions.value.find(s => s.id === currentSessionId.value)
+  if (!session) return
+
+  const displayText = buildMessageForDisplay(trimmed)
+  const apiText = buildMessageForApi(trimmed)
+  const titleSeed = trimmed || attachedIssues.value.map((i) => `#${i.number}`).join(' ')
+
+  toolLoopLimitReached.value = false
+  lastApiTextBySession.value[currentSessionId.value] = apiText
+  lastToolRoundsBySession.value[currentSessionId.value] = 6
+
+  session.messages.push({ role: 'user', content: displayText })
+  attachedIssues.value = []
+  attachedMap.value = null
+  inputMsg.value = ''
+  await nextTick()
+  adjustChatInputHeight()
+  await sendMessageWithOverrides(apiText, { tool_rounds: 6, force_no_tools: false })
+  if (session.title === '新审计会话') {
+    session.title = titleSeed.substring(0, 10)
   }
 }
 
@@ -578,6 +712,7 @@ watch(isLoggedIn, (loggedIn) => {
 watch(selectedAppId, () => {
   attachedIssues.value = []
   issueCatalog.value = []
+  attachedMap.value = null
 })
 
 onMounted(() => {
@@ -857,6 +992,12 @@ onMounted(() => {
   background: #f1f5f9;
   border-top: 1px solid #e2e8f0;
 }
+
+.tool-loop-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
 .toolbar-attach {
   display: inline-flex;
   align-items: center;
@@ -981,6 +1122,50 @@ onMounted(() => {
 .drawer { position: absolute; top: 0; right: 0; width: 42%; height: 100%; background: white; box-shadow: -10px 0 30px rgba(0,0,0,0.05); z-index: 100; display: flex; flex-direction: column; }
 .drawer-header { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; font-weight: 600; }
 .drawer-view { flex: 1; overflow-y: auto; padding: 20px; }
+
+/* Docs drawer: dark (non-black) theme */
+.docs-drawer {
+  background: #0f172a;
+  box-shadow: -12px 0 40px rgba(2, 6, 23, 0.35);
+}
+.docs-drawer .drawer-header {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+  color: #e5e7eb;
+  background: rgba(15, 23, 42, 0.7);
+}
+.docs-drawer .drawer-view {
+  background: radial-gradient(1200px 600px at 10% 0%, rgba(56, 189, 248, 0.10), transparent 55%),
+    radial-gradient(900px 500px at 90% 10%, rgba(16, 185, 129, 0.10), transparent 55%),
+    #0f172a;
+}
+.docs-drawer :deep(.docs-markdown) {
+  --md-text: #e5e7eb;
+  --md-muted: #9ca3af;
+  --md-border: rgba(148, 163, 184, 0.22);
+  --md-bg-soft: rgba(15, 23, 42, 0.55);
+  --md-code-bg: rgba(148, 163, 184, 0.14);
+  --md-code-text: #e5e7eb;
+  --md-link: #60a5fa;
+  --md-codeblock-bg: rgba(2, 6, 23, 0.8);
+  --md-codeblock-text: #e5e7eb;
+  --md-codeblock-border: rgba(148, 163, 184, 0.2);
+}
+.docs-drawer :deep(.docs-markdown h1),
+.docs-drawer :deep(.docs-markdown h2),
+.docs-drawer :deep(.docs-markdown h3) {
+  color: #f8fafc;
+}
+
+.docs-drawer :deep(.docs-markdown code) {
+  color: var(--md-code-text);
+}
+.docs-drawer :deep(.docs-markdown table) {
+  background: rgba(2, 6, 23, 0.35);
+}
+.docs-drawer :deep(.docs-markdown th) {
+  background: rgba(2, 6, 23, 0.55);
+  color: #cbd5e1;
+}
 .login-wrapper { position: fixed; inset: 0; background: #0b0d11; display: flex; align-items: center; justify-content: center; }
 .login-panel { background: white; padding: 48px; border-radius: 20px; width: 400px; text-align: center; }
 .panel-logo { font-size: 24px; font-weight: 800; margin-bottom: 24px; }

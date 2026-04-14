@@ -63,6 +63,37 @@
         </div>
       </section>
 
+      <section class="info-card">
+        <h3><Activity :size="18" /> UI Map 状态</h3>
+        <div class="stats-row">
+          <div class="stat">
+            <span class="label">图谱状态</span>
+            <span :class="['value', mapExists ? 'green' : '']">
+              {{ mapExists ? '已生成' : '未生成' }}
+            </span>
+          </div>
+          <div class="stat" v-if="mapUpdatedAt">
+            <span class="label">更新时间</span>
+            <span class="value small">{{ mapUpdatedAt }}</span>
+          </div>
+        </div>
+
+        <div class="map-actions">
+          <button
+            class="btn-inline-sync"
+            @click="generateUiMap"
+            :disabled="isGeneratingMap || repoStatus !== 'ready'"
+            :title="repoStatus !== 'ready' ? '请先下载并准备好代码仓库' : ''"
+          >
+            <RotateCw :size="14" :class="{ 'spin': isGeneratingMap }" />
+            <span>
+              {{ isGeneratingMap ? `生成中… ${mapProgress}%` : (mapExists ? '重新生成' : '生成图谱') }}
+            </span>
+          </button>
+          <span v-if="mapErr" class="map-err">{{ mapErr }}</span>
+        </div>
+      </section>
+
       <section class="info-card wide">
         <div class="card-header-flex">
             <div class="header-left">
@@ -138,7 +169,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { 
   ChevronLeft, Download, RefreshCw, XCircle, CheckCircle, 
-  Info, MessageSquare, RotateCw, X, Sparkles, ChevronRight, Database 
+  Info, MessageSquare, RotateCw, X, Sparkles, ChevronRight, Database, Activity
 } from 'lucide-vue-next'
 import { marked } from 'marked'
 
@@ -151,6 +182,13 @@ const tipMsg = ref('')
 const tipType = ref('info')
 const issues = ref([])
 const isSyncingIssues = ref(false)
+
+// UI Map 状态
+const mapExists = ref(false)
+const mapUpdatedAt = ref('')
+const isGeneratingMap = ref(false)
+const mapProgress = ref(0)
+const mapErr = ref('')
 
 // 弹窗状态
 const selectedIssue = ref(null)
@@ -174,8 +212,65 @@ const fetchStatus = async () => {
   } catch (e) { console.error("Sync failed:", e) }
 }
 
+const fetchMapStatus = async () => {
+  try {
+    mapErr.value = ''
+    const res = await fetch(`${props.apiBase}/map_status/${props.project.id}`)
+    if (!res.ok) return
+    const data = await res.json()
+    mapExists.value = !!data.exists
+    mapUpdatedAt.value = data.updated_at ? new Date(data.updated_at).toLocaleString() : ''
+  } catch (e) {
+    console.error('Fetch map status failed:', e)
+  }
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+
+const generateUiMap = async () => {
+  if (isGeneratingMap.value) return
+  if (repoStatus.value !== 'ready') {
+    mapErr.value = '代码仓库未就绪，请先下载/更新'
+    return
+  }
+  isGeneratingMap.value = true
+  mapProgress.value = 0
+  mapErr.value = ''
+  try {
+    const res = await fetch(`${props.apiBase}/map/${props.project.id}/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'real' })
+    })
+    if (!res.ok) throw new Error(`任务创建失败 (${res.status})`)
+    const { task_id } = await res.json()
+    if (!task_id) throw new Error('后端未返回 task_id')
+
+    for (let i = 0; i < 120; i++) {
+      const st = await fetch(`${props.apiBase}/map/tasks/${task_id}`)
+      if (!st.ok) throw new Error(`任务状态查询失败 (${st.status})`)
+      const data = await st.json()
+      mapProgress.value = Number(data.progress ?? mapProgress.value)
+      if (data.status === 'success') {
+        await fetchMapStatus()
+        return
+      }
+      if (data.status === 'error') {
+        throw new Error(data.message || '生成失败')
+      }
+      await sleep(800)
+    }
+    throw new Error('生成超时')
+  } catch (e) {
+    mapErr.value = e?.message || '生成失败'
+  } finally {
+    isGeneratingMap.value = false
+  }
+}
+
 onMounted(async () => {
   await fetchStatus()
+  await fetchMapStatus()
   handleAction('sync_issues')
 })
 

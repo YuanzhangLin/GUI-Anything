@@ -3,6 +3,10 @@ import json
 import logging
 import os
 import yaml
+import uuid
+import asyncio
+import random
+from datetime import datetime, timezone
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -51,6 +55,18 @@ def init_db():
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS map_tasks (
+            id TEXT PRIMARY KEY,
+            app_id TEXT,
+            status TEXT,
+            progress INTEGER,
+            message TEXT,
+            result_path TEXT,
+            created_at TEXT
+        )
+    ''')
     conn.commit()
     conn.close()
 
@@ -65,6 +81,8 @@ class ChatRequest(BaseModel):
     session_id: str
     username: str
     app_id: str # 新增：告知后端当前是哪个APP
+    tool_rounds: Optional[int] = 6
+    force_no_tools: Optional[bool] = False
 
 @app.get("/api/apps")
 async def get_app_list():
@@ -104,6 +122,151 @@ async def get_map(app_id: str):
     with open(file_path, "r", encoding="utf-8") as f:
         return json.load(f)
 
+
+@app.get("/api/map_status/{app_id}")
+async def get_map_status(app_id: str):
+    """轻量查询：是否已生成 UI Map（不返回大 JSON）。"""
+    file_path = os.path.join(DATA_DIR, f"{app_id}.json")
+    if not os.path.exists(file_path):
+        return {"app_id": app_id, "exists": False}
+    try:
+        stat = os.stat(file_path)
+        return {
+            "app_id": app_id,
+            "exists": True,
+            "bytes": stat.st_size,
+            "updated_at": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
+        }
+    except Exception:
+        return {"app_id": app_id, "exists": True}
+
+
+class MapGenerateRequest(BaseModel):
+    mode: Optional[str] = "mock"
+
+
+def _db_execute(sql: str, params: tuple = ()):
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute(sql, params)
+    conn.commit()
+    conn.close()
+
+
+def _db_fetchone(sql: str, params: tuple = ()):
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute(sql, params)
+    row = cur.fetchone()
+    conn.close()
+    return row
+
+
+def _mock_generate_map(app_id: str) -> dict:
+    # 输出结构必须兼容 frontend/src/utils/parser.ts 的 parseAndroidJson
+    unit_types = ["Activity", "Fragment", "Dialog", "Other"]
+    n = random.randint(6, 12)
+    unit_ids = [f"{app_id}.Unit{i}" for i in range(1, n + 1)]
+
+    units = []
+    for i, uid in enumerate(unit_ids):
+        t = random.choice(unit_types)
+        is_entry = i == 0
+        # 每个 unit 0-2 个跳转按钮
+        ui_elements = []
+        for j in range(random.randint(0, 2)):
+            target = random.choice(unit_ids)
+            if target == uid:
+                continue
+            ui_elements.append({
+                "id": f"{uid}.btn{j+1}",
+                "text": f"Go {target.split('.')[-1]}",
+                "interaction": {
+                    "type": "NAVIGATE_TO",
+                    "target_unit": target
+                }
+            })
+
+        units.append({
+            "unit_id": uid,
+            "unit_type": t,
+            "is_entry_point": is_entry,
+            "ui_elements": ui_elements
+        })
+
+    return {"app_id": app_id, "generated_at": datetime.now(timezone.utc).isoformat(), "units": units}
+
+
+async def _run_map_task(task_id: str, app_id: str, mode: str):
+    try:
+        for p in (5, 15, 30, 55, 75, 90):
+            _db_execute(
+                "UPDATE map_tasks SET status=?, progress=?, message=? WHERE id=?",
+                ("running", p, "Generating UI Map...", task_id)
+            )
+            await asyncio.sleep(0.6)
+
+        result = None
+        if (mode or "mock") != "mock":
+            # 真实引擎（如果已集成）优先
+            try:
+                from app.engine.uimapgenerate.service import generate_uimap  # type: ignore
+
+                result = generate_uimap(app_id=app_id)
+            except Exception as e:
+                logger.warning("Real UI map engine unavailable, fallback to mock: %s", e)
+                result = None
+
+        if result is None:
+            result = _mock_generate_map(app_id)
+        os.makedirs(DATA_DIR, exist_ok=True)
+        result_path = os.path.join(DATA_DIR, f"{app_id}.json")
+        with open(result_path, "w", encoding="utf-8") as f:
+            json.dump(result, f, ensure_ascii=False, indent=2)
+
+        _db_execute(
+            "UPDATE map_tasks SET status=?, progress=?, message=?, result_path=? WHERE id=?",
+            ("success", 100, "UI Map generated.", result_path, task_id)
+        )
+    except Exception as e:
+        logger.exception("map task failed: %s", e)
+        _db_execute(
+            "UPDATE map_tasks SET status=?, message=? WHERE id=?",
+            ("error", str(e), task_id)
+        )
+
+
+@app.post("/api/map/{app_id}/generate")
+async def generate_map(app_id: str, payload: MapGenerateRequest):
+    task_id = uuid.uuid4().hex
+    _db_execute(
+        "INSERT INTO map_tasks (id, app_id, status, progress, message, result_path, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (task_id, app_id, "queued", 0, "Queued.", "", datetime.now(timezone.utc).isoformat())
+    )
+    asyncio.create_task(_run_map_task(task_id, app_id, payload.mode or "mock"))
+    return {"task_id": task_id, "status": "queued"}
+
+
+@app.get("/api/map/tasks/{task_id}")
+async def get_map_task(task_id: str):
+    row = _db_fetchone(
+        "SELECT id, app_id, status, progress, message, result_path, created_at FROM map_tasks WHERE id=?",
+        (task_id,)
+    )
+    if not row:
+        raise HTTPException(status_code=404, detail="Task not found")
+    (tid, app_id, status, progress, message, result_path, created_at) = row
+    return {
+        "task_id": tid,
+        "app_id": app_id,
+        "status": status,
+        "progress": progress,
+        "message": message,
+        "result_path": result_path,
+        "created_at": created_at,
+        "result_available": bool(result_path) and status == "success"
+    }
+
 @app.post("/api/register")
 async def register(req: AuthRequest):
     conn = sqlite3.connect(DB_PATH)
@@ -142,7 +305,13 @@ async def chat(request: ChatRequest):
     async def event_generator():
         full_reply = ""
         # 调用 agent 的流式方法
-        async for chunk in agent.chat_stream(request.message, request.session_id, request.app_id):
+        async for chunk in agent.chat_stream(
+            request.message,
+            request.session_id,
+            request.app_id,
+            tool_rounds=request.tool_rounds or 6,
+            force_no_tools=bool(request.force_no_tools),
+        ):
             if chunk:
                 full_reply += chunk
                 yield chunk

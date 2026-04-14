@@ -7,3 +7,4 @@ PyYAML
 databases[sqlite]
 sqlalchemy
 requests
+lxml
