@@ -64,8 +64,18 @@
           :class="['session-item', currentSessionId === s.id ? 'active' : '']"
           @click="switchSession(s)"
         >
-          <div class="s-title">{{ s.title }}</div>
-          <div class="s-meta">{{ s.app_id }}</div>
+          <div class="session-item-main">
+            <div class="s-title">{{ s.title }}</div>
+            <div class="s-meta">{{ s.app_id }}</div>
+          </div>
+          <button
+            type="button"
+            class="session-delete"
+            :aria-label="'删除会话 ' + s.title"
+            @click.stop="deleteSession(s.id)"
+          >
+            <Trash2 :size="14" />
+          </button>
         </div>
       </div>
 
@@ -142,7 +152,7 @@
             <span v-if="attachedMap" class="issue-chip map-chip">
               <Activity :size="12" class="chip-icon" />
               <span class="chip-label">MAP</span>
-              <span class="chip-title">UI Map: {{ attachedMap.appId }}</span>
+              <span class="chip-title">UI Map 摘要: {{ attachedMap.appId }}</span>
               <button
                 type="button"
                 class="chip-remove"
@@ -176,10 +186,10 @@
               class="toolbar-attach"
               :disabled="mapAttachLoading"
               @click="toggleAttachMap"
-              :title="attachedMap ? '已添加，点击可移除' : '把当前项目 UI Map 作为附件加入对话'"
+              :title="attachedMap ? '已添加，点击可移除' : '把当前项目 UI Map 的人类可读摘要作为附件加入对话（非整份 JSON）'"
             >
               <Activity :size="15" />
-              {{ attachedMap ? '移除图谱' : (mapAttachLoading ? '加载图谱…' : '添加图谱') }}
+              {{ attachedMap ? '移除图谱摘要' : (mapAttachLoading ? '加载摘要…' : '添加图谱摘要') }}
             </button>
             <span v-if="mapAttachHint" class="toolbar-hint">{{ mapAttachHint }}</span>
 
@@ -254,7 +264,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
-import { Plus, Send, Activity, X, BookOpen, LogOut, Settings, Tag } from 'lucide-vue-next'
+import { Plus, Send, Activity, X, BookOpen, LogOut, Settings, Tag, Trash2 } from 'lucide-vue-next'
 import { marked } from 'marked'
 import MapCanvas from './components/MapCanvas.vue'
 import AdminPanel from './components/AdminPanel.vue' 
@@ -339,7 +349,7 @@ const issuePickerHint = computed(() => {
 type AttachedMap = { appId: string; content: string }
 const attachedMap = ref<AttachedMap | null>(null)
 const mapAttachLoading = ref(false)
-const MAP_BODY_MAX = 12000
+const MAP_BODY_MAX = 16000
 
 const mapAttachHint = computed(() => {
   if (mapAttachLoading.value) return '正在加载 UI Map…'
@@ -424,12 +434,19 @@ const initData = async () => {
     const appRes = await safeFetch(`${API_BASE}/apps`)
     appList.value = await appRes.json()
     const histRes = await safeFetch(`${API_BASE}/history/${currentUser.value}`)
-    sessions.value = await histRes.json()
+    const raw = await histRes.json()
+    // 最近会话在上：按会话 id（时间戳字符串）降序
+    sessions.value = (raw as any[]).slice().sort((a, b) => {
+      const na = parseInt(String(a.id), 10)
+      const nb = parseInt(String(b.id), 10)
+      if (!Number.isNaN(na) && !Number.isNaN(nb)) return nb - na
+      return String(b.id).localeCompare(String(a.id))
+    })
     
     if (sessions.value.length > 0) {
-      const last = sessions.value[sessions.value.length - 1]
-      currentSessionId.value = last.id
-      selectedAppId.value = last.app_id || 'activitydiary'
+      const first = sessions.value[0]
+      currentSessionId.value = first.id
+      selectedAppId.value = first.app_id || 'activitydiary'
     } else {
       createNewChat()
     }
@@ -473,18 +490,36 @@ const handleRegister = async () => {
 
 const createNewChat = () => {
   const id = Date.now().toString()
-  sessions.value.push({ 
-    id, 
-    title: '新审计会话', 
-    app_id: selectedAppId.value, 
-    messages: [{ role: 'assistant', content: '您好！GUI-Anything 审计助手已就绪。' }] 
-  })
+  const entry = {
+    id,
+    title: '新审计会话',
+    app_id: selectedAppId.value,
+    messages: [{ role: 'assistant', content: '您好！GUI-Anything 审计助手已就绪。' }]
+  }
+  sessions.value = [entry, ...sessions.value]
   currentSessionId.value = id
 }
 
 const switchSession = (s: any) => {
   currentSessionId.value = s.id
   selectedAppId.value = s.app_id
+}
+
+const deleteSession = (id: string) => {
+  const idx = sessions.value.findIndex((s: any) => s.id === id)
+  if (idx < 0) return
+  const wasCurrent = currentSessionId.value === id
+  sessions.value.splice(idx, 1)
+  delete lastApiTextBySession.value[id]
+  delete lastToolRoundsBySession.value[id]
+  if (!wasCurrent) return
+  if (sessions.value.length > 0) {
+    const next = sessions.value[0]
+    currentSessionId.value = next.id
+    selectedAppId.value = next.app_id
+  } else {
+    createNewChat()
+  }
 }
 
 const onAppChange = () => { createNewChat() }
@@ -507,7 +542,7 @@ const buildMessageForApi = (userText: string) => {
     if (m.length > MAP_BODY_MAX) {
       m = `${m.slice(0, MAP_BODY_MAX)}\n\n…（图谱内容已截断）`
     }
-    blocks.push(`### 附件：UI Map (${attachedMap.value.appId})\n\n${m}`)
+    blocks.push(`### 附件：UI Map 摘要 (${attachedMap.value.appId})\n\n${m}`)
   }
 
   return `${blocks.join('\n\n---\n\n')}\n\n---\n\n### 用户指令\n${userPart}`
@@ -523,7 +558,7 @@ const buildMessageForDisplay = (userText: string) => {
     parts.push(attachedIssues.value.map((i) => `Issue #${i.number}`).join('、'))
   }
   if (attachedMap.value) {
-    parts.push(`UI Map(${attachedMap.value.appId})`)
+    parts.push(`UI Map 摘要(${attachedMap.value.appId})`)
   }
   const head = `📎 已附加 ${parts.join('、')}`
   return `${head}\n\n${line}`
@@ -554,11 +589,11 @@ const toggleAttachMap = async () => {
   }
   mapAttachLoading.value = true
   try {
-    const res = await safeFetch(`${API_BASE}/map/${selectedAppId.value}`)
+    const res = await safeFetch(`${API_BASE}/map_summary/${selectedAppId.value}`)
     const data = await res.json()
     attachedMap.value = {
       appId: selectedAppId.value,
-      content: JSON.stringify(data, null, 2)
+      content: (data.summary || '').trim()
     }
   } catch (e: any) {
     console.error('Map attach failed:', e.message)
@@ -862,9 +897,37 @@ onMounted(() => {
 }
 .btn-new-chat-fancy:hover { background: #374151; transform: translateY(-1px); }
 .session-list { flex: 1; overflow-y: auto; margin-top: 16px; }
-.session-item { padding: 12px; border-radius: 8px; cursor: pointer; margin-bottom: 4px; transition: 0.2s; }
+.session-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 10px 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-bottom: 4px;
+  transition: 0.2s;
+}
 .session-item:hover { background: #1f2937; }
 .session-item.active { background: #1f2937; border: 1px solid #374151; }
+.session-item-main { flex: 1; min-width: 0; }
+.session-delete {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.session-delete:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+}
 .s-title { font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .s-meta { font-size: 11px; color: #6b7280; margin-top: 4px; }
 .sidebar-bottom { border-top: 1px solid #1f2937; padding-top: 16px; }

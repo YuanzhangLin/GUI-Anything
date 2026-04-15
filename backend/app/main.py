@@ -16,6 +16,7 @@ from app.core.agent import GuiAgent
 from app.paths import DATA_DIR
 from app.services.code_manager import CodeManager
 from app.services.issue_service import IssueService
+from app.services.uimap_report import build_report_from_map_json
 app = FastAPI(title="GUI-Anything Multi-Project")
 agent = GuiAgent()
 from app.services.issue_solver import IssueSolver
@@ -121,6 +122,24 @@ async def get_map(app_id: str):
         raise HTTPException(status_code=404, detail="Map file not found")
     with open(file_path, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+@app.get("/api/map_summary/{app_id}")
+async def get_map_summary(app_id: str):
+    """将 UI Map JSON 转为人类可读的文本报告，供对话附件使用（避免整份 JSON）。"""
+    file_path = os.path.join(DATA_DIR, f"{app_id}.json")
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Map file not found")
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        summary = build_report_from_map_json(data)
+        return {"app_id": app_id, "summary": summary}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error("生成 UI Map 摘要失败: %s", e)
+        raise HTTPException(status_code=500, detail="生成摘要失败")
 
 
 @app.get("/api/map_status/{app_id}")
