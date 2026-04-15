@@ -46,18 +46,34 @@
   </div>
 
   <div v-else class="app-layout">
-    <aside class="app-sidebar">
+    <aside
+      class="app-sidebar"
+      :class="{ collapsed: sidebarCollapsed }"
+      :style="{ width: sidebarCollapsed ? `${SIDEBAR_COLLAPSED_PX}px` : `${sidebarWidthPx}px` }"
+    >
       <div class="sidebar-header">
         <div class="logo-text">
           <span class="logo-icon">📱</span>
-          GUI-Anything
+          <span v-if="!sidebarCollapsed">GUI-Anything</span>
         </div>
-        <button @click="createNewChat" class="btn-new-chat-fancy">
-          <Plus :size="16" /> <span>新建对话</span>
-        </button>
+        <div class="sidebar-header-actions">
+          <button
+            type="button"
+            class="btn-icon"
+            :aria-label="sidebarCollapsed ? '展开侧边栏' : '收缩侧边栏'"
+            @click="toggleSidebar"
+            :title="sidebarCollapsed ? '展开' : '收缩'"
+          >
+            <PanelLeftClose v-if="!sidebarCollapsed" :size="18" />
+            <PanelLeftOpen v-else :size="18" />
+          </button>
+          <button @click="createNewChat" class="btn-new-chat-fancy" :title="sidebarCollapsed ? '新建对话' : ''">
+            <Plus :size="16" /> <span v-if="!sidebarCollapsed">新建对话</span>
+          </button>
+        </div>
       </div>
       
-      <div class="session-list">
+      <div class="session-list" v-show="!sidebarCollapsed">
         <div 
           v-for="s in sessions" 
           :key="s.id" 
@@ -79,7 +95,7 @@
         </div>
       </div>
 
-      <div class="sidebar-bottom">
+      <div class="sidebar-bottom" v-show="!sidebarCollapsed">
         <div class="project-picker">
           <label>当前目标</label>
           <select v-model="selectedAppId" @change="onAppChange">
@@ -103,6 +119,7 @@
           <button @click="handleLogout" class="exit"><LogOut :size="16" /> 退出</button>
         </nav>
       </div>
+      <div class="sidebar-resizer" @pointerdown="onSidebarResizeStart" />
     </aside>
 
     <main class="chat-main">
@@ -263,8 +280,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, watch } from 'vue'
-import { Plus, Send, Activity, X, BookOpen, LogOut, Settings, Tag, Trash2 } from 'lucide-vue-next'
+import { ref, computed, onMounted, nextTick, watch, onBeforeUnmount } from 'vue'
+import { Plus, Send, Activity, X, BookOpen, LogOut, Settings, Tag, Trash2, PanelLeftClose, PanelLeftOpen } from 'lucide-vue-next'
 import { marked } from 'marked'
 import MapCanvas from './components/MapCanvas.vue'
 import AdminPanel from './components/AdminPanel.vue' 
@@ -361,6 +378,51 @@ const mapAttachHint = computed(() => {
 const toolLoopLimitReached = ref(false)
 const lastApiTextBySession = ref<Record<string, string>>({})
 const lastToolRoundsBySession = ref<Record<string, number>>({})
+
+// Sidebar UX
+const SIDEBAR_MIN_PX = 240
+const SIDEBAR_MAX_PX = 520
+const SIDEBAR_COLLAPSED_PX = 64
+const sidebarWidthPx = ref<number>(Number(localStorage.getItem('gui_sidebar_w')) || 280)
+const sidebarCollapsed = ref<boolean>(localStorage.getItem('gui_sidebar_collapsed') === '1')
+const isResizingSidebar = ref(false)
+let sidebarResizeStartX = 0
+let sidebarResizeStartW = 0
+
+const clamp = (n: number, min: number, max: number) => Math.min(Math.max(n, min), max)
+
+const toggleSidebar = () => {
+  sidebarCollapsed.value = !sidebarCollapsed.value
+  localStorage.setItem('gui_sidebar_collapsed', sidebarCollapsed.value ? '1' : '0')
+}
+
+const onSidebarResizeStart = (e: PointerEvent) => {
+  if (sidebarCollapsed.value) return
+  isResizingSidebar.value = true
+  sidebarResizeStartX = e.clientX
+  sidebarResizeStartW = sidebarWidthPx.value
+  ;(e.target as HTMLElement)?.setPointerCapture?.(e.pointerId)
+  e.preventDefault()
+}
+
+const onSidebarResizeMove = (e: PointerEvent) => {
+  if (!isResizingSidebar.value) return
+  const delta = e.clientX - sidebarResizeStartX
+  const next = clamp(sidebarResizeStartW + delta, SIDEBAR_MIN_PX, SIDEBAR_MAX_PX)
+  sidebarWidthPx.value = next
+  localStorage.setItem('gui_sidebar_w', String(next))
+}
+
+const onSidebarResizeEnd = () => {
+  isResizingSidebar.value = false
+}
+
+window.addEventListener('pointermove', onSidebarResizeMove)
+window.addEventListener('pointerup', onSidebarResizeEnd)
+onBeforeUnmount(() => {
+  window.removeEventListener('pointermove', onSidebarResizeMove)
+  window.removeEventListener('pointerup', onSidebarResizeEnd)
+})
 
 // --- 3. 计算属性 (核心修复：确保渲染实例能找到) ---
 const currentMessages = computed(() => {
@@ -884,7 +946,53 @@ onMounted(() => {
 @keyframes auth-spin { to { transform: rotate(360deg); } }
 /* 原有样式完全保持一致，未做改动 */
 .app-layout { display: flex; width: 100vw; height: 100vh; background: #ffffff; color: #1a1a1a; overflow: hidden; }
-.app-sidebar { width: 280px; background: #0b0d11; color: white; display: flex; flex-direction: column; padding: 16px; flex-shrink: 0;}
+.app-sidebar {
+  width: 280px;
+  background: #0b0d11;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  flex-shrink: 0;
+  position: relative;
+}
+.app-sidebar.collapsed {
+  padding: 16px 10px;
+}
+.sidebar-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.btn-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid #374151;
+  background: #111827;
+  color: #e5e7eb;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, transform 0.2s;
+}
+.btn-icon:hover {
+  background: #1f2937;
+  transform: translateY(-1px);
+}
+.sidebar-resizer {
+  position: absolute;
+  top: 0;
+  right: -4px;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  background: transparent;
+}
+.sidebar-resizer:hover {
+  background: rgba(148, 163, 184, 0.12);
+}
 .logo-text { 
   font-size: 20px; font-weight: 800; margin-bottom: 24px; display: flex; align-items: center; gap: 8px;
   background: linear-gradient(to right, #ffffff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
