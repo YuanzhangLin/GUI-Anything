@@ -81,3 +81,19 @@ Contributions, issues, and feature requests are welcome!
 
 ## 📜 License
 This project is MIT licensed.
+
+## 📚 Citation
+
+If you find GUI-Anything useful for your research or project, please consider citing our paper:
+
+```bibtex
+@inproceedings{lin-etal-2025-uicompass,
+    title = "{UICOMPASS}: {UI} Map Guided Mobile Task Automation via Adaptive Action Generation",
+    author = "Lin, Yuanzhang and Zhang, Zhe and Rui, He and Dong, Qingao and Zhou, Mingyi and Zhang, Jing and Gao, Xiang and Sun, Hailong",
+    booktitle = "Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing",
+    month = nov,
+    year = "2025",
+    publisher = "Association for Computational Linguistics",
+    doi = "10.18653/v1/2025.emnlp-main.1346"
+}
+```
