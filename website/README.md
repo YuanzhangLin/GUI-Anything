@@ -19,6 +19,7 @@ The viewer can also import a runtime `trace.json` from the navigation Skill, or 
 ## Publish
 
 Push this website, the Pages workflow, and `backend/data/demo.json` to `master` (or `main`). In the repository's **Settings → Pages**, select **GitHub Actions** as the build and deployment source. The default URL is `https://yuanzhanglin.github.io/GUI-Anything/`.
+After changing the Pages source, re-run the website workflow or push a change under `website/` to start a fresh deployment.
 
 ## Custom domain later
 
