@@ -39,3 +39,16 @@
 .coverage-grid code { overflow-wrap: anywhere; }
 .coverage-note { font-size: 14px; margin-top: 24px; }
 @media (max-width: 700px) { .coverage-case { padding: 60px 20px; } .coverage-steps { grid-template-columns: 1fr 1fr; } .coverage-grid { grid-template-columns: 1fr; } }
+
+.case-app { display:flex; flex-wrap:wrap; gap:12px 24px; padding:20px 0; border-bottom:1px solid var(--line); }
+.case-app span { color:var(--muted); font-size:14px; overflow-wrap:anywhere; }
+.case-code,.case-task,.case-execution { margin:36px 0; }
+.case-code p,.case-task p { line-height:1.8; overflow-wrap:anywhere; }
+.case-code pre { background:var(--deep); color:#dff9f0; padding:24px; border-radius:12px; overflow:auto; font:13px/1.8 var(--mono); }
+.case-credit { color:var(--muted); font-size:13px; }
+.case-task blockquote { margin:20px 0; padding:22px 26px; border-left:4px solid var(--mint); background:var(--mint-soft); line-height:1.85; }
+.case-table-scroll { overflow-x:auto; }
+.case-execution table { border-collapse:collapse; width:100%; font-size:14px; line-height:1.7; }
+.case-execution th,.case-execution td { padding:14px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
+.case-execution th { background:#eaf1f3; }
+.case-execution td:first-child { white-space:nowrap; font-family:var(--mono); }

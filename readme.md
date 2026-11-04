@@ -25,6 +25,49 @@ Use the `gui-anything` Skill in Cursor, OpenCode, or another compatible Agent, o
 
 In one local run against an instrumented **OmniNotes 6.1.0** APK on Android API 25, an Agent created two test notes, selected both, merged them, and saved the result. The target was the non-empty branch of `DetailFragment.deleteMergedNotes(List<String>)`, including its loop and deletion call—not merely reaching the editor.
 
+### App and target code
+
+**OmniNotes 6.1.0**, package `it.feio.android.omninotes.alpha`, Android API 25. Target: `omniNotes/src/main/java/it/feio/android/omninotes/DetailFragment.java`, lines 1627–1637 of the supplied source:
+
+```java
+private void deleteMergedNotes (List<String> mergedNotesIds) {
+  ArrayList<Note> notesToDelete = new ArrayList<>();
+  if (mergedNotesIds != null) {
+    for (String mergedNoteId : mergedNotesIds) {
+      Note note = new Note();
+      note.set_id(Long.valueOf(mergedNoteId));
+      notesToDelete.add(note);
+    }
+    new NoteProcessorDelete(notesToDelete).process();
+  }
+}
+```
+
+Excerpt from OmniNotes, Copyright © 2013–2020 Federico Iosue, GPL-3.0-or-later. Line numbers refer to the tested source version.
+
+### Deriving the task from code
+
+`ListFragment.merge()` posts `NotesMergeEvent(false)`. Its event handler puts selected note IDs into `merged_notes` and opens the merged editor. After saving, `DetailFragment.onNoteSaved()` calls the method above. Reaching the editor or saving an ordinary note does not exercise the non-empty loop.
+
+> **Task:** Create two distinguishable test notes, select and merge them, then save the merged note so both originals are deleted. Verify both payloads persist and JaCoCo newly covers the loop and deletion call. Operate only on the test notes; limit execution to 60 UI actions and 30 minutes.
+
+This is an editorial rendering of the frozen task, not raw automatically generated runner output.
+
+### Executed steps
+
+| Action | Operation | Observed checkpoint |
+| --- | --- | --- |
+| 1 | Launch OmniNotes | Notes list opens |
+| 2–8 | Create `GUIA_Merge_A` with `GUIA alpha merge payload`; Back hides the keyboard, then Back saves | A appears in the list |
+| 9–15 | Create `GUIA_Merge_B` with `GUIA beta merge payload` the same way | Both notes appear |
+| Baseline | Dump JaCoCo and reset probes; not a UI action | All five target lines have zero covered instructions |
+| 16 | Long-press A's row | Selection count is 1 |
+| 17 | Tap B's row | Selection count is 2 |
+| 18 | Open More options within `action_mode_bar` | Scoped to the selection toolbar, avoiding the ordinary menu |
+| 19 | Tap Merge | Editor contains both payloads |
+| 20 | Press Back to save | List contains the merged note |
+| Verification | Dump coverage and inspect the database | Target lines newly covered; original IDs deleted; merged payloads persisted |
+
 | Check | Observed result |
 | --- | --- |
 | Target lines 1630, 1631, 1632, 1633, 1635 | All five changed from zero covered instructions before the operation to covered afterward |
@@ -34,7 +77,7 @@ In one local run against an instrumented **OmniNotes 6.1.0** APK on Android API 
 
 This was an **Agent-assisted feasibility case using a local ADB harness and JaCoCo**, not an end-to-end benchmark of the shipped navigation runner. Normal saves already enter this method, so the check specifically required newly covered loop/deletion lines. Each coverage dump reset probes; the installed APK hash matched the supplied APK and JaCoCo reported no class mismatch. One run does not establish a success rate or full branch coverage.
 
-Only this curated description is published. APKs, external source trees, databases, screenshots, traces, raw coverage files and local experiment scripts remain excluded. See the [website case](https://yuanzhanglin.github.io/GUI-Anything/#coverage-case). Code coverage and correct business output are separate checks.
+Only the curated case and short attributed code excerpt are published. APKs, external source trees, databases, screenshots, traces, raw coverage files and local experiment scripts remain excluded. See the [website case](https://yuanzhanglin.github.io/GUI-Anything/#coverage-case). Code coverage and correct business output are separate checks.
 
 ## ✨ Features
 * **⚡ Fast Map**: Analyze source or imported APK decompilation without an LLM; identify Activities, supported Fragment routes, explicit transitions, and layout/menu element candidates.

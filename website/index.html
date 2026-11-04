@@ -96,9 +96,32 @@
             <div><span class="section-kicker">INSTRUMENTED CASE / AGENT 辅助实验</span><h2 id="coverage-title">操作之后，目标代码真的执行了吗？</h2></div>
             <p>OmniNotes 6.1.0 · Android API 25。一次本地实验，分别检查 JaCoCo 新增覆盖与数据库中的实际结果。</p>
           </div>
-          <ol class="coverage-steps" aria-label="实验操作流程">
-            <li><span>01</span>创建两条测试笔记</li><li><span>02</span>长按并多选</li><li><span>03</span>合并笔记</li><li><span>04</span>保存，删除原记录</li>
-          </ol>
+          <div class="case-app"><strong>App：OmniNotes 6.1.0</strong><span>包名：<code>it.feio.android.omninotes.alpha</code> · Android API 25 · 插装 APK</span></div>
+          <article class="case-code"><span class="section-kicker">01 / 对应代码</span><h3>保存合并结果后，删除原笔记</h3><p><code>omniNotes/src/main/java/it/feio/android/omninotes/DetailFragment.java</code> · 第 1627–1637 行</p><pre><code>private void deleteMergedNotes (List&lt;String&gt; mergedNotesIds) {
+  ArrayList&lt;Note&gt; notesToDelete = new ArrayList&lt;&gt;();
+  if (mergedNotesIds != null) {
+    for (String mergedNoteId : mergedNotesIds) {
+      Note note = new Note();
+      note.set_id(Long.valueOf(mergedNoteId));
+      notesToDelete.add(note);
+    }
+    new NoteProcessorDelete(notesToDelete).process();
+  }
+}</code></pre><p class="case-credit">OmniNotes 代码节选 · © 2013–2020 Federico Iosue · GPL-3.0-or-later。行号对应本次测试源码。</p></article>
+          <article class="case-task"><span class="section-kicker">02 / 代码分析 → TASK</span><h3>为什么要“多选 → 合并 → 保存”？</h3><p><code>ListFragment.merge()</code> 发布 <code>NotesMergeEvent(false)</code>；事件处理器将选中笔记 ID 写入 <code>merged_notes</code>，然后打开合并编辑页。保存后的 <code>onNoteSaved()</code> 才会调用上面的删除方法。普通保存传入空列表引用，不会命中循环体。</p><blockquote><strong>Task</strong><br>创建两条可区分的测试笔记，选中并合并，保存合并笔记，使两条原记录被删除。确认新笔记保留两段正文，并通过 JaCoCo 验证循环体和删除调用新增覆盖。只操作本次创建的测试笔记；预算 60 次 UI 操作、30 分钟。</blockquote><p class="case-credit">以上为执行前冻结任务的中文整理，不是运行器自动生成的原始输出。</p></article>
+          <article class="case-execution"><span class="section-kicker">03 / 实际执行步骤</span><h3>从准备数据到保存结果</h3><div class="case-table-scroll"><table><thead><tr><th>动作</th><th>执行内容</th><th>观察 / 检查</th></tr></thead><tbody>
+          <tr><td>1</td><td>启动 OmniNotes</td><td>进入 Notes 列表</td></tr>
+          <tr><td>2–8</td><td>新建 GUIA_Merge_A；填写正文 GUIA alpha merge payload；返回收起键盘，再返回保存</td><td>列表出现 A</td></tr>
+          <tr><td>9–15</td><td>同样新建 GUIA_Merge_B，正文为 GUIA beta merge payload</td><td>列表出现 A、B</td></tr>
+          <tr><td>基线</td><td>采集 JaCoCo，重置探针；不计 UI 动作</td><td>五条目标行覆盖指令均为 0</td></tr>
+          <tr><td>16</td><td>长按 A 所在列表行</td><td>进入多选，已选 1 条</td></tr>
+          <tr><td>17</td><td>点击 B 所在列表行</td><td>已选 2 条</td></tr>
+          <tr><td>18</td><td>打开多选栏的 More options</td><td>限定 action_mode_bar，排除普通工具栏的同名菜单</td></tr>
+          <tr><td>19</td><td>点击 Merge</td><td>编辑页展示 A、B 两段正文</td></tr>
+          <tr><td>20</td><td>按返回，保存合并笔记</td><td>列表只剩一条合并笔记</td></tr>
+          <tr><td>验证</td><td>再次采集 JaCoCo，读取数据库</td><td>检查新增覆盖、原 ID 删除和正文持久化</td></tr>
+          </tbody></table></div></article>
+          <span class="section-kicker">04 / 覆盖与业务结果</span>
           <div class="coverage-grid">
             <article><span class="section-kicker">CODE TARGET</span><h3>5 / 5 目标行新增命中</h3><p><code>DetailFragment.deleteMergedNotes</code> 的循环体与删除调用：1630、1631、1632、1633、1635 行，操作前覆盖指令为 0，操作后全部命中。</p><p>方法覆盖：9/9 行 · 35/35 条指令 · 3/4 分支。普通保存也会调用该方法，所以单看方法覆盖不足以判定成功。</p></article>
             <article><span class="section-kicker">PERSISTED RESULT</span><h3>两条原记录 → 一条合并记录</h3><p>数据库验证两条原笔记 ID 已删除，新笔记同时保留两段正文，无关记录未变。</p><p>含数据准备共 20 次 UI 操作，预算为 60 次。APK 哈希一致，JaCoCo 未报告 class 不匹配；每次采集重置探针后比较新增覆盖。</p></article>

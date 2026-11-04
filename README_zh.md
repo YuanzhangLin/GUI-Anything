@@ -26,6 +26,49 @@
 
 在 Android API 25 上，使用插装的 **OmniNotes 6.1.0** APK 完成了一次本地实验：Agent 创建两条测试笔记，多选合并，再保存结果。目标是 `DetailFragment.deleteMergedNotes(List<String>)` 的非空分支，包括循环体和删除调用，而不只是到达编辑页面。
 
+### App 与目标代码
+
+**OmniNotes 6.1.0**，包名 `it.feio.android.omninotes.alpha`，运行环境 Android API 25。目标文件：`omniNotes/src/main/java/it/feio/android/omninotes/DetailFragment.java`，本次提供的源码第 1627–1637 行：
+
+```java
+private void deleteMergedNotes (List<String> mergedNotesIds) {
+  ArrayList<Note> notesToDelete = new ArrayList<>();
+  if (mergedNotesIds != null) {
+    for (String mergedNoteId : mergedNotesIds) {
+      Note note = new Note();
+      note.set_id(Long.valueOf(mergedNoteId));
+      notesToDelete.add(note);
+    }
+    new NoteProcessorDelete(notesToDelete).process();
+  }
+}
+```
+
+代码节选来自 OmniNotes，Copyright © 2013–2020 Federico Iosue，GPL-3.0-or-later。行号对应本次测试源码，不保证其他版本相同。
+
+### 从代码分析得到 Task
+
+`ListFragment.merge()` 发布 `NotesMergeEvent(false)`；`onEventAsync()` 将选中笔记的 ID 放入 `merged_notes`，再打开合并编辑页。保存完成后，`DetailFragment.onNoteSaved()` 调用上面的删除方法。因此只有打开编辑页或普通保存不够：必须让原笔记 ID 列表非空，并完成合并后的保存。
+
+> **Task：**在 OmniNotes 中创建两条可区分的测试笔记，选中并合并它们，保存合并笔记，使两条原记录被删除。验证新笔记包含两段正文，并通过 JaCoCo 确认 `deleteMergedNotes` 的循环体及删除调用新增覆盖。只操作本次创建的测试笔记；上限 60 次 UI 操作、30 分钟。
+
+这是对执行前冻结任务的中文整理，不是运行器自动生成的原始输出。
+
+### 实际执行步骤
+
+| 动作序号 | 操作 | 界面观察 / 检查 |
+| --- | --- | --- |
+| 1 | 启动 OmniNotes | 进入 Notes 列表 |
+| 2–8 | 点击新建，填写标题 `GUIA_Merge_A` 和正文 `GUIA alpha merge payload`，按返回收起键盘，再返回保存 | 列表出现 A |
+| 9–15 | 同样创建 `GUIA_Merge_B`，正文为 `GUIA beta merge payload` | 列表同时出现 A、B |
+| 基线采集 | 导出 JaCoCo 并重置探针，不计入 UI 动作 | 五条目标行覆盖指令均为 0 |
+| 16 | 长按 A 所在的列表行 | 进入多选模式，数量为 1 |
+| 17 | 点击 B 所在的列表行 | 已选数量变成 2 |
+| 18 | 打开多选操作栏的 More options | 用 `action_mode_bar` 限定范围，避免与普通工具栏菜单混淆 |
+| 19 | 点击 Merge | 编辑页显示 A、B 两段正文 |
+| 20 | 按返回，保存合并笔记 | 返回列表，只剩一条合并笔记 |
+| 结果采集 | 再次导出 JaCoCo，读取数据库 | 目标五行新增命中；原 ID 删除，合并内容持久化 |
+
 | 检查项 | 实测结果 |
 | --- | --- |
 | 目标行 1630、1631、1632、1633、1635 | 操作前覆盖指令均为 0，操作后五行全部新增命中 |
@@ -35,7 +78,7 @@
 
 这是 **Agent 结合本地 ADB 执行脚本和 JaCoCo 完成的可行性案例**，不代表仓库现有导航器已能端到端自动完成该业务。普通保存也会进入这个方法，因此判定要求循环体和删除调用新增覆盖。每次覆盖采集都会重置探针；安装 APK 的哈希与输入 APK 一致，JaCoCo 未报告 class 不匹配。单次实验不代表成功率，也不代表全分支覆盖。
 
-这里只发布整理后的案例说明；APK、外部源码、数据库、截图、轨迹、原始覆盖文件及本地实验脚本均不提交。另见[网页案例](https://yuanzhanglin.github.io/GUI-Anything/#coverage-case)。代码覆盖与业务结果正确分别验证。
+这里只发布整理后的案例说明和注明来源的短代码节选；APK、外部源码、数据库、截图、轨迹、原始覆盖文件及本地实验脚本均不提交。另见[网页案例](https://yuanzhanglin.github.io/GUI-Anything/#coverage-case)。代码覆盖与业务结果正确分别验证。
 
 ## ✨ 核心特性
 * **⚡ Fast 出图**：解析源码或导入 APK 的反编译结果，无需调用大模型；识别 Activity、部分 Fragment、显式跳转与布局/菜单中的元素候选。
