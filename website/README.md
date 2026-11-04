@@ -24,3 +24,7 @@ After changing the Pages source, re-run the website workflow or push a change un
 ## Custom domain later
 
 After buying a domain, enter it in **Settings → Pages → Custom domain** and configure the DNS records exactly as [GitHub documents](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site). Do not create a `CNAME` file with a placeholder domain. Verify HTTPS after DNS resolves. The site uses relative asset URLs, so the same files work under the default project URL and a custom domain.
+
+## Curated coverage case
+
+The `#coverage-case` section describes one Agent-assisted OmniNotes merge experiment. It publishes only the reviewed narrative and aggregate results, not raw coverage, traces, screenshots, APKs, databases or the local harness. Keep its wording distinct from the static Activity Diary map and from capabilities of the shipped navigation runner.

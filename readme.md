@@ -21,6 +21,21 @@ Use the `gui-anything` Skill in Cursor, OpenCode, or another compatible Agent, o
 
 ---
 
+## Instrumented example: merging notes
+
+In one local run against an instrumented **OmniNotes 6.1.0** APK on Android API 25, an Agent created two test notes, selected both, merged them, and saved the result. The target was the non-empty branch of `DetailFragment.deleteMergedNotes(List<String>)`, including its loop and deletion call—not merely reaching the editor.
+
+| Check | Observed result |
+| --- | --- |
+| Target lines 1630, 1631, 1632, 1633, 1635 | All five changed from zero covered instructions before the operation to covered afterward |
+| Target method after the operation | 9/9 lines, 35/35 instructions, 3/4 branches covered |
+| Persisted result | Both original note IDs were deleted; one new note contained both payloads; unrelated records were unchanged |
+| UI actions | 20, including setup, within a frozen 60-action budget |
+
+This was an **Agent-assisted feasibility case using a local ADB harness and JaCoCo**, not an end-to-end benchmark of the shipped navigation runner. Normal saves already enter this method, so the check specifically required newly covered loop/deletion lines. Each coverage dump reset probes; the installed APK hash matched the supplied APK and JaCoCo reported no class mismatch. One run does not establish a success rate or full branch coverage.
+
+Only this curated description is published. APKs, external source trees, databases, screenshots, traces, raw coverage files and local experiment scripts remain excluded. See the [website case](https://yuanzhanglin.github.io/GUI-Anything/#coverage-case). Code coverage and correct business output are separate checks.
+
 ## ✨ Features
 * **⚡ Fast Map**: Analyze source or imported APK decompilation without an LLM; identify Activities, supported Fragment routes, explicit transitions, and layout/menu element candidates.
 * **🧠 Agent Chat**: Launch OpenCode from the platform, or select the built-in Agent.

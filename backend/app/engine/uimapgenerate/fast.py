@@ -9,12 +9,18 @@ from pathlib import Path
 from typing import Any
 
 from app.engine.uimapgenerate.graph import SCHEMA_VERSION
+from app.engine.uimapgenerate.listeners import listener_trigger, code_only, methods
 from app.services.code_manager import CodeManager
 
 
 ANDROID = "{http://schemas.android.com/apk/res/android}"
 APP = "{http://schemas.android.com/apk/res-auto}"
-INTENT = re.compile(r"\bIntent\s*\([^;\n]*?,\s*([\w.]+)\s*(?:::class\.java|::class|\.class)\s*\)")
+INTENT = re.compile(
+    r"\b(?:android\.content\.)?Intent\s*\([^;\n]*?,\s*"
+    r"(?:\(\s*(?:java\.lang\.)?Class\s*(?:<\s*\?\s*>)?\s*\)\s*)?"
+    r"([\w.]+)\s*(?:::class\.java|::class|\.class)\s*\)"
+)
+SET_CLASS = re.compile(r"\b(?P<receiver>\w+)\.setClass\s*\([^;\n]*?,\s*(?P<target>[\w.]+)\.class\s*\)")
 IMPORT = re.compile(r"(?m)^\s*import\s+([\w.]+)\s*;?")
 ADD_FRAGMENT = re.compile(r"\baddFragment\s*\(\s*new\s+(\w+)\s*\(\s*\)\s*,\s*getResources\(\)\.getString\(R\.string\.(\w+)\)")
 MENU_CASE = re.compile(r"case\s+R\.id\.(\w+)\s*:")
@@ -114,14 +120,21 @@ def _resolve_target(raw: str, source_id: str, code: str, candidates: dict) -> st
 
 def _intent_launched(code: str, match: re.Match[str]) -> bool:
     prefix = code[max(0, match.start() - 120):match.start()]
-    if re.search(r"startActivity\s*\(\s*new\s*$", prefix):
+    if re.search(r"startActivity(?:ForResult)?\s*\(\s*new\s*$", prefix):
         return True
     assignment = re.search(r"\b(?:Intent\s+)?(\w+)\s*=\s*new\s*$", prefix)
     if not assignment:
         return False
-    tail = code[match.end():match.end() + 700]
-    launch = re.search(r"\bstartActivity\s*\(\s*" + re.escape(assignment.group(1)) + r"\s*\)", tail)
-    return bool(launch and tail[:launch.start()].count("\n") <= 18)
+    return _variable_launched(code, match.end(), assignment.group(1))
+
+
+def _variable_launched(code: str, position: int, variable: str) -> bool:
+    # Bound to the current block; never borrow a launch from a later method.
+    tail = code[position:position + 1200].split("}", 1)[0]
+    escaped = re.escape(variable)
+    launch = re.search(r"\bstartActivity(?:ForResult)?\s*\(\s*" + escaped + r"\s*[,)]", tail)
+    return bool(launch and not re.search(r"\b" + escaped + r"\s*=(?!=)|\b" + escaped +
+                                       r"\s*\.\s*(?:setClass|setClassName|setComponent)\s*\(", tail[:launch.start()]))
 
 
 def _menu_labels(repo: Path, strings: dict[str, str]) -> dict[str, str]:
@@ -138,15 +151,25 @@ def _menu_labels(repo: Path, strings: dict[str, str]) -> dict[str, str]:
     return labels
 
 
+def _closing(code: str, start: int, opening: str = "{", closing: str = "}") -> int:
+    depth = 1
+    for end in range(start + 1, len(code)):
+        depth += (code[end] == opening) - (code[end] == closing)
+        if depth == 0:
+            return end
+    return len(code)
+
+
 def _trigger_for_intent(code: str, position: int, target_title: str,
                         menu_labels: dict[str, str]) -> tuple[str, str | None, dict[str, str]]:
-    methods = list(METHOD_HEAD.finditer(code, 0, position))
-    method = methods[-1] if methods else None
+    code = code_only(code)
+    candidates = [m for m in methods(code) if m[2] <= position < m[3]]
+    method = min(candidates, key=lambda m: m[3] - m[2]) if candidates else None
     if method:
-        name = method.group(1)
+        name = method[0]
         if name == "onOptionsItemSelected":
-            cases = list(MENU_CASE.finditer(code, method.end(), position))
-            if cases:
+            cases = list(re.finditer(r"\bcase\s+R\.id\.(\w+)\s*:|\bdefault\s*:", code[method[2]:position]))
+            if cases and cases[-1].group(1):
                 element_id = cases[-1].group(1)
                 label = menu_labels.get(element_id, element_id.replace("_", " "))
                 return (f"点击“{label}”菜单项 → {target_title}", element_id,
@@ -160,23 +183,85 @@ def _trigger_for_intent(code: str, position: int, target_title: str,
         elif name == "onLongClick":
             return (f"长按控件 → {target_title}", None,
                     {"status": "event_only", "event": "long_press", "label": "具体控件未确认"})
-    scope_start = method.end() if method else 0
-    listeners = list(re.compile(r"\b(\w+)\.setOnClickListener\s*\(").finditer(code, scope_start, position))
+        elif name == "onClick":
+            parameter = re.search(r"\(\s*(?:android\.view\.)?View\s+(\w+)\s*\)", code[method[1]:method[2]])
+            if parameter:
+                switches = re.finditer(r"\bswitch\s*\(\s*" + re.escape(parameter.group(1)) + r"\.getId\s*\(\s*\)\s*\)\s*\{", code[method[2]:position])
+                for switch in switches:
+                    opening = method[2] + switch.end() - 1
+                    if position < _closing(code, opening):
+                        cases = list(re.finditer(r"\bcase\s+R\.id\.(\w+)\s*:|\bdefault\s*:", code[opening:position]))
+                        if cases and cases[-1].group(1):
+                            element_id = cases[-1].group(1)
+                            return (f"点击控件 {element_id} → {target_title}", element_id,
+                                    {"status": "resolved", "event": "click", "label": element_id})
+    # Anonymous onClick methods are nested inside the method that binds the View.
+    scope_start = min((m[2] for m in candidates), default=0)
+    listeners = [m for m in re.finditer(r"\.setOnClickListener\s*\(", code[scope_start:position])
+                 if position < _closing(code, scope_start + m.end() - 1, "(", ")")]
     if listeners:
         listener = listeners[-1]
-        body = code[listener.end():position]
-        if body.count("{") > body.count("}"):
-            variable = listener.group(1)
-            bindings = list(re.compile(r"\b" + re.escape(variable) + r"\s*=\s*findViewById\s*\(\s*R\.id\.(\w+)").finditer(
-                code, scope_start, listener.start()))
-            if bindings:
-                element_id = bindings[-1].group(1)
-                return (f"点击控件 {element_id} → {target_title}", element_id,
-                        {"status": "resolved", "event": "click", "label": element_id})
-            return (f"点击控件 → {target_title}", None,
-                    {"status": "event_only", "event": "click", "label": "具体控件未确认"})
+        listener_start = scope_start + listener.start()
+        prefix = code[scope_start:listener_start]
+        direct = re.search(r"findViewById\s*\(\s*R\.id\.(\w+)\s*\)\s*\)*\s*$", prefix)
+        variable = re.search(r"\b(\w+)\s*$", prefix)
+        element_id = direct.group(1) if direct else None
+        if not element_id and variable:
+            # Use the last assignment, not an older findViewById before reassignment.
+            assignments = list(re.finditer(r"\b" + re.escape(variable.group(1)) + r"\s*=(?!=)\s*([^;]+);", prefix))
+            if assignments:
+                bound = re.fullmatch(r"(?:\([\w.]+\)\s*)?findViewById\s*\(\s*R\.id\.(\w+)\s*\)", assignments[-1].group(1).strip())
+                element_id = bound.group(1) if bound else None
+        if element_id:
+            return (f"点击控件 {element_id} → {target_title}", element_id,
+                    {"status": "resolved", "event": "click", "label": element_id})
+        return (f"点击控件 → {target_title}", None,
+                {"status": "event_only", "event": "click", "label": "具体控件未确认"})
     return (f"代码跳转 → {target_title}", None,
             {"status": "unknown", "event": "unknown", "label": "触发方式未定位"})
+
+
+def _helper_routes(code: str, source_id: str, sources: dict, screens: dict, cache: dict):
+    """One-hop static helpers whose complete body is a single explicit launch."""
+    clean = code_only(code)
+    owner = re.escape(source_id.rsplit(".", 1)[-1])
+    calls = re.finditer(r"\b([\w.]+)\.(\w+)\s*\(\s*(?:" + owner + r"\.)?this\s*\)", clean)
+    for call in calls:
+        helper_id = _resolve_target(call.group(1), source_id, code, sources)
+        if not helper_id or helper_id == source_id:
+            continue
+        key = (helper_id, call.group(2))
+        if key not in cache:
+            cache[key] = None
+            path = sources[helper_id]
+            try:
+                helper_code = path.read_text(encoding="utf-8")
+            except (OSError, UnicodeError):
+                continue
+            helper_clean = code_only(helper_code)
+            found = [m for m in methods(helper_code) if m[0] == call.group(2)]
+            if len(found) != 1:
+                continue
+            method = found[0]
+            header = helper_clean[method[1]:method[2]]
+            parameter = re.search(r"\(\s*(?:android\.app\.)?Activity\s+(\w+)\s*\)", header)
+            if not parameter or not re.search(r"\bstatic\b", header):
+                continue
+            body = helper_clean[method[2]:method[3]]
+            intents = list(INTENT.finditer(body))
+            if len(intents) != 1:
+                continue
+            intent = intents[0]
+            receiver = re.escape(parameter.group(1))
+            if (not re.fullmatch(r"\s*" + receiver + r"\.startActivity\s*\(\s*new\s*", body[:intent.start()])
+                    or not re.fullmatch(r"\s*\)\s*;\s*", body[intent.end():])
+                    or not re.match(r"(?:android\.content\.)?Intent\s*\(\s*" + receiver + r"\s*,", intent.group())):
+                continue
+            target = _resolve_target(intent.group(1), helper_id, helper_code, screens)
+            if target:
+                cache[key] = (target, path, helper_code.count("\n", 0, method[2] + intent.start()) + 1)
+        if cache[key]:
+            yield call, cache[key]
 
 
 def _resource_files(repo: Path, folder: str) -> dict[str, Path]:
@@ -302,6 +387,29 @@ def generate_fast_map(app_id: str, *, repo_path: str | Path | None = None) -> di
                 }],
                 "layouts": layouts,
             }
+        # Launcher aliases are entry points to an Activity, not extra visible pages.
+        for alias in root.findall("./application/activity-alias"):
+            target = _manifest_name(alias.get(ANDROID + "targetActivity", ""), package, sources)
+            alias_name = alias.get(ANDROID + "name")
+            if target not in screens or not alias_name or alias.get(ANDROID + "enabled") == "false":
+                continue
+            if application is not None and application.get(ANDROID + "enabled") == "false":
+                continue
+            target_nodes = [a for a in root.findall("./application/activity")
+                            if _manifest_name(a.get(ANDROID + "name", ""), package, sources) == target]
+            if any(a.get(ANDROID + "enabled") == "false" for a in target_nodes):
+                continue
+            launcher = any(
+                any(a.get(ANDROID + "name") == "android.intent.action.MAIN" for a in filt.findall("action"))
+                and any(c.get(ANDROID + "name") == "android.intent.category.LAUNCHER" for c in filt.findall("category"))
+                for filt in alias.findall("intent-filter")
+            )
+            if launcher:
+                screens[target]["entry"] = True
+                screens[target].setdefault("entry_aliases", []).append(_manifest_name(alias_name, package, sources))
+                screens[target].setdefault("entry_evidence", []).append({
+                    "file_path": manifest.relative_to(repo).as_posix(), "line": None,
+                    "method": "manifest_launcher_alias"})
     if not screens:
         raise ValueError("No Activity declarations found in AndroidManifest.xml")
 
@@ -413,6 +521,8 @@ def generate_fast_map(app_id: str, *, repo_path: str | Path | None = None) -> di
                                 "trigger": {"status": "event_only", "event": "navigation_start", "label": "导航容器初始页面"},
                                 "evidence": [{"file_path": layout_path.relative_to(repo).as_posix(), "line": None, "method": "navigation_host"}],
                             })
+    listener_cache: dict = {}
+    helper_cache: dict = {}
     for source_id, screen in sorted(screens.items()):
         source = sources.get(source_id)
         if not source:
@@ -422,14 +532,30 @@ def generate_fast_map(app_id: str, *, repo_path: str | Path | None = None) -> di
             code = path.read_text(encoding="utf-8")
         except (UnicodeError, OSError):
             continue
-        for match in INTENT.finditer(code):
-            target_id = _resolve_target(match.group(1), source_id, code, screens)
+        clean = code_only(code)
+        routes = [(match, match.group(1), "decompiled_intent" if from_apk else "explicit_intent", [])
+                  for match in INTENT.finditer(clean) if _intent_launched(clean, match)]
+        routes.extend((match, match.group("target"), "intent_set_class", [])
+                      for match in SET_CLASS.finditer(clean)
+                      if _variable_launched(clean, match.end(), match.group("receiver")))
+        for call, (target, helper_path, helper_line) in _helper_routes(code, source_id, sources, screens, helper_cache):
+            routes.append((call, target, "navigation_helper_call", [{
+                "file_path": helper_path.relative_to(repo).as_posix(), "line": helper_line,
+                "method": "navigation_helper_launch"}]))
+        for match, raw_target, evidence_method, extra_evidence in sorted(routes, key=lambda item: item[0].start()):
+            target_id = _resolve_target(raw_target, source_id, code, screens)
             if target_id not in screens or target_id == source_id:
-                continue
-            if not _intent_launched(code, match):
                 continue
             line = code.count("\n", 0, match.start()) + 1
             action, trigger_id, trigger = _trigger_for_intent(code, match.start(), screens[target_id]["title"], menu_labels)
+            evidence = [{"file_path": path.relative_to(repo).as_posix(), "line": line, "method": evidence_method}, *extra_evidence]
+            if trigger["status"] != "resolved":
+                binding = listener_trigger(repo, sources, source_id, path, code, match.start(), cache=listener_cache)
+                if binding:
+                    trigger_id, proof = binding
+                    trigger = {"status": "resolved", "event": "click", "label": trigger_id}
+                    action = f"点击控件 {trigger_id} → {screens[target_id]['title']}"
+                    evidence.extend(proof)
             transitions.append({
                 "id": f"{source_id}:intent:{target_id}:{line}",
                 "from": source_id,
@@ -438,7 +564,7 @@ def generate_fast_map(app_id: str, *, repo_path: str | Path | None = None) -> di
                 "trigger_id": trigger_id,
                 "trigger": trigger,
                 "verification": verification,
-                "evidence": [{"file_path": path.relative_to(repo).as_posix(), "line": line, "method": "decompiled_intent" if from_apk else "explicit_intent"}],
+                "evidence": evidence,
             })
 
     # Shared navigation can be implemented in a base Activity. Represent its

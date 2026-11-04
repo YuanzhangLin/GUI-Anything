@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from app.navigation.device import Observation
-from app.navigation.observation import identify_screen, locate_trigger
+from app.navigation.observation import identify_screen, locate_trigger, trigger_present
 from app.navigation.planner import plan_path
 
 
@@ -36,6 +36,7 @@ def run_session(graph: dict[str, Any], device: Any, goal: str, trace_path: Path,
         "steps": [],
     }
     blocked: set[str] = set()
+    prepared: set[str] = set()
     settle = settle or (lambda: time.sleep(1))
 
     def save() -> None:
@@ -78,29 +79,52 @@ def run_session(graph: dict[str, Any], device: Any, goal: str, trace_path: Path,
                 return trace
             edge = route[0]
             target = edge["to"]
+            action_edge = edge
+            target_node = locate_trigger(edge, observation.nodes)
+            preparation = edge.get("preparation")
+            if (not target_node and not trigger_present(edge, observation.nodes)
+                    and (edge.get("trigger") or {}).get("status") == "resolved"
+                    and isinstance(preparation, dict) and preparation.get("evidence")
+                    and edge["id"] not in prepared):
+                prepared.add(edge["id"])
+                preparation_node = locate_trigger(preparation, observation.nodes)
+                preparation_trigger = preparation.get("trigger") or {}
+                menu_key = (preparation_trigger.get("status") == "resolved"
+                            and preparation_trigger.get("event") == "key_menu"
+                            and not preparation_trigger.get("selector") and not preparation.get("trigger_id"))
+                if preparation_node or menu_key:
+                    action_edge = preparation
+                    target_node = preparation_node
+                    target = current
+            is_preparation = action_edge is not edge
+            is_menu_key = is_preparation and (action_edge.get("trigger") or {}).get("event") == "key_menu"
             step: dict[str, Any] = {
                 "index": index, "edge_id": edge["id"], "from": current, "to": target,
-                "action": edge.get("action"), "trigger": edge.get("trigger"),
-                "evidence": edge.get("evidence", []),
+                "phase": "prepare" if is_preparation else "navigate",
+                "intended_destination": edge["to"],
+                "action": action_edge.get("action"), "trigger": action_edge.get("trigger"),
+                "evidence": action_edge.get("evidence", []),
                 "before": {"activity": observation.activity, "screen": current,
                            "hierarchy": f"{assets.name}/{index - 1:03d}-{'start' if index == 1 else 'after'}.xml",
                            "screenshot": f"{assets.name}/{index - 1:03d}-{'start' if index == 1 else 'after'}.png" if observation.screenshot else None},
                 "status": "planned", "at": _now(),
             }
             trace["steps"].append(step)
-            target_node = locate_trigger(edge, observation.nodes)
-            if not target_node:
+            if not target_node and not is_menu_key:
                 step["status"] = "needs_review"
                 step["reason"] = "Trigger is unknown, absent, or not unique in the current UI hierarchy"
                 trace["status"] = "needs_review"
                 trace["reason"] = step["reason"]
                 save()
                 return trace
-            gesture = "long_press" if (edge.get("trigger") or {}).get("event") == "long_press" else "tap"
-            step["input"] = {"gesture": gesture, "x": target_node["center"][0], "y": target_node["center"][1],
-                             "resource_id": target_node["resource_id"]}
+            gesture = "key_menu" if is_menu_key else "long_press" if (action_edge.get("trigger") or {}).get("event") == "long_press" else "tap"
+            step["input"] = {"gesture": gesture, "keycode": 82} if is_menu_key else {
+                "gesture": gesture, "x": target_node["center"][0], "y": target_node["center"][1],
+                "resource_id": target_node["resource_id"]}
             save()
-            if gesture == "long_press":
+            if is_menu_key:
+                device.open_menu()
+            elif gesture == "long_press":
                 device.long_press(*target_node["center"])
             else:
                 device.tap(*target_node["center"])
@@ -111,6 +135,13 @@ def run_session(graph: dict[str, Any], device: Any, goal: str, trace_path: Path,
             step["after"] = {"activity": observation.activity, "screen": observed,
                              "hierarchy": f"{assets.name}/{index:03d}-after.xml",
                              "screenshot": f"{assets.name}/{index:03d}-after.png" if observation.screenshot else None}
+            if is_preparation and (observed != target or not locate_trigger(edge, observation.nodes)):
+                step["status"] = "needs_review"
+                step["reason"] = "Preparation did not expose a unique target on the same screen"
+                trace["status"] = "needs_review"
+                trace["reason"] = step["reason"]
+                save()
+                return trace
             if observed == target:
                 step["status"] = "verified"
                 current = observed
@@ -125,6 +156,10 @@ def run_session(graph: dict[str, Any], device: Any, goal: str, trace_path: Path,
                     return trace
                 current = observed
             save()
+            if current == goal:
+                trace["status"] = "completed"
+                save()
+                return trace
         trace["status"] = "needs_review"
         trace["reason"] = f"Stopped at the {max_steps}-step limit"
         save()

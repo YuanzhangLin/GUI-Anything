@@ -112,7 +112,7 @@
       inspector.append(node('h3', '', `运行时观察 · ${runtimeSteps.length} 次`));
       for (const step of runtimeSteps) {
         const observed = step.after?.screen || step.before?.screen || '无法识别';
-        const detail = `${step.status} · 实际页面 ${shortId(observed)}${step.reason ? ` · ${step.reason}` : ''}${step.after?.hierarchy ? ` · 界面记录 ${step.after.hierarchy}` : ''}${step.after?.screenshot ? ` · 截图 ${step.after.screenshot}` : ''}`;
+        const detail = `${step.phase === 'prepare' ? '展开菜单 / 准备操作' : '页面跳转'} · ${step.action || ''} · ${step.status} · 实际页面 ${shortId(observed)}${step.reason ? ` · ${step.reason}` : ''}${step.after?.hierarchy ? ` · 界面记录 ${step.after.hierarchy}` : ''}${step.after?.screenshot ? ` · 截图 ${step.after.screenshot}` : ''}`;
         inspector.append(node('div', `runtime-note ${step.status}`, detail));
         const screenshot = step.after?.screenshot_data || step.before?.screenshot_data;
         if (screenshot) {
@@ -201,7 +201,7 @@
       const y2 = b.y + 35;
       const d = sameColumn ? `M${x1} ${y1} C${x1 + 95} ${y1},${x2 + 95} ${y2},${x2} ${y2}`
         : `M${x1} ${y1} C${(x1 + x2) / 2} ${y1},${(x1 + x2) / 2} ${y2},${x2} ${y2}`;
-      const runtime = (runtimeTrace?.steps || []).filter((step) => edges.some((item) => reviewKey(item) === step.edge_id));
+      const runtime = (runtimeTrace?.steps || []).filter((step) => step.phase !== 'prepare' && edges.some((item) => reviewKey(item) === step.edge_id));
       const runtimeClass = runtime.some((step) => step.status === 'mismatch') ? ' mismatch'
         : runtime.some((step) => step.status === 'verified') ? ' verified' : '';
       const path = svg('path', { d, class: `edge${runtimeClass}`, 'data-route-id': reviewKey(edge) });
@@ -248,7 +248,7 @@
       if (query && !searchable.includes(query)) continue;
       const button = node('button', 'route-row'); button.type = 'button';
       const text = node('span'); text.append(node('strong', '', label), node('small', '', edge.action || '跳转'));
-      const runtime = (runtimeTrace?.steps || []).filter((step) => step.edge_id === reviewKey(edge));
+      const runtime = (runtimeTrace?.steps || []).filter((step) => step.phase !== 'prepare' && step.edge_id === reviewKey(edge));
       const runtimeLabel = runtime.some((step) => step.status === 'mismatch') ? '运行偏差'
         : runtime.some((step) => step.status === 'verified') ? '运行已验证' : '';
       const kind = node('span', 'path-kind', runtimeLabel || (edge.trigger?.status === 'resolved' ? '已定位触发点' : edge.trigger?.status === 'event_only' ? '只定位事件' : '触发未知'));

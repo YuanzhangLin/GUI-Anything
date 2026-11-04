@@ -8,6 +8,49 @@ from app.paths import validate_app_id
 
 
 class FastMapTests(unittest.TestCase):
+    def test_launcher_alias_marks_target_without_creating_a_fake_page(self):
+        for enabled in ("true", "false"):
+            with self.subTest(enabled=enabled), tempfile.TemporaryDirectory() as directory:
+                main = Path(directory) / "src" / "main"
+                main.mkdir(parents=True)
+                (main / "AndroidManifest.xml").write_text(
+                    '<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="example">'
+                    '<application><activity android:name=".Start"/>'
+                    f'<activity-alias android:name=".Launcher" android:targetActivity=".Start" android:enabled="{enabled}">'
+                    '<intent-filter><action android:name="android.intent.action.MAIN"/>'
+                    '<category android:name="android.intent.category.LAUNCHER"/></intent-filter>'
+                    '</activity-alias></application></manifest>', encoding="utf-8")
+                graph = generate_fast_map("fixture", repo_path=directory)
+                self.assertEqual(len(graph["screens"]), 1)
+                page = graph["screens"][0]
+                self.assertEqual(page["id"], "example.Start")
+                self.assertEqual(page["entry"], enabled == "true")
+                if enabled == "true":
+                    self.assertEqual(page["entry_aliases"], ["example.Launcher"])
+
+    def test_decompiled_intent_casts_and_qualified_names(self):
+        for constructor in ("Intent(this, (Class<?>) DetailActivity.class)",
+                            "android.content.Intent(this, (java.lang.Class<?>) example.DetailActivity.class)"):
+            for statement in (f"startActivity(new {constructor});",
+                              f"android.content.Intent next = new {constructor}; startActivity(next);"):
+                with self.subTest(statement=statement), tempfile.TemporaryDirectory() as directory:
+                    repo = Path(directory)
+                    main = repo / "src" / "main"
+                    main.mkdir(parents=True)
+                    (main / "AndroidManifest.xml").write_text(
+                        '<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="example">'
+                        '<application><activity android:name=".HomeActivity"/>'
+                        '<activity android:name=".DetailActivity"/></application></manifest>', encoding="utf-8")
+                    (main / "HomeActivity.java").write_text(
+                        'package example; class HomeActivity { void open() { ' + statement +
+                        ' } void unused() { android.content.Intent unused = new ' + constructor + '; } }',
+                        encoding="utf-8")
+                    with patch("app.engine.uimapgenerate.fast.CodeManager") as manager:
+                        manager.return_value.get_repo_path.return_value = str(repo)
+                        graph = generate_fast_map("fixture")
+                    self.assertEqual(len(graph["transitions"]), 1)
+                    self.assertEqual(graph["transitions"][0]["to"], "example.DetailActivity")
+
     def test_app_id_cannot_escape_repository_root(self):
         with self.assertRaises(ValueError):
             validate_app_id("../private")

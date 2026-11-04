@@ -24,6 +24,7 @@
         <nav aria-label="主导航">
           <a href="#map">交互示例</a>
           <a href="./viewer.html">地图校验器</a>
+          <a href="#coverage-case">覆盖案例</a>
           <a href="#workflow">工作方式</a>
           <a href="https://github.com/YuanzhangLin/GUI-Anything" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
         </nav>
@@ -88,6 +89,21 @@
             </div>
             <div class="demo-foot"><span><i class="legend-dot legend-start"></i> 起始页面</span><span><i class="legend-dot legend-screen"></i> Activity / Fragment</span><span>展示部分路径 · 静态证据，未经运行时验证</span></div>
           </div>
+        </section>
+
+        <section class="coverage-case" id="coverage-case" aria-labelledby="coverage-title">
+          <div class="section-heading">
+            <div><span class="section-kicker">INSTRUMENTED CASE / AGENT 辅助实验</span><h2 id="coverage-title">操作之后，目标代码真的执行了吗？</h2></div>
+            <p>OmniNotes 6.1.0 · Android API 25。一次本地实验，分别检查 JaCoCo 新增覆盖与数据库中的实际结果。</p>
+          </div>
+          <ol class="coverage-steps" aria-label="实验操作流程">
+            <li><span>01</span>创建两条测试笔记</li><li><span>02</span>长按并多选</li><li><span>03</span>合并笔记</li><li><span>04</span>保存，删除原记录</li>
+          </ol>
+          <div class="coverage-grid">
+            <article><span class="section-kicker">CODE TARGET</span><h3>5 / 5 目标行新增命中</h3><p><code>DetailFragment.deleteMergedNotes</code> 的循环体与删除调用：1630、1631、1632、1633、1635 行，操作前覆盖指令为 0，操作后全部命中。</p><p>方法覆盖：9/9 行 · 35/35 条指令 · 3/4 分支。普通保存也会调用该方法，所以单看方法覆盖不足以判定成功。</p></article>
+            <article><span class="section-kicker">PERSISTED RESULT</span><h3>两条原记录 → 一条合并记录</h3><p>数据库验证两条原笔记 ID 已删除，新笔记同时保留两段正文，无关记录未变。</p><p>含数据准备共 20 次 UI 操作，预算为 60 次。APK 哈希一致，JaCoCo 未报告 class 不匹配；每次采集重置探针后比较新增覆盖。</p></article>
+          </div>
+          <p class="coverage-note">能力边界：由 Agent 阅读源码、观察实时 UI，并使用本地 ADB 脚本执行。此案例不是现有导航器的端到端自动化基准，也不代表成功率或全分支覆盖。仅发布整理后的说明，原始实验数据、截图、APK、数据库及执行脚本不上传。</p>
         </section>
 
         <section class="workflow" id="workflow" aria-labelledby="workflow-title">

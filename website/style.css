@@ -26,3 +26,16 @@
 .inspector-elements li strong,.inspector-elements li small{display:block}
 .inspector-elements li strong{font-size:12px}
 .inspector-elements li small,.inspector-elements>small{margin-top:4px;color:#738b98;font:400 10px var(--mono)}
+
+/* Curated instrumented case; no runtime artifacts are hosted. */
+.coverage-case { padding: 80px max(38px,calc((100vw - 1264px)/2)); scroll-margin-top: 24px; }
+.coverage-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 0; list-style: none; }
+.coverage-steps li { padding: 18px; border: 1px solid #d5dedf; border-radius: 12px; }
+.coverage-steps span { display: block; color: #437369; font: 12px "IBM Plex Mono", monospace; margin-bottom: 8px; }
+.coverage-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
+.coverage-grid article { padding: 24px; background: #eef4f1; border-radius: 14px; color: #172d2a; }
+.coverage-grid h3 { margin: 12px 0; }
+.coverage-grid p, .coverage-note { line-height: 1.75; }
+.coverage-grid code { overflow-wrap: anywhere; }
+.coverage-note { font-size: 14px; margin-top: 24px; }
+@media (max-width: 700px) { .coverage-case { padding: 60px 20px; } .coverage-steps { grid-template-columns: 1fr 1fr; } .coverage-grid { grid-template-columns: 1fr; } }

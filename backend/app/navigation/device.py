@@ -54,3 +54,7 @@ class AdbDevice:
 
     def long_press(self, x: int, y: int) -> None:
         self._run("shell", "input", "swipe", str(x), str(y), str(x), str(y), "800")
+
+    def open_menu(self) -> None:
+        """Explicit legacy options-menu preparation; callers verify the result."""
+        self._run("shell", "input", "keyevent", "82")

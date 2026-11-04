@@ -35,6 +35,7 @@ class FakeDevice:
     def __init__(self, observations):
         self.observations = iter(observations)
         self.taps = []
+        self.menu_keys = 0
 
     def observe(self):
         return next(self.observations)
@@ -42,8 +43,103 @@ class FakeDevice:
     def tap(self, x, y):
         self.taps.append((x, y))
 
+    def open_menu(self):
+        self.menu_keys += 1
+
 
 class NavigationTests(unittest.TestCase):
+    def test_explicit_list_item_handles_nonclickable_rows_and_rejects_disabled_rows(self):
+        xml = ('<hierarchy><node class="android.widget.ListView" bounds="[0,0][100,100]">'
+               '<node class="android.widget.LinearLayout" clickable="false" enabled="true" bounds="[0,0][100,50]">'
+               '<node text="Settings" resource-id="android:id/title" bounds="[10,10][90,40]"/></node>'
+               '</node></hierarchy>')
+        action = edge("A", "B", None, event="menu_select")
+        action["trigger"]["selector"] = {"resource_id": "android:id/title", "text": "Settings", "target": "list_item"}
+        self.assertEqual(locate_trigger(action, parse_hierarchy(xml))["center"], [50, 25])
+        self.assertIsNone(locate_trigger(action, parse_hierarchy(xml.replace('enabled="true"', 'enabled="false"'))))
+        self.assertIsNone(locate_trigger(action, parse_hierarchy(xml.replace('android.widget.ListView', 'android.widget.FrameLayout'))))
+        action["trigger"]["selector"]["target"] = "nearest_clickable_ancestor"
+        self.assertIsNone(locate_trigger(action, parse_hierarchy(xml)))
+
+    def test_explicit_menu_key_preparation(self):
+        path = edge("A", "B", "settings")
+        path["preparation"] = {"action": "Open options menu",
+                               "trigger": {"status": "resolved", "event": "key_menu"},
+                               "evidence": [{"file_path": "A.java", "line": 42}]}
+        device = FakeDevice([observation("A", "none"), observation("A", "settings"), observation("B", "done")])
+        with tempfile.TemporaryDirectory() as directory:
+            result = run_session({"screens": [screen("A"), screen("B")], "transitions": [path]}, device,
+                                 "example.B", Path(directory) / "trace.json", max_steps=2, settle=lambda: None)
+        self.assertEqual(result["status"], "completed")
+        self.assertEqual(result["steps"][0]["input"], {"gesture": "key_menu", "keycode": 82})
+        self.assertEqual(device.menu_keys, 1)
+        self.assertEqual(len(device.taps), 1)
+
+    def test_unproved_menu_key_is_not_sent(self):
+        for preparation in ({"trigger": {"status": "resolved", "event": "key_menu"}},
+                            {"trigger": {"status": "unknown", "event": "key_menu"}, "evidence": [{}]}):
+            path = edge("A", "B", "settings")
+            path["preparation"] = preparation
+            device = FakeDevice([observation("A", "none")])
+            with tempfile.TemporaryDirectory() as directory:
+                result = run_session({"screens": [screen("A"), screen("B")], "transitions": [path]}, device,
+                                     "example.B", Path(directory) / "trace.json", settle=lambda: None)
+            self.assertEqual(result["status"], "needs_review")
+            self.assertEqual(device.menu_keys, 0)
+
+    def test_explicit_child_label_selects_only_its_enabled_clickable_parent(self):
+        xml = ('<hierarchy><node clickable="true" bounds="[0,0][100,50]">'
+               '<node resource-id="example:id/name" text="Settings" bounds="[10,10][80,40]"/>'
+               '</node><node clickable="true" bounds="[0,50][100,100]">'
+               '<node resource-id="example:id/name" text="About" bounds="[10,60][80,90]"/>'
+               '</node></hierarchy>')
+        action = edge("A", "B", None)
+        action["trigger"]["selector"] = {"resource_id": "example:id/name", "text": "Settings",
+                                           "target": "nearest_clickable_ancestor"}
+        self.assertEqual(locate_trigger(action, parse_hierarchy(xml))["center"], [50, 25])
+        self.assertIsNone(locate_trigger(action, parse_hierarchy(xml.replace('text="About"', 'text="Settings"'))))
+        self.assertIsNone(locate_trigger(action, parse_hierarchy(xml.replace('clickable="true"', 'clickable="true" enabled="false"'))))
+        self.assertIsNone(locate_trigger(action, parse_hierarchy(xml.replace('text="Settings"', 'text="settings"'))))
+        action["trigger"]["selector"] = {"target": "nearest_clickable_ancestor"}
+        self.assertIsNone(locate_trigger(action, parse_hierarchy(xml)))
+
+    def test_preparation_opens_menu_then_navigates_at_exact_step_limit(self):
+        path = edge("A", "B", "open_b")
+        path["preparation"] = edge("A", "A", "open_menu")
+        graph = {"screens": [screen("A"), screen("B")], "transitions": [path]}
+        device = FakeDevice([observation("A", "open_menu"), observation("A", "open_b"), observation("B", "done")])
+        with tempfile.TemporaryDirectory() as directory:
+            result = run_session(graph, device, "example.B", Path(directory) / "trace.json",
+                                 max_steps=2, settle=lambda: None)
+        self.assertEqual(result["status"], "completed")
+        self.assertEqual([s["phase"] for s in result["steps"]], ["prepare", "navigate"])
+        self.assertEqual([s["status"] for s in result["steps"]], ["verified", "verified"])
+        self.assertEqual(result["steps"][0]["to"], "example.A")
+        self.assertEqual(len(device.taps), 2)
+
+    def test_failed_preparation_stops_without_repeated_taps(self):
+        for after in (observation("A", "open_menu"), observation("C", "open_b")):
+            path = edge("A", "B", "open_b")
+            path["preparation"] = edge("A", "A", "open_menu")
+            graph = {"screens": [screen("A"), screen("B"), screen("C")], "transitions": [path]}
+            device = FakeDevice([observation("A", "open_menu"), after])
+            with tempfile.TemporaryDirectory() as directory:
+                result = run_session(graph, device, "example.B", Path(directory) / "trace.json", settle=lambda: None)
+            self.assertEqual(result["status"], "needs_review")
+            self.assertEqual(len(device.taps), 1)
+
+    def test_present_ambiguous_target_does_not_trigger_preparation(self):
+        path = edge("A", "B", "open_b")
+        path["preparation"] = edge("A", "A", "open_menu")
+        current = observation("A", "open_b")
+        current.nodes = current.nodes * 2 + observation("A", "open_menu").nodes
+        device = FakeDevice([current])
+        with tempfile.TemporaryDirectory() as directory:
+            result = run_session({"screens": [screen("A"), screen("B")], "transitions": [path]}, device,
+                                 "example.B", Path(directory) / "trace.json", settle=lambda: None)
+        self.assertEqual(result["status"], "needs_review")
+        self.assertEqual(device.taps, [])
+
     def test_cli_run_writes_trace_and_standalone_replay(self):
         graph = {"schema_version": 2, "project_name": "Fixture", "screens": [screen("A"), screen("B")],
                  "transitions": [edge("A", "B", "open_b")], "containments": []}

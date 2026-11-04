@@ -12,4 +12,12 @@ The product has three parts:
 
 The state flow is **plan → observe → ground one action → execute → observe again → verify or replan**. A planned transition has source-rule evidence. A verified trace step has runtime observation. When the current page or control is ambiguous, the runner stops with `needs_review`; the Agent can inspect code and the local observation files before proceeding. A trace does not mutate the static Map.
 
-Current limits: Fast does not identify every Fragment/runtime page; the ADB runner only performs a tap or long press when a resolved resource ID uniquely matches the current UI. It does not infer arbitrary list-row targets, scroll or open hidden menus, or prove a task's business outcome. These are explicit 2.0 extension points rather than silently guessed actions.
+Fast also traces bounded external Java click listeners through an immutable Activity receiver and a single callback call. The rule records binding, receiver, delegate and decompiled resource-ID evidence. It leaves ambiguous, conditional and multi-hop callbacks unresolved.
+
+Additional source rules cover `startActivityForResult`, launched `setClass` targets, and single-launch static helpers, with caller/callee evidence. Anonymous listeners use lexical callback boundaries so an earlier binding cannot leak into a later callback. Launcher aliases mark their target page as an entry without introducing a fictitious page. Per-generation listener parsing/resource caches avoid repeated scans for each transition.
+
+The ADB runner accepts exact resource IDs or explicit selectors combining full resource ID, text and accessibility description. A selector may target the nearest clickable ancestor of a uniquely matched label. An evidence-backed `preparation` can open a menu before a transition: it is attempted once, must preserve the source screen and expose the unique target, and is recorded separately as `phase: prepare`. Preparation alone never marks a graph transition verified. See the canonical Skill's `references/navigation.md` for the schema and the separate task-map workflow.
+
+For legacy native menus, explicit `target: list_item` targets an enabled row under `android.widget.ListView` even when the row's clickable flag is false. Explicit `key_menu` preparation sends keycode 82 and retains the same verification/stop rules. Neither capability is selected implicitly from a guessed label or UI coordinate.
+
+Current limits: Fast does not identify every Fragment/runtime page or infer arbitrary menu libraries. The runner does not guess selectors, translate labels, scroll, or prove a task's business outcome. Source-reviewed task maps remain distinct from generated maps and runtime traces.
