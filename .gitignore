@@ -4,5 +4,10 @@ __pycache__/
 *.db
 node_modules/
 dist/
+/_site/
+frontend.tar.gz
+debug_log.txt
 repos/
+backend/data/*.json
+!backend/data/demo.json
 .DS_Store

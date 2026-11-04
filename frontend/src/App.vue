@@ -1,5 +1,12 @@
 <template>
-  <div v-if="!isLoggedIn" class="auth-container">
+  <div v-if="demoVisible" class="demo-view">
+    <header class="demo-header">
+      <button type="button" @click="demoVisible = false">← 返回登录</button>
+      <div><strong>Activity Diary 示例图</strong><span>固定示例 · 无反编译文件或讨论记录</span></div>
+    </header>
+    <MapCanvas appId="demo" :demo="true" />
+  </div>
+  <div v-else-if="!isLoggedIn" class="auth-container">
     <div class="auth-bg-glow">
       <div class="glow-circle glow-1"></div>
       <div class="glow-circle glow-2"></div>
@@ -8,7 +15,7 @@
     <div class="auth-card">
       <div class="auth-header">
         <div class="auth-icon-wrapper">
-          <span class="auth-icon">📱</span>
+          <img class="auth-icon" src="./assets/mark.svg" alt="GUI-Anything" />
         </div>
         <h1>GUI-Anything</h1>
         <p>Android 静态分析与智能审计平台</p>
@@ -38,6 +45,7 @@
       </div>
 
       <div class="auth-footer">
+        <button type="button" class="demo-entry" @click="demoVisible = true">先看看示例图 →</button>
         <span @click="isRegistering = !isRegistering" class="toggle-link">
           {{ isRegistering ? '已有权限？执行登录协议' : '没有访问权限？申请注册' }}
         </span>
@@ -53,7 +61,7 @@
     >
       <div class="sidebar-header">
         <div class="logo-text">
-          <span class="logo-icon">📱</span>
+          <img class="logo-icon" src="./assets/mark.svg" alt="" />
           <span v-if="!sidebarCollapsed">GUI-Anything</span>
         </div>
         <div class="sidebar-header-actions">
@@ -112,7 +120,7 @@
         </div>
         <nav class="footer-nav">
           <button @click="openDocs"><BookOpen :size="16" /> 使用手册</button>
-          <button @click="showMap = !showMap"><Activity :size="16" /> 交互图谱</button>
+          <button @click="showMap = !showMap"><Activity :size="16" /> Only Map</button>
           <button v-if="isAdmin" @click="showAdmin = true" class="admin-entry-btn">
     <Settings :size="16" /> 管理控制台
   </button>
@@ -193,6 +201,13 @@
             </button>
           </div>
           <div class="composer-toolbar">
+            <label class="toolbar-hint">Agent
+              <select v-model="selectedAgent" :disabled="isLoading">
+                <option v-for="item in availableAgents" :key="item.id" :value="item.id" :disabled="!item.available">
+                  {{ item.name }}{{ item.available ? '' : '（未配置）' }}
+                </option>
+              </select>
+            </label>
             <button type="button" class="toolbar-attach" @click="openIssuePicker">
               <Tag :size="15" />
               添加 ISSUE
@@ -251,9 +266,9 @@
       </div>
     </main>
 
-    <div v-if="showMap" class="drawer">
+    <div v-if="showMap" class="drawer only-map-drawer">
       <div class="drawer-header">
-        <span>UI Map: {{ selectedAppId }}</span>
+        <span>Only Map · {{ selectedAppId }}</span>
         <X @click="showMap = false" class="close-icon" />
       </div>
       <div class="drawer-view">
@@ -274,6 +289,7 @@
     <AdminPanel 
     v-if="showAdmin" 
     @close="showAdmin = false" 
+    @imported="refreshApps"
     :appList="appList" 
     :apiBase="API_BASE" 
   />
@@ -282,23 +298,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick, watch, onBeforeUnmount } from 'vue'
 import { Plus, Send, Activity, X, BookOpen, LogOut, Settings, Tag, Trash2, PanelLeftClose, PanelLeftOpen } from 'lucide-vue-next'
-import { marked } from 'marked'
+import { renderMarkdown } from './utils/markdown'
+import { authFetch, setToken, getToken, clearToken } from './utils/auth'
 import MapCanvas from './components/MapCanvas.vue'
 import AdminPanel from './components/AdminPanel.vue' 
 
 
-// --- 1. 基础工具配置 ---
-marked.setOptions({
-  breaks: true,
-  gfm: true
-})
-
-const renderMarkdown = (content: string) => {
-  return marked.parse(content || '')
-}
-
 // --- 2. 状态定义 (必须放在计算属性之前) ---
 const isLoggedIn = ref(false)
+const demoVisible = ref(false)
 const isRegistering = ref(false)
 const showDocs = ref(false)
 const showMap = ref(false)
@@ -344,7 +352,20 @@ const adjustChatInputHeight = () => {
 }
 const docsContent = ref('正在加载手册...')
 const showAdmin = ref(false) // 控制中台显示的“开关”
-const isAdmin = ref(true)    // 权限标记
+const isAdmin = ref(false)
+const selectedAgent = ref<'opencode' | 'builtin' | 'external'>('opencode')
+const availableAgents = ref<{id: 'opencode' | 'builtin' | 'external'; name: string; available: boolean}[]>([])
+
+const loadAgents = async () => {
+  try {
+    const response = await authFetch(`${API_BASE}/agents`)
+    const data = await response.json()
+    availableAgents.value = data.agents || []
+    if (!availableAgents.value.some(item => item.id === selectedAgent.value && item.available)) {
+      selectedAgent.value = availableAgents.value.find(item => item.available)?.id || 'opencode'
+    }
+  } catch { availableAgents.value = [] }
+}
 
 type AttachedIssue = { number: number; title: string; body: string }
 const MAX_ATTACHED_ISSUES = 5
@@ -443,18 +464,9 @@ const currentAppMeta = computed(() => {
 
 // --- 4. 彻底去掉硬编码的 API 地址推导 (核心修复) ---
 const getApiBase = () => {
-  // 1. 优先检查环境变量（用于 Docker Compose 环境变量或生产配置）
   const envBase = import.meta.env.VITE_API_BASE
   if (envBase) return envBase
-  
-  // 2. 自动推导逻辑：
-  // 无论你在浏览器输入的是 localhost、局域网 IP 还是公网 IP
-  // hostname 都会自动捕获当前访问的域名，protocol 会自动获取 http 或 https
-  const protocol = window.location.protocol
-  const hostname = window.location.hostname
-  
-  // 默认后端端口为 8002。这种写法保证了前后端只要部署在同一台机器，就能自动连接
-  return `${protocol}//${hostname}:8002/api`
+  return '/api'
 }
 
 const API_BASE = getApiBase()
@@ -462,8 +474,13 @@ const API_BASE = getApiBase()
 // --- 5. 健壮的 Fetch 封装 ---
 const safeFetch = async (url: string, options?: RequestInit) => {
   try {
-    const res = await fetch(url, options)
+    const res = await authFetch(url, options)
     const contentType = res.headers.get('content-type')
+    if (res.status === 401 && !url.endsWith('/login')) {
+      clearToken()
+      localStorage.removeItem('gui_user')
+      isLoggedIn.value = false
+    }
     
     if (!res.ok) {
       if (contentType && contentType.includes('text/html')) {
@@ -493,6 +510,10 @@ const openDocs = async () => {
 
 const initData = async () => {
   try {
+    const meRes = await safeFetch(`${API_BASE}/me`)
+    const identity = await meRes.json()
+    isAdmin.value = !!identity.is_admin
+    await loadAgents()
     const appRes = await safeFetch(`${API_BASE}/apps`)
     appList.value = await appRes.json()
     const histRes = await safeFetch(`${API_BASE}/history/${currentUser.value}`)
@@ -517,6 +538,12 @@ const initData = async () => {
   }
 }
 
+const refreshApps = async (appId?: string) => {
+  const response = await safeFetch(`${API_BASE}/apps`)
+  appList.value = await response.json()
+  if (appId) selectedAppId.value = appId
+}
+
 const handleLogin = async () => {
   loginError.value = ''
   try {
@@ -527,6 +554,8 @@ const handleLogin = async () => {
     })
     const data = await res.json()
     currentUser.value = data.username
+    isAdmin.value = !!data.is_admin
+    setToken(data.token)
     isLoggedIn.value = true
     localStorage.setItem('gui_user', data.username)
     await initData()
@@ -729,6 +758,7 @@ const sendMessageWithOverrides = async (
         session_id: currentSessionId.value,
         username: currentUser.value,
         app_id: selectedAppId.value,
+        provider: selectedAgent.value,
         ...overrides
       })
     })
@@ -788,8 +818,11 @@ const sendMessage = async () => {
 }
 
 const handleLogout = () => {
+  authFetch(`${API_BASE}/logout`, { method: 'POST' }).catch(() => {})
   isLoggedIn.value = false
+  isAdmin.value = false
   localStorage.removeItem('gui_user')
+  clearToken()
 }
 
 const formatId = (id: string) => {
@@ -814,7 +847,7 @@ watch(selectedAppId, () => {
 
 onMounted(() => {
   const saved = localStorage.getItem('gui_user')
-  if (saved) {
+  if (saved && getToken()) {
     currentUser.value = saved
     isLoggedIn.value = true
     initData()
@@ -824,6 +857,13 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.demo-view { height: 100vh; display: flex; flex-direction: column; background: #f8fafc; }
+.demo-view :deep(.map-container) { flex: 1; min-height: 0; }
+.demo-header { display: flex; align-items: center; gap: 24px; padding: 14px 20px; background: #101d31; color: white; }
+.demo-header button { border: 1px solid #64748b; border-radius: 8px; background: transparent; color: white; padding: 8px 12px; cursor: pointer; }
+.demo-header div { display: flex; flex-direction: column; gap: 2px; }
+.demo-header span { font-size: 12px; color: #94a3b8; }
+.demo-entry { display: block; width: 100%; margin-bottom: 12px; border: 1px solid #10b981; border-radius: 8px; background: transparent; color: #6ee7b7; padding: 10px; cursor: pointer; }
 /* 让控制台按钮与其他侧边栏按钮保持风格一致 */
 .admin-entry-btn {
   width: 100%;
@@ -894,7 +934,8 @@ onMounted(() => {
 }
 
 .auth-header { text-align: center; margin-bottom: 36px; }
-.auth-icon-wrapper { font-size: 48px; margin-bottom: 16px; }
+.auth-icon-wrapper { margin-bottom: 16px; }
+.auth-icon { display: block; width: 76px; height: 76px; margin: 0 auto; }
 .auth-header h1 { 
   color: #f8fafc; font-size: 28px; font-weight: 800; 
   letter-spacing: -1px; margin-bottom: 8px; 
@@ -997,7 +1038,7 @@ onMounted(() => {
   font-size: 20px; font-weight: 800; margin-bottom: 24px; display: flex; align-items: center; gap: 8px;
   background: linear-gradient(to right, #ffffff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
-.logo-icon { -webkit-text-fill-color: initial; font-size: 24px; }
+.logo-icon { display: block; width: 30px; height: 30px; flex: none; }
 .btn-new-chat-fancy {
   width: 100%; padding: 12px; background: #1f2937; border: 1px solid #374151; color: white; 
   border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -1291,6 +1332,8 @@ onMounted(() => {
 }
 .send-btn { position: absolute; right: 12px; bottom: 12px; background: #111827; color: white; border: none; padding: 8px; border-radius: 10px; cursor: pointer; }
 .drawer { position: absolute; top: 0; right: 0; width: 42%; height: 100%; background: white; box-shadow: -10px 0 30px rgba(0,0,0,0.05); z-index: 100; display: flex; flex-direction: column; }
+.only-map-drawer { position: fixed; width: 100vw; box-shadow: none; }
+.only-map-drawer .drawer-view { padding: 0; overflow: hidden; }
 .drawer-header { padding: 16px 20px; border-bottom: 1px solid #f3f4f6; display: flex; justify-content: space-between; align-items: center; font-weight: 600; }
 .drawer-view { flex: 1; overflow-y: auto; padding: 20px; }
 

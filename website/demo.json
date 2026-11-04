@@ -1,0 +1,2211 @@
+{
+  "project_name": "Activity Diary",
+  "schema_version": 2,
+  "mode": "demo",
+  "source": "android_repository",
+  "screens": [
+    {
+      "id": "de.rampro.activitydiary.ui.generic.AboutActivity",
+      "title": "About",
+      "kind": "screen_candidate",
+      "entry": false,
+      "components": [
+        {
+          "name": "de.rampro.activitydiary.ui.generic.AboutActivity",
+          "type": "Activity",
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/generic/AboutActivity.java"
+        }
+      ],
+      "layouts": [
+        "activity_about",
+        "activity_base",
+        "drawer_header"
+      ],
+      "elements": [
+        {
+          "id": "nav_about",
+          "label": "About",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_add_activity",
+          "label": "Add Activity",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_diary",
+          "label": "Diary",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_activity_manager",
+          "label": "Edit Activities",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_map",
+          "label": "Map",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_privacy",
+          "label": "Privacy Policy",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_main",
+          "label": "Select Activity",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_settings",
+          "label": "Settings",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_statistics",
+          "label": "Statistics",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "activity_diary_logo",
+          "label": "Logo of activitydiary",
+          "type": "ImageView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/drawer_header.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "aboutTextView",
+          "label": "aboutTextView",
+          "type": "TextView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_about.xml",
+            "method": "resource_xml"
+          }
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.generic.EditActivity",
+      "title": "New activity",
+      "kind": "screen_candidate",
+      "entry": false,
+      "components": [
+        {
+          "name": "de.rampro.activitydiary.ui.generic.EditActivity",
+          "type": "Activity",
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/generic/EditActivity.java"
+        }
+      ],
+      "layouts": [
+        "activity_base",
+        "activity_edit_content",
+        "drawer_header"
+      ],
+      "elements": [
+        {
+          "id": "edit_activity_name",
+          "label": "Activity title",
+          "type": "TextInputEditText",
+          "kind": "layout_control",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_edit_content.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "quickFixButtonRename",
+          "label": "Rename deleted activity with same name to resolve the conflict",
+          "type": "ImageButton",
+          "kind": "layout_control",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_edit_content.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "quickFixButton1",
+          "label": "Undelete activity with same name",
+          "type": "ImageButton",
+          "kind": "layout_control",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_edit_content.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_about",
+          "label": "About",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_add_activity",
+          "label": "Add Activity",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "action_edit_delete",
+          "label": "Delete activity",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/edit_menu.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_diary",
+          "label": "Diary",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_activity_manager",
+          "label": "Edit Activities",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_map",
+          "label": "Map",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_privacy",
+          "label": "Privacy Policy",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "action_edit_done",
+          "label": "Save",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/edit_menu.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_main",
+          "label": "Select Activity",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_settings",
+          "label": "Settings",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_statistics",
+          "label": "Statistics",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "edit_activity_color_label",
+          "label": "Activity color",
+          "type": "TextView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_edit_content.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "activity_diary_logo",
+          "label": "Logo of activitydiary",
+          "type": "ImageView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/drawer_header.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "edit_activity_color",
+          "label": "edit activity color",
+          "type": "ImageView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_edit_content.xml",
+            "method": "resource_xml"
+          }
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.generic.ManageActivity",
+      "title": "Manage activities",
+      "kind": "screen_candidate",
+      "entry": false,
+      "components": [
+        {
+          "name": "de.rampro.activitydiary.ui.generic.ManageActivity",
+          "type": "Activity",
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/generic/ManageActivity.java"
+        }
+      ],
+      "layouts": [
+        "activity_base",
+        "activity_manage_content",
+        "activity_row",
+        "drawer_header"
+      ],
+      "elements": [
+        {
+          "id": "manage_activity_list",
+          "label": "manage activity list",
+          "type": "ListView",
+          "kind": "layout_control",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_manage_content.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_about",
+          "label": "About",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "action_add_activity",
+          "label": "Add Activity",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/manage_menu.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_add_activity",
+          "label": "Add Activity",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_diary",
+          "label": "Diary",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_activity_manager",
+          "label": "Edit Activities",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_map",
+          "label": "Map",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_privacy",
+          "label": "Privacy Policy",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_main",
+          "label": "Select Activity",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_settings",
+          "label": "Settings",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "action_show_hide_deleted",
+          "label": "Show Deleted",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/manage_menu.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_statistics",
+          "label": "Statistics",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "activity_name",
+          "label": "<No Activity>",
+          "type": "TextView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_row.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "activity_diary_logo",
+          "label": "Logo of activitydiary",
+          "type": "ImageView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/drawer_header.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "activity_image",
+          "label": "Picture for activity",
+          "type": "ImageView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_row.xml",
+            "method": "resource_xml"
+          }
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.generic.PrivacyPolicyActivity",
+      "title": "Privacy Policy",
+      "kind": "screen_candidate",
+      "entry": false,
+      "components": [
+        {
+          "name": "de.rampro.activitydiary.ui.generic.PrivacyPolicyActivity",
+          "type": "Activity",
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/generic/PrivacyPolicyActivity.java"
+        }
+      ],
+      "layouts": [
+        "activity_base",
+        "activity_privacy_policy",
+        "drawer_header"
+      ],
+      "elements": [
+        {
+          "id": "nav_about",
+          "label": "About",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_add_activity",
+          "label": "Add Activity",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_diary",
+          "label": "Diary",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_activity_manager",
+          "label": "Edit Activities",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_map",
+          "label": "Map",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_privacy",
+          "label": "Privacy Policy",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_main",
+          "label": "Select Activity",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_settings",
+          "label": "Settings",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_statistics",
+          "label": "Statistics",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "activity_diary_logo",
+          "label": "Logo of activitydiary",
+          "type": "ImageView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/drawer_header.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "policyTextView",
+          "label": "policyTextView",
+          "type": "TextView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_privacy_policy.xml",
+            "method": "resource_xml"
+          }
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.history.HistoryActivity",
+      "title": "Diary",
+      "kind": "screen_candidate",
+      "entry": false,
+      "components": [
+        {
+          "name": "de.rampro.activitydiary.ui.history.HistoryActivity",
+          "type": "Activity",
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/history/HistoryActivity.java"
+        }
+      ],
+      "layouts": [
+        "activity_base",
+        "activity_history_content",
+        "drawer_header"
+      ],
+      "elements": [
+        {
+          "id": "history_list",
+          "label": "history list",
+          "type": "RecyclerView",
+          "kind": "layout_control",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_history_content.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_about",
+          "label": "About",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_add_activity",
+          "label": "Add Activity",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_diary",
+          "label": "Diary",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_activity_manager",
+          "label": "Edit Activities",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "action_filter",
+          "label": "Filter",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/history_menu.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_map",
+          "label": "Map",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_privacy",
+          "label": "Privacy Policy",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_main",
+          "label": "Select Activity",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_settings",
+          "label": "Settings",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_statistics",
+          "label": "Statistics",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "activity_diary_logo",
+          "label": "Logo of activitydiary",
+          "type": "ImageView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/drawer_header.xml",
+            "method": "resource_xml"
+          }
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.history.HistoryDetailActivity",
+      "title": "Diary entry",
+      "kind": "screen_candidate",
+      "entry": false,
+      "components": [
+        {
+          "name": "de.rampro.activitydiary.ui.history.HistoryDetailActivity",
+          "type": "Activity",
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/history/HistoryDetailActivity.java"
+        }
+      ],
+      "layouts": [
+        "activity_base",
+        "activity_history_detail_content",
+        "drawer_header"
+      ],
+      "elements": [
+        {
+          "id": "adjust_adjacent",
+          "label": "Adjust adjacent diary entries",
+          "type": "CheckBox",
+          "kind": "layout_control",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_history_detail_content.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "date_end",
+          "label": "End date",
+          "type": "Button",
+          "kind": "layout_control",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_history_detail_content.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "time_end",
+          "label": "End time",
+          "type": "Button",
+          "kind": "layout_control",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_history_detail_content.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "edit_activity_note",
+          "label": "Note",
+          "type": "TextInputEditText",
+          "kind": "layout_control",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_history_detail_content.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "date_start",
+          "label": "Start date",
+          "type": "Button",
+          "kind": "layout_control",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_history_detail_content.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "time_start",
+          "label": "Start time",
+          "type": "Button",
+          "kind": "layout_control",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_history_detail_content.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "picture_recycler",
+          "label": "picture recycler",
+          "type": "RecyclerView",
+          "kind": "layout_control",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_history_detail_content.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_about",
+          "label": "About",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_add_activity",
+          "label": "Add Activity",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_diary",
+          "label": "Diary",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_activity_manager",
+          "label": "Edit Activities",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_map",
+          "label": "Map",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_privacy",
+          "label": "Privacy Policy",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "action_edit_done",
+          "label": "Save",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/edit_diary_entry_menu.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_main",
+          "label": "Select Activity",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_settings",
+          "label": "Settings",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_statistics",
+          "label": "Statistics",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "activity_name",
+          "label": "<No Activity>",
+          "type": "TextView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_row.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "end_header",
+          "label": "End",
+          "type": "TextView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_history_detail_content.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "activity_diary_logo",
+          "label": "Logo of activitydiary",
+          "type": "ImageView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/drawer_header.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "activity_image",
+          "label": "Picture for activity",
+          "type": "ImageView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_row.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "start_header",
+          "label": "Start",
+          "type": "TextView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_history_detail_content.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "time_error",
+          "label": "time error",
+          "type": "TextView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_history_detail_content.xml",
+            "method": "resource_xml"
+          }
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.location.MapActivity",
+      "title": "Map",
+      "kind": "screen_candidate",
+      "entry": false,
+      "components": [
+        {
+          "name": "de.rampro.activitydiary.ui.location.MapActivity",
+          "type": "Activity",
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/location/MapActivity.java"
+        }
+      ],
+      "layouts": [
+        "activity_base",
+        "activity_map",
+        "drawer_header"
+      ],
+      "elements": [
+        {
+          "id": "nav_about",
+          "label": "About",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_add_activity",
+          "label": "Add Activity",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_diary",
+          "label": "Diary",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_activity_manager",
+          "label": "Edit Activities",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_map",
+          "label": "Map",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_privacy",
+          "label": "Privacy Policy",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_main",
+          "label": "Select Activity",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_settings",
+          "label": "Settings",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_statistics",
+          "label": "Statistics",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "activity_diary_logo",
+          "label": "Logo of activitydiary",
+          "type": "ImageView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/drawer_header.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "noMap",
+          "label": "No data to show. Enable location services in the settings.",
+          "type": "TextView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_map.xml",
+            "method": "resource_xml"
+          }
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.main.DetailNoteFragment",
+      "title": "Note",
+      "kind": "screen_candidate",
+      "entry": false,
+      "components": [
+        {
+          "name": "de.rampro.activitydiary.ui.main.DetailNoteFragment",
+          "type": "Fragment",
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/main/DetailNoteFragment.java"
+        }
+      ],
+      "layouts": [
+        "fragment_detail_note"
+      ],
+      "elements": [
+        {
+          "id": "note",
+          "label": "note",
+          "type": "TextView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/fragment_detail_note.xml",
+            "method": "resource_xml"
+          }
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.main.DetailPictureFragement",
+      "title": "Pictures",
+      "kind": "screen_candidate",
+      "entry": false,
+      "components": [
+        {
+          "name": "de.rampro.activitydiary.ui.main.DetailPictureFragement",
+          "type": "Fragment",
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/main/DetailPictureFragement.java"
+        }
+      ],
+      "layouts": [
+        "fragment_detail_pictures"
+      ],
+      "elements": [
+        {
+          "id": "picture_recycler",
+          "label": "picture recycler",
+          "type": "RecyclerView",
+          "kind": "layout_control",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/fragment_detail_pictures.xml",
+            "method": "resource_xml"
+          }
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.main.DetailStatFragement",
+      "title": "Statistics",
+      "kind": "screen_candidate",
+      "entry": false,
+      "components": [
+        {
+          "name": "de.rampro.activitydiary.ui.main.DetailStatFragement",
+          "type": "Fragment",
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/main/DetailStatFragement.java"
+        }
+      ],
+      "layouts": [
+        "fragment_detail_stats"
+      ],
+      "elements": [
+        {
+          "id": "avg_duration_label",
+          "label": "avg duration label",
+          "type": "TextView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/fragment_detail_stats.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "duration_label",
+          "label": "duration label",
+          "type": "TextView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/fragment_detail_stats.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "start_of_last_label",
+          "label": "start of last label",
+          "type": "TextView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/fragment_detail_stats.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "total_month_label",
+          "label": "total month label",
+          "type": "TextView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/fragment_detail_stats.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "total_today_label",
+          "label": "total today label",
+          "type": "TextView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/fragment_detail_stats.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "total_week_label",
+          "label": "total week label",
+          "type": "TextView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/fragment_detail_stats.xml",
+            "method": "resource_xml"
+          }
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.main.MainActivity",
+      "title": "Activity Diary",
+      "kind": "screen_candidate",
+      "entry": true,
+      "components": [
+        {
+          "name": "de.rampro.activitydiary.ui.main.MainActivity",
+          "type": "Activity",
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/main/MainActivity.java"
+        }
+      ],
+      "layouts": [
+        "activity_base",
+        "activity_main_content",
+        "drawer_header"
+      ],
+      "elements": [
+        {
+          "id": "fab_attach_picture",
+          "label": "fab attach picture",
+          "type": "FloatingActionButton",
+          "kind": "layout_control",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_main_content.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "fab_edit_note",
+          "label": "fab edit note",
+          "type": "FloatingActionButton",
+          "kind": "layout_control",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_main_content.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "select_recycler",
+          "label": "select recycler",
+          "type": "RecyclerView",
+          "kind": "layout_control",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_main_content.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "tablayout",
+          "label": "tablayout",
+          "type": "TabLayout",
+          "kind": "layout_control",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_main_content.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_about",
+          "label": "About",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "action_add_activity",
+          "label": "Add Activity",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_menu.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_add_activity",
+          "label": "Add Activity",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_diary",
+          "label": "Diary",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_activity_manager",
+          "label": "Edit Activities",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "action_filter",
+          "label": "Filter",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_menu.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_map",
+          "label": "Map",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_privacy",
+          "label": "Privacy Policy",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_main",
+          "label": "Select Activity",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_settings",
+          "label": "Settings",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_statistics",
+          "label": "Statistics",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "activity_name",
+          "label": "<No Activity>",
+          "type": "TextView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_row.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "activity_diary_logo",
+          "label": "Logo of activitydiary",
+          "type": "ImageView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/drawer_header.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "activity_image",
+          "label": "Picture for activity",
+          "type": "ImageView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_row.xml",
+            "method": "resource_xml"
+          }
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.settings.SettingsActivity",
+      "title": "Settings",
+      "kind": "screen_candidate",
+      "entry": false,
+      "components": [
+        {
+          "name": "de.rampro.activitydiary.ui.settings.SettingsActivity",
+          "type": "Activity",
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/settings/SettingsActivity.java"
+        }
+      ],
+      "layouts": [
+        "activity_base",
+        "activity_settings",
+        "drawer_header"
+      ],
+      "elements": [
+        {
+          "id": "nav_about",
+          "label": "About",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_add_activity",
+          "label": "Add Activity",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_diary",
+          "label": "Diary",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_activity_manager",
+          "label": "Edit Activities",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_map",
+          "label": "Map",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_privacy",
+          "label": "Privacy Policy",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_main",
+          "label": "Select Activity",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_settings",
+          "label": "Settings",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_statistics",
+          "label": "Statistics",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "activity_diary_logo",
+          "label": "Logo of activitydiary",
+          "type": "ImageView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/drawer_header.xml",
+            "method": "resource_xml"
+          }
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.statistics.StatisticsActivity",
+      "title": "Statistics",
+      "kind": "screen_candidate",
+      "entry": false,
+      "components": [
+        {
+          "name": "de.rampro.activitydiary.ui.statistics.StatisticsActivity",
+          "type": "Activity",
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/statistics/StatisticsActivity.java"
+        }
+      ],
+      "layouts": [
+        "activity_base",
+        "activity_statistics",
+        "drawer_header",
+        "simple_spinner_item"
+      ],
+      "elements": [
+        {
+          "id": "rangeTextView",
+          "label": "?",
+          "type": "TextView",
+          "kind": "layout_control",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_statistics.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "timeframeSpinner",
+          "label": "timeframeSpinner",
+          "type": "Spinner",
+          "kind": "layout_control",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_statistics.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_about",
+          "label": "About",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_add_activity",
+          "label": "Add Activity",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_diary",
+          "label": "Diary",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_activity_manager",
+          "label": "Edit Activities",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_map",
+          "label": "Map",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_privacy",
+          "label": "Privacy Policy",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_main",
+          "label": "Select Activity",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_settings",
+          "label": "Settings",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "nav_statistics",
+          "label": "Statistics",
+          "type": "item",
+          "kind": "menu_item",
+          "evidence": {
+            "file_path": "app/src/main/res/menu/main_drawer.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "activity_diary_logo",
+          "label": "Logo of activitydiary",
+          "type": "ImageView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/drawer_header.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "img_earlier",
+          "label": "earlier",
+          "type": "ImageView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_statistics.xml",
+            "method": "resource_xml"
+          }
+        },
+        {
+          "id": "img_later",
+          "label": "later",
+          "type": "ImageView",
+          "kind": "display_element",
+          "evidence": {
+            "file_path": "app/src/main/res/layout/activity_statistics.xml",
+            "method": "resource_xml"
+          }
+        }
+      ]
+    }
+  ],
+  "transitions": [
+    {
+      "id": "de.rampro.activitydiary.ui.main.MainActivity:tab:de.rampro.activitydiary.ui.main.DetailStatFragement",
+      "from": "de.rampro.activitydiary.ui.main.MainActivity",
+      "to": "de.rampro.activitydiary.ui.main.DetailStatFragement",
+      "action": "切换到“Statistics”标签",
+      "trigger_id": null,
+      "verification": "source_rule",
+      "trigger": {
+        "status": "event_only",
+        "event": "tab_select",
+        "label": "Statistics"
+      },
+      "evidence": [
+        {
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/main/MainActivity.java",
+          "line": 670,
+          "method": "viewpager_tab"
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.main.MainActivity:tab:de.rampro.activitydiary.ui.main.DetailNoteFragment",
+      "from": "de.rampro.activitydiary.ui.main.MainActivity",
+      "to": "de.rampro.activitydiary.ui.main.DetailNoteFragment",
+      "action": "切换到“Note”标签",
+      "trigger_id": null,
+      "verification": "source_rule",
+      "trigger": {
+        "status": "event_only",
+        "event": "tab_select",
+        "label": "Note"
+      },
+      "evidence": [
+        {
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/main/MainActivity.java",
+          "line": 671,
+          "method": "viewpager_tab"
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.main.MainActivity:tab:de.rampro.activitydiary.ui.main.DetailPictureFragement",
+      "from": "de.rampro.activitydiary.ui.main.MainActivity",
+      "to": "de.rampro.activitydiary.ui.main.DetailPictureFragement",
+      "action": "切换到“Pictures”标签",
+      "trigger_id": null,
+      "verification": "source_rule",
+      "trigger": {
+        "status": "event_only",
+        "event": "tab_select",
+        "label": "Pictures"
+      },
+      "evidence": [
+        {
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/main/MainActivity.java",
+          "line": 672,
+          "method": "viewpager_tab"
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.generic.ManageActivity:intent:de.rampro.activitydiary.ui.generic.EditActivity:140",
+      "from": "de.rampro.activitydiary.ui.generic.ManageActivity",
+      "to": "de.rampro.activitydiary.ui.generic.EditActivity",
+      "action": "点击“Add Activity”菜单项 → New activity",
+      "trigger_id": "action_add_activity",
+      "trigger": {
+        "status": "resolved",
+        "event": "menu_select",
+        "label": "Add Activity"
+      },
+      "verification": "source_rule",
+      "evidence": [
+        {
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/generic/ManageActivity.java",
+          "line": 140,
+          "method": "explicit_intent"
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.generic.ManageActivity:intent:de.rampro.activitydiary.ui.generic.EditActivity:191",
+      "from": "de.rampro.activitydiary.ui.generic.ManageActivity",
+      "to": "de.rampro.activitydiary.ui.generic.EditActivity",
+      "action": "点击列表项 → New activity",
+      "trigger_id": null,
+      "trigger": {
+        "status": "event_only",
+        "event": "item_click",
+        "label": "列表项"
+      },
+      "verification": "source_rule",
+      "evidence": [
+        {
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/generic/ManageActivity.java",
+          "line": 191,
+          "method": "explicit_intent"
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.history.HistoryActivity:intent:de.rampro.activitydiary.ui.history.HistoryDetailActivity:99",
+      "from": "de.rampro.activitydiary.ui.history.HistoryActivity",
+      "to": "de.rampro.activitydiary.ui.history.HistoryDetailActivity",
+      "action": "点击列表项 → Diary entry",
+      "trigger_id": null,
+      "trigger": {
+        "status": "event_only",
+        "event": "item_click",
+        "label": "列表项"
+      },
+      "verification": "source_rule",
+      "evidence": [
+        {
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/history/HistoryActivity.java",
+          "line": 99,
+          "method": "explicit_intent"
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.history.HistoryActivity:intent:de.rampro.activitydiary.ui.generic.EditActivity:352",
+      "from": "de.rampro.activitydiary.ui.history.HistoryActivity",
+      "to": "de.rampro.activitydiary.ui.generic.EditActivity",
+      "action": "点击“Add Activity”菜单项 → New activity",
+      "trigger_id": "action_add_activity",
+      "trigger": {
+        "status": "resolved",
+        "event": "menu_select",
+        "label": "Add Activity"
+      },
+      "verification": "source_rule",
+      "evidence": [
+        {
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/history/HistoryActivity.java",
+          "line": 352,
+          "method": "explicit_intent"
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.main.DetailStatFragement:intent:de.rampro.activitydiary.ui.history.HistoryDetailActivity:59",
+      "from": "de.rampro.activitydiary.ui.main.DetailStatFragement",
+      "to": "de.rampro.activitydiary.ui.history.HistoryDetailActivity",
+      "action": "代码跳转 → Diary entry",
+      "trigger_id": null,
+      "trigger": {
+        "status": "unknown",
+        "event": "unknown",
+        "label": "触发方式未定位"
+      },
+      "verification": "source_rule",
+      "evidence": [
+        {
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/main/DetailStatFragement.java",
+          "line": 59,
+          "method": "explicit_intent"
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.main.MainActivity:intent:de.rampro.activitydiary.ui.history.HistoryDetailActivity:193",
+      "from": "de.rampro.activitydiary.ui.main.MainActivity",
+      "to": "de.rampro.activitydiary.ui.history.HistoryDetailActivity",
+      "action": "点击控件 activity_background → Diary entry",
+      "trigger_id": "activity_background",
+      "trigger": {
+        "status": "resolved",
+        "event": "click",
+        "label": "activity_background"
+      },
+      "verification": "source_rule",
+      "evidence": [
+        {
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/main/MainActivity.java",
+          "line": 193,
+          "method": "explicit_intent"
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.main.MainActivity:intent:de.rampro.activitydiary.ui.generic.EditActivity:345",
+      "from": "de.rampro.activitydiary.ui.main.MainActivity",
+      "to": "de.rampro.activitydiary.ui.generic.EditActivity",
+      "action": "长按控件 → New activity",
+      "trigger_id": null,
+      "trigger": {
+        "status": "event_only",
+        "event": "long_press",
+        "label": "具体控件未确认"
+      },
+      "verification": "source_rule",
+      "evidence": [
+        {
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/main/MainActivity.java",
+          "line": 345,
+          "method": "explicit_intent"
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.main.MainActivity:intent:de.rampro.activitydiary.ui.generic.EditActivity:355",
+      "from": "de.rampro.activitydiary.ui.main.MainActivity",
+      "to": "de.rampro.activitydiary.ui.generic.EditActivity",
+      "action": "长按列表项 → New activity",
+      "trigger_id": null,
+      "trigger": {
+        "status": "event_only",
+        "event": "item_long_press",
+        "label": "列表项"
+      },
+      "verification": "source_rule",
+      "evidence": [
+        {
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/main/MainActivity.java",
+          "line": 355,
+          "method": "explicit_intent"
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.main.MainActivity:intent:de.rampro.activitydiary.ui.generic.EditActivity:555",
+      "from": "de.rampro.activitydiary.ui.main.MainActivity",
+      "to": "de.rampro.activitydiary.ui.generic.EditActivity",
+      "action": "点击“Add Activity”菜单项 → New activity",
+      "trigger_id": "action_add_activity",
+      "trigger": {
+        "status": "resolved",
+        "event": "menu_select",
+        "label": "Add Activity"
+      },
+      "verification": "source_rule",
+      "evidence": [
+        {
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/main/MainActivity.java",
+          "line": 555,
+          "method": "explicit_intent"
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.main.MainActivity:shared-menu:de.rampro.activitydiary.ui.generic.EditActivity",
+      "from": "de.rampro.activitydiary.ui.main.MainActivity",
+      "to": "de.rampro.activitydiary.ui.generic.EditActivity",
+      "action": "导航菜单：Add Activity",
+      "trigger_id": "nav_add_activity",
+      "verification": "source_rule",
+      "trigger": {
+        "status": "resolved",
+        "event": "menu_select",
+        "label": "Add Activity"
+      },
+      "evidence": [
+        {
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/generic/BaseActivity.java",
+          "line": 88,
+          "method": "inherited_navigation"
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.main.MainActivity:shared-menu:de.rampro.activitydiary.ui.generic.ManageActivity",
+      "from": "de.rampro.activitydiary.ui.main.MainActivity",
+      "to": "de.rampro.activitydiary.ui.generic.ManageActivity",
+      "action": "导航菜单：Edit Activities",
+      "trigger_id": "nav_activity_manager",
+      "verification": "source_rule",
+      "trigger": {
+        "status": "resolved",
+        "event": "menu_select",
+        "label": "Edit Activities"
+      },
+      "evidence": [
+        {
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/generic/BaseActivity.java",
+          "line": 92,
+          "method": "inherited_navigation"
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.main.MainActivity:shared-menu:de.rampro.activitydiary.ui.history.HistoryActivity",
+      "from": "de.rampro.activitydiary.ui.main.MainActivity",
+      "to": "de.rampro.activitydiary.ui.history.HistoryActivity",
+      "action": "导航菜单：Diary",
+      "trigger_id": "nav_diary",
+      "verification": "source_rule",
+      "trigger": {
+        "status": "resolved",
+        "event": "menu_select",
+        "label": "Diary"
+      },
+      "evidence": [
+        {
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/generic/BaseActivity.java",
+          "line": 96,
+          "method": "inherited_navigation"
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.main.MainActivity:shared-menu:de.rampro.activitydiary.ui.location.MapActivity",
+      "from": "de.rampro.activitydiary.ui.main.MainActivity",
+      "to": "de.rampro.activitydiary.ui.location.MapActivity",
+      "action": "导航菜单：Map",
+      "trigger_id": "nav_map",
+      "verification": "source_rule",
+      "trigger": {
+        "status": "resolved",
+        "event": "menu_select",
+        "label": "Map"
+      },
+      "evidence": [
+        {
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/generic/BaseActivity.java",
+          "line": 100,
+          "method": "inherited_navigation"
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.main.MainActivity:shared-menu:de.rampro.activitydiary.ui.statistics.StatisticsActivity",
+      "from": "de.rampro.activitydiary.ui.main.MainActivity",
+      "to": "de.rampro.activitydiary.ui.statistics.StatisticsActivity",
+      "action": "导航菜单：Statistics",
+      "trigger_id": "nav_statistics",
+      "verification": "source_rule",
+      "trigger": {
+        "status": "resolved",
+        "event": "menu_select",
+        "label": "Statistics"
+      },
+      "evidence": [
+        {
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/generic/BaseActivity.java",
+          "line": 104,
+          "method": "inherited_navigation"
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.main.MainActivity:shared-menu:de.rampro.activitydiary.ui.generic.AboutActivity",
+      "from": "de.rampro.activitydiary.ui.main.MainActivity",
+      "to": "de.rampro.activitydiary.ui.generic.AboutActivity",
+      "action": "导航菜单：About",
+      "trigger_id": "nav_about",
+      "verification": "source_rule",
+      "trigger": {
+        "status": "resolved",
+        "event": "menu_select",
+        "label": "About"
+      },
+      "evidence": [
+        {
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/generic/BaseActivity.java",
+          "line": 108,
+          "method": "inherited_navigation"
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.main.MainActivity:shared-menu:de.rampro.activitydiary.ui.generic.PrivacyPolicyActivity",
+      "from": "de.rampro.activitydiary.ui.main.MainActivity",
+      "to": "de.rampro.activitydiary.ui.generic.PrivacyPolicyActivity",
+      "action": "导航菜单：Privacy Policy",
+      "trigger_id": "nav_privacy",
+      "verification": "source_rule",
+      "trigger": {
+        "status": "resolved",
+        "event": "menu_select",
+        "label": "Privacy Policy"
+      },
+      "evidence": [
+        {
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/generic/BaseActivity.java",
+          "line": 112,
+          "method": "inherited_navigation"
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.main.MainActivity:shared-menu:de.rampro.activitydiary.ui.settings.SettingsActivity",
+      "from": "de.rampro.activitydiary.ui.main.MainActivity",
+      "to": "de.rampro.activitydiary.ui.settings.SettingsActivity",
+      "action": "导航菜单：Settings",
+      "trigger_id": "nav_settings",
+      "verification": "source_rule",
+      "trigger": {
+        "status": "resolved",
+        "event": "menu_select",
+        "label": "Settings"
+      },
+      "evidence": [
+        {
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/generic/BaseActivity.java",
+          "line": 117,
+          "method": "inherited_navigation"
+        }
+      ]
+    }
+  ],
+  "containments": [
+    {
+      "id": "de.rampro.activitydiary.ui.main.MainActivity:hosts-tab:de.rampro.activitydiary.ui.main.DetailNoteFragment",
+      "parent": "de.rampro.activitydiary.ui.main.MainActivity",
+      "child": "de.rampro.activitydiary.ui.main.DetailNoteFragment",
+      "kind": "tab_host",
+      "verification": "source_rule",
+      "evidence": [
+        {
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/main/MainActivity.java",
+          "line": 671,
+          "method": "viewpager_tab"
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.main.MainActivity:hosts-tab:de.rampro.activitydiary.ui.main.DetailPictureFragement",
+      "parent": "de.rampro.activitydiary.ui.main.MainActivity",
+      "child": "de.rampro.activitydiary.ui.main.DetailPictureFragement",
+      "kind": "tab_host",
+      "verification": "source_rule",
+      "evidence": [
+        {
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/main/MainActivity.java",
+          "line": 672,
+          "method": "viewpager_tab"
+        }
+      ]
+    },
+    {
+      "id": "de.rampro.activitydiary.ui.main.MainActivity:hosts-tab:de.rampro.activitydiary.ui.main.DetailStatFragement",
+      "parent": "de.rampro.activitydiary.ui.main.MainActivity",
+      "child": "de.rampro.activitydiary.ui.main.DetailStatFragement",
+      "kind": "tab_host",
+      "verification": "source_rule",
+      "evidence": [
+        {
+          "file_path": "app/src/main/java/de/rampro/activitydiary/ui/main/MainActivity.java",
+          "line": 670,
+          "method": "viewpager_tab"
+        }
+      ]
+    }
+  ],
+  "source_commit": "71254d4"
+}

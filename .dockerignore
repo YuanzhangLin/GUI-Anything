@@ -1,0 +1,10 @@
+.git
+repos
+frontend
+agent-skills/**/__pycache__
+backend/__pycache__
+backend/**/*.pyc
+backend/*.db
+backend/.env
+backend/data/imported_apps.json
+backend/debug_log.txt

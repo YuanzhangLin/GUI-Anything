@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0d1928" />
+    <meta name="description" content="GUI-Anything 将 Android 应用的页面与操作路径整理成可追溯的地图。" />
+    <title>GUI-Anything — Understand how an app works</title>
+    <link rel="icon" href="./mark.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./style.css" />
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳到正文</a>
+    <div class="site-shell">
+      <header class="site-header">
+        <a class="brand" href="#top" aria-label="GUI-Anything 首页">
+          <img src="./mark.svg" alt="" width="35" height="35" />
+          <span>GUI-Anything</span>
+        </a>
+        <nav aria-label="主导航">
+          <a href="#map">交互示例</a>
+          <a href="./viewer.html">地图校验器</a>
+          <a href="#workflow">工作方式</a>
+          <a href="https://github.com/YuanzhangLin/GUI-Anything" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+        </nav>
+      </header>
+
+      <main id="main">
+        <section class="hero" id="top" aria-labelledby="hero-title">
+          <div class="hero-copy">
+            <div class="eyebrow"><span class="status-light"></span> ANDROID → MAP <span class="eyebrow-divider">/</span> OPEN SOURCE</div>
+            <h1 id="hero-title">看懂一个 App，<br /><em>先看它的路径。</em></h1>
+            <p class="hero-lead">把 Android 应用里的页面、跳转和操作线索整理成一张图。用 Map 规划路径，执行时逐步核对界面；遇到疑点，就回到 Activity、Fragment 和源码查证。</p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="./viewer.html">打开地图校验器 <span aria-hidden="true">↗</span></a>
+              <a class="button button-quiet" href="https://github.com/YuanzhangLin/GUI-Anything" target="_blank" rel="noopener noreferrer">查看源代码 <span aria-hidden="true">→</span></a>
+            </div>
+            <p class="hero-note"><span class="mono">SKILL</span> 兼容 Agent <span class="note-dot">·</span> Fast 出图无需模型 <span class="note-dot">·</span> 独立网页校验</p>
+          </div>
+          <div class="hero-art" aria-hidden="true">
+            <div class="art-grain"></div>
+            <span class="art-caption art-caption-top">APP / USER JOURNEY</span>
+            <div class="phone-frame">
+              <div class="phone-speaker"></div>
+              <div class="phone-screen">
+                <div class="phone-topline"></div>
+                <div class="phone-title"></div>
+                <div class="phone-row"><span></span><i></i></div>
+                <div class="phone-row"><span></span><i></i></div>
+                <div class="phone-row"><span></span><i></i></div>
+                <div class="phone-dock"><b></b><b></b><b></b></div>
+              </div>
+            </div>
+            <svg class="art-paths" viewBox="0 0 560 470" fill="none" preserveAspectRatio="xMidYMid meet">
+              <path d="M259 120 H400 Q421 120 421 140 V203" stroke="#70ddbc" stroke-width="2.5" />
+              <path d="M277 287 H402 Q422 287 422 268" stroke="#70ddbc" stroke-width="2.5" />
+              <path d="M265 343 H404 Q423 343 423 363 V397" stroke="#70ddbc" stroke-width="2.5" />
+              <circle cx="421" cy="203" r="5" fill="#70ddbc" />
+              <circle cx="422" cy="268" r="5" fill="#70ddbc" />
+              <circle cx="423" cy="397" r="5" fill="#70ddbc" />
+            </svg>
+            <div class="art-tag tag-one"><span class="tag-index">01</span> 首页 <small>MainActivity</small></div>
+            <div class="art-tag tag-two"><span class="tag-index">02</span> 操作 <small>onClick</small></div>
+            <div class="art-tag tag-three"><span class="tag-index">03</span> 目标页 <small>Fragment</small></div>
+            <span class="art-caption art-caption-bottom">VISIBLE FLOW / SOURCE EVIDENCE</span>
+          </div>
+        </section>
+
+        <section class="demo-section" id="map" aria-labelledby="demo-title">
+          <div class="section-heading">
+            <div><span class="section-kicker">LIVE EXAMPLE / 只含图谱</span><h2 id="demo-title">点开一条路径，看看依据。</h2></div>
+            <p>基于 Activity Diary 源码的真实 Fast 结果。下方选取其中几条路径展示；网站不提供源码副本或对话记录。</p>
+          </div>
+          <div class="demo-window">
+            <div class="demo-toolbar"><span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span><span>Activity Diary / FAST MAP</span><span class="demo-mode" id="map-summary">LOADING MAP</span></div>
+            <div class="demo-body">
+              <div class="map-scroll"><div class="map-stage" id="map-stage" aria-label="可交互的应用页面地图"><svg id="map-lines" viewBox="0 0 610 460" aria-label="页面之间的操作路径"></svg><div id="map-nodes"></div></div></div>
+              <aside class="map-inspector" id="map-inspector" aria-live="polite">
+                <span class="inspector-kicker">SELECT A SCREEN OR PATH</span>
+                <h3>从首页开始</h3>
+                <p>点击页面或连接线，查看 Fast 从哪一处源码识别出它。</p>
+                <div class="inspector-meta"><span>图谱来源</span><strong>真实源码扫描</strong></div>
+              </aside>
+            </div>
+            <div class="demo-foot"><span><i class="legend-dot legend-start"></i> 起始页面</span><span><i class="legend-dot legend-screen"></i> Activity / Fragment</span><span>展示部分路径 · 静态证据，未经运行时验证</span></div>
+          </div>
+        </section>
+
+        <section class="workflow" id="workflow" aria-labelledby="workflow-title">
+          <div class="section-heading compact"><div><span class="section-kicker">FROM APK TO UNDERSTANDING</span><h2 id="workflow-title">两种速度，同一张图。</h2></div></div>
+          <div class="workflow-grid">
+            <article class="workflow-item"><span class="workflow-marker">01 / INPUT</span><h3>给它一个应用</h3><p>从 Android 源码仓库开始，或导入 APK 并在后端反编译。</p></article>
+            <article class="workflow-item"><span class="workflow-marker">02 / FAST MAP</span><h3>先看到路径</h3><p>无需模型，提取候选页面与显式跳转。只想要图，就停在这里。</p></article>
+            <article class="workflow-item"><span class="workflow-marker">03 / OBSERVE</span><h3>边走边看</h3><p>在连接的 Android 设备上逐步观察与核对；把实际轨迹载入校验器，对照 Map 和源码依据。</p></article>
+          </div>
+        </section>
+
+        <section class="closing" aria-labelledby="closing-title"><div><span class="section-kicker">OPEN SOURCE / ANDROID UI ANALYSIS</span><h2 id="closing-title">让代码里的界面，<br />变成能讨论的路径。</h2></div><a class="button button-light" href="https://github.com/YuanzhangLin/GUI-Anything" target="_blank" rel="noopener noreferrer">在 GitHub 查看项目 <span aria-hidden="true">↗</span></a></section>
+      </main>
+      <footer class="site-footer"><span>© GUI-Anything</span><span>Understand how an app works.</span><a href="https://github.com/YuanzhangLin/GUI-Anything" target="_blank" rel="noopener noreferrer">Source on GitHub ↗</a></footer>
+    </div>
+  </body>
+</html>

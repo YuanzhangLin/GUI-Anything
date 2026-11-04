@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Map Review · GUI-Anything</title>
+  <link rel="icon" href="./mark.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="./viewer.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./index.html"><img src="./mark.svg" alt="" /> GUI-Anything</a>
+    <span class="divider"></span><strong>Map Review</strong>
+    <span class="spacer"></span>
+    <label class="file-button">载入 Map JSON<input id="map-file" type="file" accept=".json,application/json" /></label>
+    <label class="file-button">载入运行轨迹<input id="trace-file" type="file" accept=".json,application/json" /></label>
+    <button id="export-review" type="button" disabled>导出校验记录</button>
+  </header>
+  <main>
+    <section class="heading">
+      <div><span class="eyebrow">ANDROID / HUMAN VERIFICATION</span><h1 id="project-title">正在加载地图</h1><p id="map-meta">可导入本地 JSON，或通过 URL 的 ?map= 参数自动载入。</p></div>
+      <div class="counts" id="map-counts"></div>
+    </section>
+    <div id="trace-summary" class="trace-summary" hidden></div>
+    <div id="load-error" class="error" hidden></div>
+    <div class="workspace" id="workspace" hidden>
+      <section class="canvas-card" aria-label="页面和操作路径地图">
+        <div class="card-heading"><div><strong>页面地图</strong><small>点击页面或路径查看依据</small></div><span id="map-legend">静态分析 · 待人工核对</span></div>
+        <div class="canvas-scroll"><svg id="map-svg" role="img" aria-label="页面关系图"></svg></div>
+      </section>
+      <aside class="inspector" id="inspector"><span class="eyebrow">INSPECTOR / 依据</span><h2>选择页面或路径</h2><p>逐条检查触发方式和源码出处。校验记录保存在当前浏览器，并可导出 JSON。</p></aside>
+    </div>
+    <section class="route-card" id="route-card" hidden>
+      <div class="route-heading"><div><span class="eyebrow">PATHS / 操作路径</span><h2>逐条校验</h2></div><div class="filters"><input id="route-search" type="search" placeholder="搜索页面、动作、源码…" aria-label="搜索路径" /><select id="route-filter" aria-label="筛选校验状态"><option value="all">全部路径</option><option value="unreviewed">待校验</option><option value="confirmed">已确认</option><option value="questionable">有疑问</option><option value="incorrect">错误</option></select></div></div>
+      <div id="route-list" class="route-list"></div>
+    </section>
+  </main>
+  <script id="embedded-map" type="application/json"></script>
+  <script id="embedded-trace" type="application/json"></script>
+  <script src="./viewer.js" defer></script>
+</body>
+</html>

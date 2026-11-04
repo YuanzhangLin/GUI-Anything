@@ -10,18 +10,18 @@
         <div>
           <h1>{{ project.name }}</h1>
           <div class="repo-info">
-            <code class="repo-url">{{ project.repo_url }}</code>
+            <code class="repo-url">{{ project.source_type === 'apk' ? 'APK 导入项目' : project.repo_url }}</code>
             <span :class="['status-pill', repoStatus]">{{ statusText }}</span>
           </div>
         </div>
       </div>
 
       <div class="btn-group">
-        <button v-if="repoStatus === 'missing'" class="btn download" @click="handleAction('download')">
+        <button v-if="repoStatus === 'missing' && project.source_type !== 'apk'" class="btn download" @click="handleAction('download')">
           <Download :size="16" /> 开始下载源码
         </button>
         
-        <button v-else class="btn update" :disabled="repoStatus === 'syncing'" @click="handleAction('update')">
+        <button v-else-if="project.source_type !== 'apk'" class="btn update" :disabled="repoStatus === 'syncing'" @click="handleAction('update')">
           <RefreshCw :class="{ 'spin': repoStatus === 'syncing' }" :size="16" /> 
           {{ repoStatus === 'syncing' ? '同步中...' : '检查代码更新' }}
         </button>
@@ -87,7 +87,7 @@
           >
             <RotateCw :size="14" :class="{ 'spin': isGeneratingMap }" />
             <span>
-              {{ isGeneratingMap ? `生成中… ${mapProgress}%` : (mapExists ? '重新生成' : '生成图谱') }}
+              {{ isGeneratingMap ? `生成中… ${mapProgress}%` : (mapExists ? 'Fast 重新出图' : 'Fast 出图') }}
             </span>
           </button>
           <span v-if="mapErr" class="map-err">{{ mapErr }}</span>
@@ -100,7 +100,7 @@
                 <MessageSquare :size="18" />
                 <h3>仓库 ISSUE 列表</h3>
             </div>
-            <button class="btn-inline-sync" @click="handleAction('sync_issues')" :disabled="isSyncingIssues">
+            <button v-if="project.repo_url" class="btn-inline-sync" @click="handleAction('sync_issues')" :disabled="isSyncingIssues">
                 <RotateCw :size="14" :class="{ 'spin': isSyncingIssues }" />
                 <span>{{ isSyncingIssues ? '正在同步...' : '同步更新' }}</span>
             </button>
@@ -171,7 +171,8 @@ import {
   ChevronLeft, Download, RefreshCw, XCircle, CheckCircle, 
   Info, MessageSquare, RotateCw, X, Sparkles, ChevronRight, Database, Activity
 } from 'lucide-vue-next'
-import { marked } from 'marked'
+import { renderMarkdown } from '../utils/markdown'
+import { authFetch } from '../utils/auth'
 
 const props = defineProps(['project', 'apiBase']) 
 const emit = defineEmits(['back'])
@@ -200,11 +201,10 @@ const statusText = computed(() => {
   return map[repoStatus.value] || '未知'
 })
 
-const renderMarkdown = (text) => marked.parse(text || '无详细内容')
 
 const fetchStatus = async () => {
   try {
-    const res = await fetch(`${props.apiBase}/admin/status/${props.project.id}`)
+    const res = await authFetch(`${props.apiBase}/admin/status/${props.project.id}`)
     if (res.ok) {
       const data = await res.json()
       repoStatus.value = data.status
@@ -215,7 +215,7 @@ const fetchStatus = async () => {
 const fetchMapStatus = async () => {
   try {
     mapErr.value = ''
-    const res = await fetch(`${props.apiBase}/map_status/${props.project.id}`)
+    const res = await authFetch(`${props.apiBase}/map_status/${props.project.id}`)
     if (!res.ok) return
     const data = await res.json()
     mapExists.value = !!data.exists
@@ -237,17 +237,17 @@ const generateUiMap = async () => {
   mapProgress.value = 0
   mapErr.value = ''
   try {
-    const res = await fetch(`${props.apiBase}/map/${props.project.id}/generate`, {
+    const res = await authFetch(`${props.apiBase}/map/${props.project.id}/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: 'real' })
+      body: JSON.stringify({ mode: 'fast' })
     })
     if (!res.ok) throw new Error(`任务创建失败 (${res.status})`)
     const { task_id } = await res.json()
     if (!task_id) throw new Error('后端未返回 task_id')
 
     for (let i = 0; i < 120; i++) {
-      const st = await fetch(`${props.apiBase}/map/tasks/${task_id}`)
+      const st = await authFetch(`${props.apiBase}/map/tasks/${task_id}`)
       if (!st.ok) throw new Error(`任务状态查询失败 (${st.status})`)
       const data = await st.json()
       mapProgress.value = Number(data.progress ?? mapProgress.value)
@@ -271,7 +271,7 @@ const generateUiMap = async () => {
 onMounted(async () => {
   await fetchStatus()
   await fetchMapStatus()
-  handleAction('sync_issues')
+  if (props.project.repo_url) handleAction('sync_issues')
 })
 
 const openIssueModal = async (issue) => {
@@ -282,7 +282,7 @@ const openIssueModal = async (issue) => {
 
   // 2. 静默查询：检查后端是否有已保存的诊断结果
   try {
-    const res = await fetch(`${props.apiBase}/admin/analyze_issue`, {
+    const res = await authFetch(`${props.apiBase}/admin/analyze_issue`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -318,7 +318,7 @@ const analyzeWithAI = async () => {
   if (isAnalyzing.value) return
   isAnalyzing.value = true
   try {
-    const res = await fetch(`${props.apiBase}/admin/analyze_issue`, {
+    const res = await authFetch(`${props.apiBase}/admin/analyze_issue`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -342,7 +342,7 @@ const handleAction = async (type) => {
   else repoStatus.value = 'syncing'
 
   try {
-    const res = await fetch(`${props.apiBase}/admin/task/${props.project.id}`, {
+    const res = await authFetch(`${props.apiBase}/admin/task/${props.project.id}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type })

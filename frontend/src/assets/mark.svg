@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 136 136" role="img" aria-labelledby="title">
+  <title id="title">GUI-Anything</title>
+  <rect width="136" height="136" rx="30" fill="#101d31"/>
+  <path d="M37 46V37a12 12 0 0 1 12-12h37a12 12 0 0 1 12 12v62a12 12 0 0 1-12 12H49a12 12 0 0 1-12-12V46Z" fill="none" stroke="#e9f1f5" stroke-width="5"/>
+  <path d="M51 41h20M51 52h34" stroke="#647b91" stroke-width="4" stroke-linecap="round"/>
+  <path d="M54 83h17l13-16h25" fill="none" stroke="#5ee0b2" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="54" cy="83" r="7" fill="#5ee0b2" stroke="#101d31" stroke-width="3"/>
+  <circle cx="84" cy="67" r="7" fill="#5ee0b2" stroke="#101d31" stroke-width="3"/>
+  <circle cx="109" cy="67" r="7" fill="#5ee0b2" stroke="#101d31" stroke-width="3"/>
+  <path d="m105 53 14 14-14 14" fill="none" stroke="#5ee0b2" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

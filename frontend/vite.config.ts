@@ -7,6 +7,7 @@ export default defineConfig({
     host: '0.0.0.0', // 必须是 0.0.0.0 才能让容器外访问
     port: 5173,      // 容器内部端口保持不变
     strictPort: true, 
+    proxy: { '/api': 'http://localhost:8002' },
     watch: {
       usePolling: true
     }

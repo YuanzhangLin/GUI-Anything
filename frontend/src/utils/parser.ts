@@ -1,4 +1,65 @@
 export const parseAndroidJson = (json: any) => {
+  if (json?.schema_version === 2 && Array.isArray(json.screens) && Array.isArray(json.transitions)) {
+    const screens = json.screens as any[]
+    const transitions = json.transitions as any[]
+    const containments = Array.isArray(json.containments) ? json.containments as any[] : []
+    const screenById = new Map(screens.map((screen) => [screen.id, screen]))
+    const ids = new Set(screens.map((screen) => screen.id))
+    const outgoing = new Map<string, string[]>()
+    for (const edge of transitions) {
+      if (!ids.has(edge.from) || !ids.has(edge.to)) continue
+      outgoing.set(edge.from, [...(outgoing.get(edge.from) || []), edge.to])
+    }
+
+    // Place reachable screens by distance from an entry screen. Isolated screens
+    // stay visible in a separate final column rather than disappearing.
+    const depth = new Map<string, number>()
+    const queue = screens.filter((screen) => screen.entry).map((screen) => screen.id)
+    for (const id of queue) depth.set(id, 0)
+    for (let i = 0; i < queue.length; i++) {
+      for (const next of outgoing.get(queue[i]) || []) {
+        if (!depth.has(next)) {
+          depth.set(next, (depth.get(queue[i]) || 0) + 1)
+          queue.push(next)
+        }
+      }
+    }
+    const maxDepth = Math.max(0, ...depth.values())
+    const columnCounts = new Map<number, number>()
+    const nodes = screens.map((screen) => {
+      const column = depth.get(screen.id) ?? maxDepth + 1
+      const row = columnCounts.get(column) || 0
+      columnCounts.set(column, row + 1)
+      return {
+        id: screen.id,
+        label: screen.title,
+        position: { x: column * 300 + 40, y: row * 150 + 40 },
+        data: {
+          ...screen,
+          contained_pages: containments.filter((relation) => relation.parent === screen.id).map((relation) => ({ title: screenById.get(relation.child)?.title || relation.child, kind: relation.kind })),
+          parent_pages: containments.filter((relation) => relation.child === screen.id).map((relation) => ({ title: screenById.get(relation.parent)?.title || relation.parent, kind: relation.kind }))
+        },
+        style: {
+          background: screen.entry ? '#ecfdf5' : '#fff',
+          border: `2px solid ${screen.entry ? '#0d9488' : '#94a3b8'}`,
+          borderRadius: '12px', padding: '14px', width: '220px',
+          color: '#0f172a', fontWeight: '600'
+        }
+      }
+    })
+    const edges = transitions.filter((edge) => ids.has(edge.from) && ids.has(edge.to)).map((edge) => ({
+      id: edge.id,
+      source: edge.from,
+      target: edge.to,
+      label: edge.action,
+      data: { ...edge, containment: containments.find((relation) => relation.parent === edge.from && relation.child === edge.to) },
+      animated: false,
+      style: { stroke: ['source_rule', 'decompiled_rule'].includes(edge.verification) ? '#0d9488' : '#94a3b8', strokeWidth: 2 },
+      labelStyle: { fill: '#475569', fontSize: '11px' }
+    }))
+    return { nodes, edges }
+  }
+
   const nodes: any[] = [];
   const edges: any[] = [];
 

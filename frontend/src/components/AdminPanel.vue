@@ -28,6 +28,13 @@
                 <h2>项目清单 ({{ appList.length }})</h2>
                 <p>点击行进入项目详情管理</p>
               </div>
+              <form class="apk-import" @submit.prevent="uploadApk">
+                <label>导入 APK</label>
+                <input v-model="newAppId" placeholder="项目 ID（字母、数字、-、_）" required pattern="[A-Za-z0-9][A-Za-z0-9_-]*" />
+                <input type="file" accept=".apk,application/vnd.android.package-archive" required @change="onApkSelected" />
+                <button type="submit" :disabled="isImporting">{{ isImporting ? '正在反编译…' : '导入并解析' }}</button>
+                <span v-if="importError" class="import-error">{{ importError }}</span>
+              </form>
               <table class="data-table">
                 <thead>
                   <tr>
@@ -72,15 +79,43 @@
 import { ref } from 'vue'
 import { X, Settings, Database, Terminal, ShieldCheck, ChevronRight } from 'lucide-vue-next'
 import ProjectDetail from './ProjectDetail.vue' // 引入详情子组件
+import { authFetch } from '../utils/auth'
 
 const props = defineProps(['appList', 'apiBase'])
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'imported'])
+
+const newAppId = ref('')
+const apkFile = ref(null)
+const isImporting = ref(false)
+const importError = ref('')
+const onApkSelected = (event) => { apkFile.value = event.target.files?.[0] || null }
+const uploadApk = async () => {
+  if (!apkFile.value || isImporting.value) return
+  isImporting.value = true
+  importError.value = ''
+  try {
+    const body = new FormData()
+    body.set('app_id', newAppId.value)
+    body.set('file', apkFile.value)
+    const response = await authFetch(`${props.apiBase}/import/apk`, { method: 'POST', body })
+    const result = await response.json()
+    if (!response.ok) throw new Error(result.detail || `导入失败 (${response.status})`)
+    logs.value.push(`[APK] ${new Date().toLocaleTimeString()}: ${newAppId.value} 导入完成`)
+    newAppId.value = ''
+    apkFile.value = null
+    emit('imported', result.app_id)
+  } catch (error) {
+    importError.value = error.message || '导入失败'
+  } finally {
+    isImporting.value = false
+  }
+}
 
 const activeTab = ref('projects')
 const selectedProject = ref(null)
 const logs = ref([
   '[SYSTEM] 后台管理系统初始化完成...',
-  '[INFO] 已连接到后端 API: 211.71.15.39:8002'
+  `[INFO] API 路径: ${props.apiBase}`
 ])
 
 const menuItems = [
@@ -97,6 +132,11 @@ const onTaskTriggered = ({ id, type }) => {
 </script>
 
 <style scoped>
+.apk-import { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 20px 0; padding: 14px; background: #f1f5f9; border-radius: 10px; }
+.apk-import input { max-width: 240px; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; }
+.apk-import button { padding: 9px 14px; border: 0; border-radius: 6px; background: #0d9488; color: white; cursor: pointer; }
+.apk-import button:disabled { opacity: .6; cursor: wait; }
+.import-error { width: 100%; color: #b91c1c; font-size: 13px; }
 /* 保持你之前喜欢的样式风格 */
 .admin-screen { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.9); z-index: 2000; display: flex; padding: 30px; }
 .admin-layout { width: 100%; max-width: 1400px; margin: 0 auto; background: #ffffff; border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; }

@@ -1,19 +1,20 @@
 import os
 import json
 import logging
+from app.paths import BACKEND_ROOT, DATA_DIR, validate_app_id
 
 logger = logging.getLogger(__name__)
 
 class IssueSolver:
-    def __init__(self, repos_root="/app/repos", data_root="/app/data"):
-        self.repos_root = repos_root
-        self.data_root = data_root
+    def __init__(self, repos_root=None, data_root=None):
+        self.repos_root = repos_root or os.getenv("REPOS_PATH", os.path.join(BACKEND_ROOT, "repos"))
+        self.data_root = data_root or DATA_DIR
         if not os.path.exists(self.data_root):
             os.makedirs(self.data_root, exist_ok=True)
 
     def _get_cache_path(self, app_id: str):
         """每个项目生成一个独立的分析缓存文件"""
-        return os.path.join(self.data_root, f"analysis_{app_id}.json")
+        return os.path.join(self.data_root, f"analysis_{validate_app_id(app_id)}.json")
 
     def get_cached_solution(self, app_id: str, issue_number: str):
         """检查并读取已有的诊断记录"""

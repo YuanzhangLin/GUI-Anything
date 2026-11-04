@@ -97,6 +97,44 @@ def print_human_report(enriched_units: List[Dict[str, Any]], out: TextIO) -> Non
 
 def build_report_from_map_json(data: Dict[str, Any]) -> str:
     """从 get_map 返回的 dict 中提取 units 并生成报告文本。"""
+    if data.get("schema_version") == 2:
+        lines = [
+            f"# UI Map: {data.get('project_name', 'Android app')}",
+            f"Mode: {data.get('mode', 'unknown')}",
+            "The listed screens are static-analysis candidates, not runtime-confirmed pages.",
+            "",
+            "## Screen candidates",
+        ]
+        for screen in sorted(data.get("screens", []), key=lambda item: (not item.get("entry", False), item.get("title", ""))):
+            component = (screen.get("components") or [{}])[0]
+            lines.append(f"- {screen.get('title')} ({component.get('type', 'Unknown')}) — {component.get('file_path', 'no source path')}")
+            elements = screen.get("elements") or []
+            for element in elements[:6]:
+                evidence = element.get("evidence") or {}
+                lines.append(f"  - UI element: {element.get('label') or element.get('id')} ({element.get('type', 'Unknown')}, {element.get('kind', 'unknown')}) — {evidence.get('file_path', 'no source path')}")
+            if len(elements) > 6:
+                lines.append(f"  - ... {len(elements) - 6} more static elements in the map JSON")
+        lines.extend(["", "## Page containment / hosting"])
+        for relation in data.get("containments", []):
+            evidence = (relation.get("evidence") or [{}])[0]
+            lines.append(f"- {relation.get('parent')} hosts {relation.get('child')} "
+                         f"[{relation.get('kind')}] — {evidence.get('file_path', 'no source path')}")
+        lines.extend(["", "## Navigation"])
+        for transition in data.get("transitions", []):
+            evidence = (transition.get("evidence") or [{}])[0]
+            location = evidence.get("file_path", "no source path")
+            if evidence.get("line"):
+                location += f":{evidence['line']}"
+            trigger = transition.get("trigger") or {}
+            trigger_text = (f"{trigger.get('label', transition.get('trigger_id', 'unknown'))} "
+                            f"({trigger.get('status', 'unknown')}, {trigger.get('event', 'unknown')})")
+            lines.append(
+                f"- {transition.get('from')} → {transition.get('to')}: "
+                f"{transition.get('action')} [{transition.get('verification')}]"
+                f" [trigger: {trigger_text}] — {location}"
+            )
+        return "\n".join(lines)
+
     content = data.get("units") or data.get("topology")
     if not isinstance(content, list):
         raise ValueError("JSON 中缺少 units 列表或格式无法识别")

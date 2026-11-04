@@ -3,6 +3,7 @@ import os
 import yaml
 import re
 import logging
+from pathlib import Path
 
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -19,14 +20,11 @@ TOOL_LOOP_LIMIT_MARKER = "\n\n[[TOOL_LOOP_LIMIT_REACHED]]\n\n"
 
 class GuiAgent:
     def __init__(self):
-        self.client = OpenAI(
-            api_key=os.getenv("OPENAI_API_KEY"), 
-            base_url=os.getenv("OPENAI_BASE_URL", "https://api.deepseek.com")
-        )
+        self.client = None
         self.model_name = os.getenv("MODEL_NAME", "deepseek-chat")
         
         # --- 重点：从外部 YAML 加载工具描述 ---
-        self.skills_file = "app/skills/skills_schema.yaml"
+        self.skills_file = Path(__file__).resolve().parents[1] / "skills" / "skills_schema.yaml"
         self.tools = self._load_tools_schema()
 
     def _load_tools_schema(self):
@@ -46,6 +44,14 @@ class GuiAgent:
         tool_rounds: int = 6,
         force_no_tools: bool = False,
     ):
+        if self.client is None:
+            api_key = os.getenv("OPENAI_API_KEY")
+            if not api_key:
+                raise RuntimeError("Deep analysis requires OPENAI_API_KEY")
+            self.client = OpenAI(
+                api_key=api_key,
+                base_url=os.getenv("OPENAI_BASE_URL", "https://api.deepseek.com"),
+            )
         # 1. 组装初始上下文（不再默认加载 UI Map/拓扑数据）
         tool_names = []
         try:

@@ -1,17 +1,11 @@
-# /home/yuanzhang/hdd/GUI-Anything/frontend/Dockerfile
-FROM node:20-alpine
-
+FROM node:20-alpine AS build
 WORKDIR /app
-
-# 先拷贝 package.json 以利用 Docker 缓存层
 COPY package*.json ./
-RUN npm install
-
-# 拷贝所有源代码
+RUN npm ci
 COPY . .
+RUN npm run build
 
-# Vite 默认端口
-EXPOSE 5173
-
-# 这里的 --host 是关键，否则在容器外无法访问
-CMD ["npm", "run", "dev", "--", "--host"]
+FROM nginx:1.27-alpine
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /app/dist /usr/share/nginx/html
+EXPOSE 80

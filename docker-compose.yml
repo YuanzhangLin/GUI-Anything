@@ -5,25 +5,33 @@ services:
       dockerfile: Dockerfile
     container_name: gui-anything-frontend
     ports:
-      - "3001:5173"  # 修改这里：宿主机 3001 -> 容器 5173
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - CHOKIDAR_USEPOLLING=true
-    stdin_open: true
-    tty: true
+      - "3001:80"
+    depends_on:
+      - backend
 
   backend:
-      build: ./backend
+      build:
+        context: .
+        dockerfile: backend/Dockerfile
       container_name: gui-anything-backend
-      env_file:
-      - ./backend/.env
       ports:
-        - "8002:8000"  # 宿主机用 8002，容器内保持 8000
+        - "127.0.0.1:8002:8000"
       volumes:
-        - ./backend:/app
-        - ./repos:/app/repos     
+        - ./backend/data:/app/data
+        - ./repos:/app/repos
+        - backend-db:/app/state
       environment:
-      - REPOS_PATH=/app/repos    
+      - REPOS_PATH=/app/repos
+      - GUI_DB_PATH=/app/state/gui_anything.db
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.deepseek.com}
+      - MODEL_NAME=${MODEL_NAME:-deepseek-chat}
+      - OPENCODE_MODEL=${OPENCODE_MODEL:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - GUI_AGENT_EXECUTABLE=${GUI_AGENT_EXECUTABLE:-}
+      - GUI_AGENT_ARGS=${GUI_AGENT_ARGS:-["{prompt}"]}
       restart: always
+
+volumes:
+  backend-db:

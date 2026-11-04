@@ -1,6 +1,6 @@
 
 <p align="center">
-  <img src="./frontend/src/assets/logo.png" alt="GUI-Anything Logo" width="1200">
+  <img src="./frontend/src/assets/logo.svg" alt="GUI-Anything Logo" width="560">
 </p>
 
 # 📱 GUI-Anything
@@ -9,38 +9,27 @@
   <b>English</b> | <a href="./README_zh.md">简体中文</a>
 </p>
 
-> An intelligent static analysis and security auditing platform for Android applications, powered by DeepSeek-V3 and Static Topology Mapping.
+> Analyze Android screens and action paths with an Agent Skill, then review source evidence in an independent map viewer.
+
+**[Project website](https://yuanzhanglin.github.io/GUI-Anything/)** · [中文说明](./README_zh.md)
 
 ---
 
-## 📖 Usage Guide
+## 📖 Workflow
 
-Here is a typical security audit interaction example, demonstrating how the platform answers specific operational questions based on static source code topology analysis:
-
-> The user submits the following query: **"If I want to delete the logs with images from the history in this app, what user actions should I take?"**, and selects the target application **"Activity Diary"**.
->
-> Based on the application's static analysis results (Activity transition chains, component dependencies, and database operation logic), the system generates the following reasoning response:
->
-> <p align="center">
->   <img src="./images/screenshot.png" alt="Audit Interaction Example" width="800">
-> </p>
->
-> The platform output includes:
-> - **Clear step-by-step actions**: Navigate from the side menu to `HistoryActivity` and locate the target log entry;
-> - **UI interaction details**: Long-press on an image to trigger the deletion confirmation dialog;
-> - **Code-level evidence**: Points to the deletion logic at `MainActivity.java` lines 464–488, which implements a soft-delete mechanism (`_DELETED = 1`);
-> - **Limitation disclosure**: Notes that the current implementation does not support batch deletion of entire log entries — only individual images can be deleted.
->
-> This example showcases **GUI-Anything**'s ability to combine static topology mapping with LLM reasoning, delivering traceable and verifiable audit conclusions.
+Use the `gui-anything` Skill in Cursor, OpenCode, or another compatible Agent, or run the Fast engine directly. It writes Map JSON plus a standalone HTML review page. Inspect each route, trigger, and source reference there, mark findings, and export a review record. The platform frontend remains available for project management; the public website includes a sample and a JSON-loading reviewer.
 
 ---
 
 ## ✨ Features
-* **🧠 Intelligent Audit**: Deep analysis of Android logic flaws using LLM reasoning based on app topology.
-* **📊 Interactive UI Map**: Visualize activity transitions and component relationships in real-time.
-* **⚡ Streaming Response**: Smooth, real-time Markdown auditing reports with typing effects.
-* **🛡️ High-Security Auth**: Sophisticated login/register system with a modern Glassmorphism UI.
-* **🚀 Zero-Config Deployment**: Automatic API discovery logic—no need to hardcode IPs.
+* **⚡ Fast Map**: Analyze source or imported APK decompilation without an LLM; identify Activities, supported Fragment routes, explicit transitions, and layout/menu element candidates.
+* **🧠 Agent Chat**: Launch OpenCode from the platform, or select the built-in Agent.
+* **📊 Interactive UI Map**: Use screens and action paths as the graph, with source files and components as inspectable evidence.
+* **📦 APK Import**: Admins can upload an APK for JADX decompilation and Fast mapping.
+* **🗺️ Only Map / Demo**: View the map alone; the fixed public demo contains no decompilation or discussion history.
+* **⚡ Chat Output**: The built-in Agent streams Markdown; CLI Agents return an answer when their run completes.
+* **🔐 Login**: Password hashes and expiring sessions protect project data and analysis endpoints.
+* **🚀 Single-Origin Deployment**: The web server serves the frontend and proxies `/api` to the backend.
 
 ## 🛠️ Tech Stack
 * **Frontend**: Vue 3, Vite, TypeScript, Lucide Icons, Marked.
@@ -49,30 +38,62 @@ Here is a typical security audit interaction example, demonstrating how the plat
 
 ## 🚀 Quick Start
 
-### 1. Clone the repository
+### Skill and local review page (no platform required)
+
+The canonical Skill is in `agent-skills/gui-anything/`, with discoverable copies under `.cursor/skills/gui-anything/` and `.opencode/skills/gui-anything/`. Run the same workflow directly:
+
 ```bash
-git clone [https://github.com/your-username/GUI-Anything.git](https://github.com/your-username/GUI-Anything.git)
+python agent-skills/gui-anything/scripts/fast_map.py --repo /path/to/android-project --output /path/to/map.json
+```
+
+This writes `map.json` and `map.html`. Open the HTML directly in a browser; it requires no server or model key. If you copy the Skill into another project, set `GUI_ANYTHING_HOME` to this repository root. See the [Skill](./agent-skills/gui-anything/SKILL.md). Raw APK files still need the platform's JADX import step.
+
+### Map-guided planning and runtime checks
+
+Plan a route and inspect source evidence without a device:
+
+```bash
+python agent-skills/gui-anything/scripts/navigate.py plan --map /path/to/map.json --from <current-screen-id> --to <goal-screen-id>
+```
+
+When the user wants to operate a connected Android device, run the observation loop:
+
+```bash
+python agent-skills/gui-anything/scripts/navigate.py run --map /path/to/map.json --goal <goal-screen-id> --trace /path/to/trace.json --execute
+```
+
+The runner acts only on uniquely grounded controls, observes again after every step, replans after a mismatch, and stops when evidence is insufficient. It saves UI XML and screenshots beside the trace and writes a standalone `trace.html` embedding the Map, trace, and screenshots for replay. You can also load `trace.json` into `map.html`. ADB and a device are required; automatic grounding still has deliberate limits for Fragments, list rows, and hidden menus. See [architecture](./docs/architecture.md).
+
+### Full platform (optional)
+
+#### 1. Clone the repository
+```bash
+git clone https://github.com/YuanzhangLin/GUI-Anything.git
 cd GUI-Anything
 ```
 
-### 2. Configure Backend Environment
-Create a `.env` file in the `backend/` directory to store your credentials:
+#### 2. Configure Backend Environment
+Fast map generation needs no model credentials. To use the built-in Agent, create `backend/.env`:
 ```bash
 # backend/.env
 OPENAI_API_KEY=sk-xxxxxx
-OPENAI_BASE_URL=[https://api.deepseek.com](https://api.deepseek.com)
+OPENAI_BASE_URL=https://api.deepseek.com
 MODEL_NAME=deepseek-chat
 ```
 
-### 3. One-Click Launch (Docker)
+#### 3. One-Click Launch (Docker)
 Ensure you have Docker and Docker Compose installed:
 ```bash
-docker-compose up -d
+docker compose up -d --build
 ```
-The system will be accessible at `http://your-server-ip:3001`. The frontend will automatically detect and connect to the backend on port `8002`.
+The system will be accessible at `http://your-server-ip:3001`. The frontend sends API requests to the same origin at `/api`.
+If you created `backend/.env` for Deep analysis, launch with `docker compose --env-file backend/.env up -d --build` instead.
+The backend image installs OpenCode and starts it on demand. Configure model credentials through OpenCode; the platform shows whether each Agent is available. See `agent-skills/gui-anything/SKILL.md` for the project Agent guide.
+You can also set `OPENCODE_MODEL=provider/model` and the provider API key in `backend/.env`, then launch with the `--env-file` command above.
+Other CLI Agents can be connected with `GUI_AGENT_EXECUTABLE` and JSON-array `GUI_AGENT_ARGS`, such as `["--project","{repo}","{prompt}"]`. Install that executable in the backend environment first.
 
 ## 📂 Data Customization
-Place your Android analysis results (JSON files) in `backend/data/`.
+Generated maps and analysis caches are stored in `backend/data/` and excluded from Git.
 * `app_list.yml`: Manage project display names and IDs.
 * `docs.md`: Edit this file to update the "User Manual" section in the app dynamically.
 
