@@ -18,8 +18,8 @@ class WorkbenchApiTests(unittest.TestCase):
         data=patch("app.workbench.api.DATA_DIR",str(self.root/"data"));data.start();self.addCleanup(data.stop)
         app=FastAPI();app.include_router(router);self.app=app;self.client=TestClient(app)
 
-    def test_auth_create_reopen_and_stale_warning(self):
-        self.assertEqual(self.client.get("/api/workbench/projects/example/files").status_code,401)
+    def test_local_create_reopen_and_stale_warning(self):
+        self.assertEqual(self.client.get("/api/workbench/projects/example/files").status_code,200)
         self.app.dependency_overrides[current_user]=lambda:"alice"
         source=self.client.get("/api/workbench/projects/example/source",params={"path":"Main.java"}).json()
         response=self.client.post("/api/workbench/projects/example/runs",json={"goal":"Test Main","target":{"path":"Main.java","start_line":1,"end_line":1,"file_sha256":source["file_sha256"]},"conditions":[{"kind":"coverage","description":"New line coverage"}]})

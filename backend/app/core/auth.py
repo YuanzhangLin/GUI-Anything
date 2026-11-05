@@ -15,6 +15,11 @@ from app.paths import BACKEND_ROOT
 
 DB_PATH = os.getenv("GUI_DB_PATH", os.path.join(BACKEND_ROOT, "gui_anything.db"))
 TOKEN_LIFETIME_SECONDS = 60 * 60 * 24
+LOCAL_USER = os.getenv("GUI_LOCAL_USER", "local")
+
+
+def auth_enabled() -> bool:
+    return os.getenv("GUI_AUTH_ENABLED", "").lower() in {"1", "true", "yes"}
 
 
 def hash_password(password: str) -> str:
@@ -52,6 +57,8 @@ def revoke_token(token: str) -> None:
 
 
 def current_user(authorization: str | None = Header(default=None)) -> str:
+    if not authorization and not auth_enabled():
+        return LOCAL_USER
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Login required")
     token = authorization[7:]
@@ -68,6 +75,8 @@ def current_user(authorization: str | None = Header(default=None)) -> str:
 
 
 def is_admin(username: str) -> bool:
+    if not auth_enabled() and username == LOCAL_USER:
+        return True
     with closing(sqlite3.connect(DB_PATH)) as conn:
         row = conn.execute("SELECT role FROM users WHERE username=?", (username,)).fetchone()
     return bool(row and row[0] == "admin")

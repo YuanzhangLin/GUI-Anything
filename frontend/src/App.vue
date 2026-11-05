@@ -1,58 +1,11 @@
 <template>
   <div v-if="demoVisible" class="demo-view">
     <header class="demo-header">
-      <button type="button" @click="demoVisible = false">← 返回登录</button>
+      <button type="button" @click="demoVisible = false">← 返回工作区</button>
       <div><strong>Activity Diary 示例图</strong><span>固定示例 · 无反编译文件或讨论记录</span></div>
     </header>
     <MapCanvas appId="demo" :demo="true" />
   </div>
-  <div v-else-if="!isLoggedIn" class="auth-container">
-    <div class="auth-bg-glow">
-      <div class="glow-circle glow-1"></div>
-      <div class="glow-circle glow-2"></div>
-    </div>
-
-    <div class="auth-card">
-      <div class="auth-header">
-        <div class="auth-icon-wrapper">
-          <img class="auth-icon" src="./assets/mark.svg" alt="GUI-Anything" />
-        </div>
-        <h1>GUI-Anything</h1>
-        <p>Android 任务执行与验证工作台</p>
-      </div>
-
-      <div class="auth-form">
-        <div class="input-group">
-          <label>Operator ID</label>
-          <input v-model="loginForm.username" type="text" placeholder="输入用户名..." />
-        </div>
-        <div class="input-group">
-          <label>登录密码</label>
-          <input
-            v-model="loginForm.password"
-            type="password"
-            placeholder="输入登录密码..."
-            @keyup.enter="isRegistering ? handleRegister() : handleLogin()"
-          />
-        </div>
-
-        <button class="auth-btn" @click="isRegistering ? handleRegister() : handleLogin()" :disabled="isLoading">
-          <span v-if="!isLoading">{{ isRegistering ? '初始化新账号' : '建立安全连接' }}</span>
-          <span v-else class="auth-loader"></span>
-        </button>
-
-        <p v-if="loginError" class="auth-error-hint">⚠️ {{ loginError }}</p>
-      </div>
-
-      <div class="auth-footer">
-        <button type="button" class="demo-entry" @click="demoVisible = true">先看看示例图 →</button>
-        <span @click="isRegistering = !isRegistering" class="toggle-link">
-          {{ isRegistering ? '已有权限？执行登录协议' : '没有访问权限？申请注册' }}
-        </span>
-      </div>
-    </div>
-  </div>
-
   <div v-else class="app-layout">
     <aside
       class="app-sidebar"
@@ -124,7 +77,6 @@
           <button v-if="isAdmin" @click="showAdmin = true" class="admin-entry-btn">
     <Settings :size="16" /> 管理控制台
   </button>
-          <button @click="handleLogout" class="exit"><LogOut :size="16" /> 退出</button>
         </nav>
       </div>
       <div class="sidebar-resizer" @pointerdown="onSidebarResizeStart" />
@@ -305,9 +257,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick, watch, onBeforeUnmount } from 'vue'
-import { Plus, Send, Activity, X, BookOpen, LogOut, Settings, Tag, Trash2, PanelLeftClose, PanelLeftOpen } from 'lucide-vue-next'
+import { Plus, Send, Activity, X, BookOpen, Settings, Tag, Trash2, PanelLeftClose, PanelLeftOpen } from 'lucide-vue-next'
 import { renderMarkdown } from './utils/markdown'
-import { authFetch, setToken, getToken, clearToken } from './utils/auth'
+import { authFetch } from './utils/auth'
 import MapCanvas from './components/MapCanvas.vue'
 import ConversationContext from './components/ConversationContext.vue'
 import ModelSettings from './components/ModelSettings.vue'
@@ -316,17 +268,13 @@ import AdminPanel from './components/AdminPanel.vue'
 
 
 // --- 2. 状态定义 (必须放在计算属性之前) ---
-const isLoggedIn = ref(false)
 const demoVisible = ref(false)
-const isRegistering = ref(false)
 const showDocs = ref(false)
 const showMap = ref(false)
 
 const isLoading = ref(false)
 const isStreaming = ref(false)
-const currentUser = ref('')
-const loginForm = ref({ username: '', password: '' })
-const loginError = ref('')
+const currentUser = ref('local')
 const selectedAppId = ref('activitydiary')
 const appList = ref([])
 const sessions = ref([])
@@ -552,12 +500,6 @@ const safeFetch = async (url: string, options?: RequestInit) => {
   try {
     const res = await authFetch(url, options)
     const contentType = res.headers.get('content-type')
-    if (res.status === 401 && !url.endsWith('/login')) {
-      clearToken()
-      localStorage.removeItem('gui_user')
-      isLoggedIn.value = false
-    }
-
     if (!res.ok) {
       if (contentType && contentType.includes('text/html')) {
         throw new Error(`API 响应异常: 服务器返回了 HTML (可能是 404)。请确认后端 8002 端口是否正常开启。`)
@@ -618,41 +560,6 @@ const refreshApps = async (appId?: string) => {
   const response = await safeFetch(`${API_BASE}/apps`)
   appList.value = await response.json()
   if (appId) selectedAppId.value = appId
-}
-
-const handleLogin = async () => {
-  loginError.value = ''
-  try {
-    const res = await safeFetch(`${API_BASE}/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(loginForm.value)
-    })
-    const data = await res.json()
-    currentUser.value = data.username
-    isAdmin.value = !!data.is_admin
-    setToken(data.token)
-    isLoggedIn.value = true
-    localStorage.setItem('gui_user', data.username)
-    await initData()
-  } catch (e: any) {
-    loginError.value = e.message
-  }
-}
-
-const handleRegister = async () => {
-  loginError.value = ''
-  try {
-    await safeFetch(`${API_BASE}/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(loginForm.value)
-    })
-    isRegistering.value = false
-    loginError.value = '注册成功，请登录'
-  } catch (e: any) {
-    loginError.value = e.message
-  }
 }
 
 const createNewChat = () => {
@@ -927,14 +834,6 @@ const sendMessage = async () => {
   }
 }
 
-const handleLogout = () => {
-  authFetch(`${API_BASE}/logout`, { method: 'POST' }).catch(() => {})
-  isLoggedIn.value = false
-  isAdmin.value = false
-  localStorage.removeItem('gui_user')
-  clearToken()
-}
-
 const formatId = (id: string) => {
   const num = parseInt(id)
   if (isNaN(num)) return id
@@ -945,10 +844,6 @@ watch(inputMsg, () => {
   nextTick(() => adjustChatInputHeight())
 })
 
-watch(isLoggedIn, (loggedIn) => {
-  if (loggedIn) nextTick(() => adjustChatInputHeight())
-})
-
 watch(selectedAppId, () => {
   attachedIssues.value = []
   issueCatalog.value = []
@@ -956,12 +851,7 @@ watch(selectedAppId, () => {
 })
 
 onMounted(() => {
-  const saved = localStorage.getItem('gui_user')
-  if (saved && getToken()) {
-    currentUser.value = saved
-    isLoggedIn.value = true
-    initData()
-  }
+  initData()
   nextTick(() => adjustChatInputHeight())
 })
 </script>

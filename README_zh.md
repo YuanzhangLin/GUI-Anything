@@ -87,7 +87,7 @@ private void deleteMergedNotes (List<String> mergedNotesIds) {
 * **📦 APK 导入**：管理员可上传 APK，由 JADX 在后端反编译后运行 Fast 出图。
 * **🗺️ Only Map / Demo**：只看图；公开 Demo 只包含固定示例图，不包含反编译内容和讨论记录。
 * **⚡ 对话输出**：内置 Agent 支持流式 Markdown；命令行 Agent 完成后返回结果。
-* **🔐 登录保护**：密码哈希与有期限的会话令牌保护项目数据和分析接口。
+* **🧪 本地免登录**：本地开发默认直接以 `local` 管理员进入；共享部署可设置 `GUI_AUTH_ENABLED=1` 恢复账号登录。
 * **🚀 同源部署**：Web 服务提供前端页面，并将 `/api` 转发给后端。
 
 ## 🛠️ 技术栈

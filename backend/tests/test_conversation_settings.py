@@ -2,17 +2,15 @@ import unittest
 from unittest.mock import patch, AsyncMock
 from fastapi.testclient import TestClient
 from app.main import app
-from app.core.auth import current_user, require_admin
+from app.core.auth import current_user, require_admin, is_admin
 from app.agents import settings
 
 class ModelSettingsTests(unittest.TestCase):
     def tearDown(self): app.dependency_overrides.clear()
 
-    def test_unauthenticated_cannot_read_or_write(self):
-        with TestClient(app) as client:
-            self.assertEqual(client.get('/api/conversation-settings').status_code,401)
-            self.assertEqual(client.put('/api/conversation-settings/credentials',json={'provider':'test','api_key':'never-return'}).status_code,401)
-            self.assertEqual(client.post('/api/conversation-settings/test',json={'provider':'test','model':'m'}).status_code,401)
+    def test_local_mode_needs_no_token_and_is_admin(self):
+        self.assertEqual(current_user(None), 'local')
+        self.assertTrue(is_admin('local'))
 
     def test_normal_user_cannot_change_shared_credentials(self):
         app.dependency_overrides[current_user]=lambda:'ordinary-user'
