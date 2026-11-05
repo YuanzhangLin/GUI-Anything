@@ -136,3 +136,19 @@ def verify_assertions(run_id: str, user: str = Depends(current_user)):
 def agents(user: str = Depends(current_user)):
     from app.workbench.agent import available
     return [{"id":name,"available":available(name),"note":"Executable availability only; model credentials are checked when invoked"} for name in ["opencode","external"]]
+
+
+@router.get("/devices/{serial}/preview")
+def device_preview(serial: str, user: str = Depends(current_user)):
+    def read():
+        import base64
+        from app.navigation.device import AdbDevice
+        from app.navigation.observation import parse_activity
+        if not any(d["serial"] == serial and d["state"] == "device" for d in devices()["devices"]):
+            raise ValueError("Device is not connected")
+        device = AdbDevice(serial)
+        with __import__("app.workbench.runtime", fromlist=["lock"]).lock("device:" + serial):
+            activity = parse_activity(device._run("shell", "dumpsys", "activity", "activities").decode("utf-8", "replace"))
+            picture = device._run("exec-out", "screencap", "-p")
+        return {"activity": activity, "screenshot": base64.b64encode(picture).decode("ascii")}
+    return guarded(read)

@@ -91,6 +91,17 @@ class Runtime:
             rows=c.execute("SELECT seq,at,kind,payload FROM events WHERE run_id=? AND seq>? ORDER BY seq",(run_id,after)).fetchall()
         return [{"seq":r[0],"at":r[1],"kind":r[2],"payload":json.loads(r[3])} for r in rows]
 
+    def block(self, run_id, reason):
+        """Record an execution failure without discarding completed evidence."""
+        with lock(run_id), closing(self.connect()) as c:
+            c.execute("INSERT OR IGNORE INTO states(id,status) VALUES(?, 'draft')", (run_id,))
+            status = c.execute("SELECT status FROM states WHERE id=?", (run_id,)).fetchone()[0]
+            if status not in {"stopped", "blocked"}:
+                c.execute("UPDATE states SET status='blocked' WHERE id=?", (run_id,))
+                c.commit()
+                self.event(run_id, "blocked", {"reason": str(reason)})
+        return self.state(run_id)
+
     def control(self, run, command):
         self.state(run["id"])
         with lock(run["id"]), closing(self.connect()) as c:
@@ -187,7 +198,5 @@ class Runtime:
                 self.event(run["id"],"action_completed",{"action_seq":action_seq,"after":payload})
                 return {"state":self.state(run["id"]),"observation":payload}
             except (RuntimeError,ValueError) as exc:
-                with closing(self.connect()) as c:
-                    c.execute("UPDATE states SET status='blocked' WHERE id=?",(run["id"],));c.commit()
-                self.event(run["id"],"blocked",{"reason":str(exc)})
+                self.block(run["id"], exc)
                 raise

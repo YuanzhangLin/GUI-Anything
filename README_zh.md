@@ -147,7 +147,7 @@ docker compose up -d --build
 ```
 启动后访问 `http://服务器IP:3001`。前端通过同源 `/api` 访问后端。
 如已为 Deep 分析创建 `backend/.env`，改用 `docker compose --env-file backend/.env up -d --build` 启动。
-OpenCode 由后端镜像安装并按需启动。若要指定模型，在 OpenCode 自身配置中设置凭证；平台会显示 Agent 是否可用。项目 Agent 指南见 `agent-skills/gui-anything/SKILL.md`。
+OpenCode 由后端镜像安装。管理员可进入 **管理控制台 → 模型服务**，选择供应商、保存 API key 并测试一个模型。密钥只发送给本机 OpenCode，不会由接口返回，也不会写进仓库。项目 Agent 指南见 `agent-skills/gui-anything/SKILL.md`。
 也可以在 `backend/.env` 中设置 `OPENCODE_MODEL=provider/model` 与该提供商的 API Key，再使用上述 `--env-file` 命令启动。
 其他命令行 Agent 可通过 `GUI_AGENT_EXECUTABLE` 和 `GUI_AGENT_ARGS` 接入，例如 `GUI_AGENT_ARGS=["--project","{repo}","{prompt}"]`。参数以 JSON 数组传入，不经过 shell；请先在后端运行环境安装该 Agent。
 

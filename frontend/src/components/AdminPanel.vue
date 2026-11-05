@@ -69,6 +69,10 @@
               <p v-for="(log, i) in logs" :key="i">{{ log }}</p>
             </div>
           </div>
+
+          <div v-if="activeTab === 'models'" class="view-card model-service-view">
+            <ModelSettings :api-base="apiBase" :admin="true" />
+          </div>
         </section>
       </div>
     </div>
@@ -77,8 +81,9 @@
 
 <script setup>
 import { ref } from 'vue'
-import { X, Settings, Database, Terminal, ShieldCheck, ChevronRight } from 'lucide-vue-next'
+import { X, Settings, Database, Terminal, ShieldCheck, ChevronRight, Bot } from 'lucide-vue-next'
 import ProjectDetail from './ProjectDetail.vue' // 引入详情子组件
+import ModelSettings from './ModelSettings.vue'
 import { authFetch } from '../utils/auth'
 
 const props = defineProps(['appList', 'apiBase'])
@@ -120,6 +125,7 @@ const logs = ref([
 
 const menuItems = [
   { id: 'projects', label: '项目资源管理', icon: Database },
+  { id: 'models', label: '模型服务', icon: Bot },
   { id: 'logs', label: '任务执行日志', icon: Terminal },
   { id: 'security', label: '审计策略配置', icon: ShieldCheck }
 ]
@@ -156,6 +162,7 @@ const onTaskTriggered = ({ id, type }) => {
 .clickable-row:hover { background: #f8fafc; }
 .arrow-cell { text-align: right; color: #cbd5e1; }
 .terminal { background: #0f172a; color: #10b981; padding: 20px; border-radius: 12px; font-family: 'Courier New', monospace; font-size: 13px; min-height: 300px; }
+.model-service-view{max-width:820px}
 .icon-spin { animation: spin 4s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 </style>

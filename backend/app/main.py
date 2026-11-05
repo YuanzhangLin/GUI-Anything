@@ -24,6 +24,10 @@ from app.services.apk_import import import_apk_file, MAX_APK_BYTES
 app = FastAPI(title="GUI-Anything Multi-Project")
 from app.workbench.api import router as workbench_router
 app.include_router(workbench_router)
+from app.agents.settings import router as conversation_settings_router
+app.include_router(conversation_settings_router)
+from app.agents.device_tools import router as agent_tools_router
+app.include_router(agent_tools_router)
 agent = GuiAgent()
 from app.services.issue_solver import IssueSolver
 
@@ -87,7 +91,15 @@ class AuthRequest(BaseModel):
     username: str
     password: str
 
+class ModelChoice(BaseModel):
+    providerID: str
+    modelID: str
+
+from app.workbench.store import RunRequest
+
 class ChatRequest(BaseModel):
+    device_task: Optional[RunRequest] = None
+    model: Optional[ModelChoice] = None
     message: str
     session_id: str
     username: str
@@ -99,10 +111,24 @@ class ChatRequest(BaseModel):
 
 @app.get("/api/agents")
 async def get_agents(username: str = Depends(current_user)):
+    from app.agents.opencode import OpenCodeConnection
+    import httpx
+    ready = False
+    reason = "OpenCode 服务未连接"
+    try:
+        health = await OpenCodeConnection().health()
+        ready = bool(health.get("healthy"))
+        reason = "服务已连接；模型可用性需验证"
+    except httpx.HTTPError:
+        pass
     return {"default": "opencode", "agents": [
-        {"id": "opencode", "name": "OpenCode", "available": opencode_available()},
-        {"id": "builtin", "name": "内置 Agent", "available": bool(os.getenv("OPENAI_API_KEY"))},
-        {"id": "external", "name": "自定义 Agent", "available": external_available()},
+        {"id": "opencode", "name": "OpenCode", "available": ready,
+         "installed": opencode_available(), "reason": reason,
+         "capabilities": {"sessions": True, "streaming": True, "tools": True, "abort": True, "device_actions": False}},
+        {"id": "builtin", "name": "内置 Agent", "available": bool(os.getenv("OPENAI_API_KEY")),
+         "capabilities": {"sessions": False, "streaming": True, "tools": False, "abort": False, "device_actions": False}},
+        {"id": "external", "name": "自定义 Agent", "available": external_available(),
+         "capabilities": {"sessions": False, "streaming": False, "tools": False, "abort": False, "device_actions": False}},
     ]}
 
 @app.get("/api/apps")
@@ -371,6 +397,9 @@ async def me(username: str = Depends(current_user)):
 
 @app.post("/api/chat")
 async def chat(request: ChatRequest, username: str = Depends(current_user)):
+    if request.provider == "opencode":
+        from app.agents.conversations import chat as conversation_chat
+        return await conversation_chat(DB_PATH, request, username, CodeManager().get_repo_path(validate_app_id(request.app_id)))
     if request.provider == "builtin" and not os.getenv("OPENAI_API_KEY"):
         raise HTTPException(status_code=503, detail="Deep analysis is not configured; Fast map remains available")
     if request.provider == "opencode" and not opencode_available():
@@ -429,6 +458,16 @@ async def chat(request: ChatRequest, username: str = Depends(current_user)):
         conn_inner.close()
 
     return StreamingResponse(event_generator(), media_type="text/plain")
+
+@app.get("/api/conversations/{session_id}/events")
+def conversation_events(session_id: str, after: int = 0, username: str = Depends(current_user)):
+    from app.agents.conversations import read_events
+    return read_events(DB_PATH, session_id, username, max(0,after))
+
+@app.post("/api/conversations/{session_id}/abort")
+async def abort_conversation(session_id: str, username: str = Depends(current_user)):
+    from app.agents.conversations import stop
+    return await stop(DB_PATH, session_id, username)
 
 @app.get("/api/history/{username}")
 async def get_history(username: str, authenticated_user: str = Depends(current_user)):

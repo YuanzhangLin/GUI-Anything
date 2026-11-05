@@ -1,0 +1,43 @@
+import asyncio
+import tempfile
+import unittest
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch, AsyncMock
+from app.agents import conversations as c
+
+class BackgroundConversationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_browser_disconnect_does_not_cancel_or_resend(self):
+        with tempfile.TemporaryDirectory() as root:
+            db=str(Path(root)/'chat.db')
+            conn=c.connection_db(db)
+            conn.execute('CREATE TABLE sessions(id TEXT PRIMARY KEY,title TEXT,username TEXT,app_id TEXT)')
+            conn.execute('CREATE TABLE messages(session_id TEXT,role TEXT,content TEXT)')
+            conn.commit();conn.close()
+            request=SimpleNamespace(username='alice',session_id='one',app_id='app',model=None,message='hello')
+            gate=asyncio.Event();calls=[]
+            async def fake_stream(*args,**kwargs):
+                calls.append(kwargs['text'])
+                yield {'kind':'text_delta','part_id':'p','text':'first'}
+                await gate.wait()
+                yield {'kind':'text_delta','part_id':'p','text':' second'}
+                yield {'kind':'done'}
+            with patch.object(c.OpenCodeConnection,'create',AsyncMock(return_value='remote')),patch.object(c,'stream_reply',fake_stream):
+                response=await c.chat(db,request,'alice',root)
+                task=c._tasks['one']
+                await asyncio.sleep(0)
+                # Close the browser consumer while the actual generation waits.
+                await response.body_iterator.__anext__()
+                await response.body_iterator.aclose()
+                self.assertFalse(task.done())
+                self.assertTrue(c.read_events(db,'one','alice')['running'])
+                with self.assertRaises(Exception): await c.chat(db,request,'alice',root)
+                gate.set();await task
+            self.assertEqual(len(calls),1)
+            self.assertTrue(calls[0].startswith('hello'))
+            events=c.read_events(db,'one','alice')
+            self.assertFalse(events['running'])
+            self.assertEqual(events['events'][-1]['kind'],'turn_finished')
+            conn=c.connection_db(db)
+            self.assertEqual(conn.execute("SELECT content FROM messages WHERE role='assistant'").fetchone()[0],'first second')
+            conn.close()

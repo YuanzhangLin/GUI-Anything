@@ -18,7 +18,7 @@
           <img class="auth-icon" src="./assets/mark.svg" alt="GUI-Anything" />
         </div>
         <h1>GUI-Anything</h1>
-        <p>Android 静态分析与智能审计平台</p>
+        <p>Android 任务执行与验证工作台</p>
       </div>
 
       <div class="auth-form">
@@ -27,15 +27,15 @@
           <input v-model="loginForm.username" type="text" placeholder="输入用户名..." />
         </div>
         <div class="input-group">
-          <label>Access Token</label>
-          <input 
-            v-model="loginForm.password" 
-            type="password" 
-            placeholder="输入访问密钥..." 
-            @keyup.enter="isRegistering ? handleRegister() : handleLogin()" 
+          <label>登录密码</label>
+          <input
+            v-model="loginForm.password"
+            type="password"
+            placeholder="输入登录密码..."
+            @keyup.enter="isRegistering ? handleRegister() : handleLogin()"
           />
         </div>
-        
+
         <button class="auth-btn" @click="isRegistering ? handleRegister() : handleLogin()" :disabled="isLoading">
           <span v-if="!isLoading">{{ isRegistering ? '初始化新账号' : '建立安全连接' }}</span>
           <span v-else class="auth-loader"></span>
@@ -75,16 +75,16 @@
             <PanelLeftClose v-if="!sidebarCollapsed" :size="18" />
             <PanelLeftOpen v-else :size="18" />
           </button>
-          <button @click="createNewChat" class="btn-new-chat-fancy" :title="sidebarCollapsed ? '新建对话' : ''">
-            <Plus :size="16" /> <span v-if="!sidebarCollapsed">新建对话</span>
+          <button @click="createNewChat()" class="btn-new-chat-fancy" :title="sidebarCollapsed ? '新建对话' : ''">
+            <Plus :size="16" /> <span v-if="!sidebarCollapsed">源码审计对话</span>
           </button>
         </div>
       </div>
-      
+
       <div class="session-list" v-show="!sidebarCollapsed">
-        <div 
-          v-for="s in sessions" 
-          :key="s.id" 
+        <div
+          v-for="s in sessions"
+          :key="s.id"
           :class="['session-item', currentSessionId === s.id ? 'active' : '']"
           @click="switchSession(s)"
         >
@@ -121,7 +121,6 @@
         <nav class="footer-nav">
           <button @click="openDocs"><BookOpen :size="16" /> 使用手册</button>
           <button @click="showMap = !showMap"><Activity :size="16" /> Only Map</button>
-          <button :disabled="!selectedAppId" @click="showWorkbench = true"><Activity :size="16" /> 代码目标工作台</button>
           <button v-if="isAdmin" @click="showAdmin = true" class="admin-entry-btn">
     <Settings :size="16" /> 管理控制台
   </button>
@@ -134,9 +133,11 @@
     <main class="chat-main">
       <div class="chat-scroller" ref="messageScroll">
         <div class="chat-content">
+          <ConversationRun v-for="id in conversationRunIds" :key="id" :run-id="id" :api-base="API_BASE" />
+          <details v-if="conversationEvents.length" class="conversation-activity"><summary>执行记录（{{ conversationEvents.length }}）</summary><ol><li v-for="event in conversationEvents" :key="event.seq">{{ event.tool || event.kind }} · {{ event.state || event.message || event.status || '已结束' }}</li></ol></details>
           <div v-for="(msg, i) in currentMessages" :key="i" :class="['msg-row', msg.role]">
             <div v-if="msg.role === 'assistant'" class="avatar ai">AI</div>
-            
+
             <div class="msg-bubble">
               <div class="msg-content markdown-body">
                 <div v-if="msg.role === 'assistant' && !msg.content && isLoading" class="typing-status">
@@ -148,7 +149,7 @@
 
             <div v-if="msg.role === 'user'" class="avatar user">ME</div>
           </div>
-          
+
           <div v-if="isLoading && !isStreaming" class="msg-row assistant">
             <div class="avatar ai">AI</div>
             <div class="msg-bubble">
@@ -159,6 +160,7 @@
       </div>
 
       <footer class="input-area">
+        <ModelSettings v-if="selectedAgent === 'opencode'" :api-base="API_BASE" :admin="false" @change="selectedModel = $event" />
         <div class="composer-card">
           <div v-if="attachedIssues.length || attachedMap" class="composer-chips">
             <span v-for="a in attachedIssues" :key="a.number" class="issue-chip">
@@ -189,6 +191,8 @@
               </button>
             </span>
           </div>
+          <div v-if="attachedSource" class="toolbar-hint">已附加源码：{{ attachedSource.path }} <button @click="attachedSource = null">移除</button></div>
+          <div v-if="deviceTarget" class="device-task-chip"><strong>本次允许设备执行</strong><span>{{ deviceTarget.device_serial }} · {{ deviceTarget.target.path }}:{{ deviceTarget.target.start_line }}–{{ deviceTarget.target.end_line }}</span><label>最多动作 <input type="number" v-model.number="deviceBudget" min="1" max="1000"></label><button @click="deviceTarget = null">取消设备执行</button></div>
           <div class="input-container">
             <textarea
               ref="chatInput"
@@ -197,10 +201,12 @@
               placeholder="输入审计指令…（Shift+Enter 换行）"
               rows="1"
             ></textarea>
-            <button class="send-btn" @click="sendMessage" :disabled="isLoading">
+            <button v-if="(isLoading || recoveredRunning) && selectedAgent === 'opencode'" class="toolbar-attach" @click="stopReply">停止</button>
+            <button class="send-btn" @click="sendMessage" :disabled="isLoading || recoveredRunning">
               <Send :size="18" />
             </button>
           </div>
+          <p v-if="agentStatus" class="toolbar-hint" role="status">{{ agentStatus }}</p>
           <div class="composer-toolbar">
             <label class="toolbar-hint">Agent
               <select v-model="selectedAgent" :disabled="isLoading">
@@ -266,6 +272,7 @@
         </div>
       </div>
     </main>
+    <ConversationContext :app-id="selectedAppId" :api-base="API_BASE" @attach="attachedSource = $event" @target="deviceTarget = $event" />
 
     <div v-if="showMap" class="drawer only-map-drawer">
       <div class="drawer-header">
@@ -287,16 +294,12 @@
       </div>
     </div>
   </div>
-    <section v-if="showWorkbench" class="workbench-overlay" role="dialog" aria-modal="true" aria-label="代码目标工作台">
-      <header class="workbench-topbar"><strong>{{ currentAppMeta?.name || selectedAppId }} · 代码目标测试</strong><button aria-label="关闭代码目标工作台" @click="showWorkbench = false">关闭</button></header>
-      <div class="workbench-body"><RunWorkbench :key="selectedAppId" :app-id="selectedAppId" :api-base="API_BASE" /></div>
-    </section>
-    <AdminPanel 
-    v-if="showAdmin" 
-    @close="showAdmin = false" 
+    <AdminPanel
+    v-if="showAdmin"
+    @close="showAdmin = false"
     @imported="refreshApps"
-    :appList="appList" 
-    :apiBase="API_BASE" 
+    :appList="appList"
+    :apiBase="API_BASE"
   />
 </template>
 
@@ -306,8 +309,10 @@ import { Plus, Send, Activity, X, BookOpen, LogOut, Settings, Tag, Trash2, Panel
 import { renderMarkdown } from './utils/markdown'
 import { authFetch, setToken, getToken, clearToken } from './utils/auth'
 import MapCanvas from './components/MapCanvas.vue'
-import RunWorkbench from './components/RunWorkbench.vue'
-import AdminPanel from './components/AdminPanel.vue' 
+import ConversationContext from './components/ConversationContext.vue'
+import ModelSettings from './components/ModelSettings.vue'
+import ConversationRun from './components/ConversationRun.vue'
+import AdminPanel from './components/AdminPanel.vue'
 
 
 // --- 2. 状态定义 (必须放在计算属性之前) ---
@@ -316,7 +321,7 @@ const demoVisible = ref(false)
 const isRegistering = ref(false)
 const showDocs = ref(false)
 const showMap = ref(false)
-const showWorkbench = ref(false)
+
 const isLoading = ref(false)
 const isStreaming = ref(false)
 const currentUser = ref('')
@@ -360,6 +365,70 @@ const adjustChatInputHeight = () => {
 const docsContent = ref('正在加载手册...')
 const showAdmin = ref(false) // 控制中台显示的“开关”
 const isAdmin = ref(false)
+const deviceTarget = ref<any>(null)
+const deviceBudget = ref(30)
+watch(selectedAppId,()=>{deviceTarget.value=null})
+const attachedSource = ref<{path:string;text:string;appId:string}|null>(null)
+watch(selectedAppId,()=>{attachedSource.value=null})
+const selectedModel = ref<{providerID:string;modelID:string}|null>(null)
+const conversationEvents = ref<any[]>([])
+const conversationRunIds = computed(()=>[...new Set(conversationEvents.value.map(e=>e.run_id).filter(Boolean))] as string[])
+const recoveredRunning = ref(false)
+let eventLoadGeneration = 0
+let restoreTimer: ReturnType<typeof setTimeout> | undefined
+async function restoreEvents(id: string) {
+  const generation = ++eventLoadGeneration
+  if (restoreTimer) clearTimeout(restoreTimer)
+  conversationEvents.value = []
+  recoveredRunning.value = false
+  if (!id) return
+  let after = 0
+  const parts: Record<string,string> = {}
+  let recoveredMessage: any = null
+  async function poll() {
+    try {
+      while (generation === eventLoadGeneration) {
+        const r = await authFetch(`${API_BASE}/conversations/${encodeURIComponent(id)}/events?after=${after}`)
+        if (!r.ok) return
+        const data = await r.json()
+        if (generation !== eventLoadGeneration) return
+        for (const event of data.events) {
+          after = event.seq
+          if (!event.kind.startsWith('text_') && !conversationEvents.value.some(e=>e.seq===event.seq)) conversationEvents.value.push(event)
+          if (event.kind === 'turn_started') for (const key of Object.keys(parts)) delete parts[key]
+          if (event.kind === 'text_snapshot') parts[event.part_id] = event.text
+          if (event.kind === 'text_delta') parts[event.part_id] = (parts[event.part_id] || '') + event.text
+        }
+        if (data.recovery_required) agentStatus.value = '后端曾中断；下次发送前会先确认遗留执行已停止。'
+        recoveredRunning.value = data.running && !(isStreaming.value && streamingSession.value === id)
+        const session = sessions.value.find(s=>s.id === id)
+        if (session && recoveredRunning.value && !recoveredMessage) {
+          recoveredMessage = {role:'assistant',content:''}
+          session.messages.push(recoveredMessage)
+        }
+        if (recoveredMessage) recoveredMessage.content = Object.values(parts).join('\n\n')
+        if (data.has_more && data.events.length) continue
+        if (data.running) restoreTimer = setTimeout(poll, 800)
+        else if (recoveredMessage && session) {
+          const history = await authFetch(`${API_BASE}/history/${encodeURIComponent(currentUser.value)}`)
+          if (history.ok && generation === eventLoadGeneration) {
+            const updated = (await history.json()).find((s:any)=>s.id===id)
+            if (updated) session.messages = updated.messages
+          }
+        }
+        break
+      }
+    } catch { if(generation === eventLoadGeneration) restoreTimer = setTimeout(poll, 2000) }
+  }
+  await poll()
+}
+watch(currentSessionId, id => { restoreEvents(id) })
+onBeforeUnmount(()=>{++eventLoadGeneration;if(restoreTimer)clearTimeout(restoreTimer)})
+const agentStatus = ref('')
+const streamingSession = ref('')
+async function stopReply() {
+  try { await safeFetch(`${API_BASE}/conversations/${encodeURIComponent(recoveredRunning.value ? currentSessionId.value : streamingSession.value)}/abort`, {method:'POST'}); agentStatus.value = '已请求停止' } catch(e) { agentStatus.value = String(e) }
+}
 const selectedAgent = ref<'opencode' | 'builtin' | 'external'>('opencode')
 const availableAgents = ref<{id: 'opencode' | 'builtin' | 'external'; name: string; available: boolean}[]>([])
 
@@ -488,7 +557,7 @@ const safeFetch = async (url: string, options?: RequestInit) => {
       localStorage.removeItem('gui_user')
       isLoggedIn.value = false
     }
-    
+
     if (!res.ok) {
       if (contentType && contentType.includes('text/html')) {
         throw new Error(`API 响应异常: 服务器返回了 HTML (可能是 404)。请确认后端 8002 端口是否正常开启。`)
@@ -532,7 +601,7 @@ const initData = async () => {
       if (!Number.isNaN(na) && !Number.isNaN(nb)) return nb - na
       return String(b.id).localeCompare(String(a.id))
     })
-    
+
     if (sessions.value.length > 0) {
       const first = sessions.value[0]
       currentSessionId.value = first.id
@@ -599,6 +668,7 @@ const createNewChat = () => {
 }
 
 const switchSession = (s: any) => {
+
   currentSessionId.value = s.id
   selectedAppId.value = s.app_id
 }
@@ -747,11 +817,14 @@ const sendMessageWithOverrides = async (
   apiText: string,
   overrides: { tool_rounds?: number; force_no_tools?: boolean }
 ) => {
-  if (isLoading.value) return
+  if (isLoading.value || recoveredRunning.value) return
   const session = sessions.value.find(s => s.id === currentSessionId.value)
   if (!session) return
 
   isLoading.value = true
+  if(deviceTarget.value && selectedAgent.value !== 'opencode'){agentStatus.value='设备执行目前只接入 OpenCode';isLoading.value=false;return}
+  streamingSession.value = session.id
+  agentStatus.value = '正在连接 Agent…'
   const assistantMsg = { role: 'assistant', content: '' }
   session.messages.push(assistantMsg)
   isStreaming.value = true
@@ -766,19 +839,46 @@ const sendMessageWithOverrides = async (
         username: currentUser.value,
         app_id: selectedAppId.value,
         provider: selectedAgent.value,
+        model: selectedModel.value,
+        device_task: deviceTarget.value && selectedAgent.value === 'opencode' ? {
+          goal: apiText.slice(0,4000), target: deviceTarget.value.target,
+          device_serial: deviceTarget.value.device_serial, agent:'opencode',
+          action_budget: deviceBudget.value, time_budget_seconds:300,
+          conditions:[{kind:'coverage',description:'所选代码范围产生新增覆盖'}]
+        } : null,
         ...overrides
       })
     })
 
+    deviceTarget.value = null
     const reader = res.body?.getReader()
     const decoder = new TextDecoder()
     if (!reader) throw new Error('读取器初始化失败')
 
+    const structured = res.headers.get('content-type')?.includes('application/x-ndjson')
+    let pending = ''
+    const parts: Record<string,string> = {}
+    const handleEvent = (line: string) => {
+      if (!line.trim()) return
+      const event = JSON.parse(line)
+      if (!event.kind.startsWith('text_') && currentSessionId.value === session.id && !conversationEvents.value.some(e=>e.seq===event.seq)) conversationEvents.value.push(event)
+      if (event.kind === 'text_snapshot') parts[event.part_id] = event.text
+      if (event.kind === 'text_delta') parts[event.part_id] = (parts[event.part_id] || '') + event.text
+      if (event.kind.startsWith('text_')) assistantMsg.content = Object.values(parts).join('\n\n')
+      if (event.kind === 'tool') agentStatus.value = `${event.tool}：${event.state}`
+      if (event.kind === 'status') agentStatus.value = event.status === 'busy' ? 'Agent 正在执行…' : event.status === 'retry' ? '模型请求失败，OpenCode 正在重试；可点击停止' : event.status
+      if (event.kind === 'done') agentStatus.value = '本轮已结束'
+      if (event.kind === 'error') { agentStatus.value = event.message; assistantMsg.content += '\n\n' + event.message }
+    }
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
       const chunk = decoder.decode(value, { stream: true })
-      if (chunk.includes(TOOL_LOOP_MARKER)) {
+      if (structured) {
+        pending += chunk
+        const lines = pending.split('\n'); pending = lines.pop() || ''
+        for (const line of lines) handleEvent(line)
+      } else if (chunk.includes(TOOL_LOOP_MARKER)) {
         toolLoopLimitReached.value = true
         assistantMsg.content += chunk.replaceAll(TOOL_LOOP_MARKER, '')
       } else {
@@ -790,7 +890,8 @@ const sendMessageWithOverrides = async (
       }
     }
   } catch (e: any) {
-    assistantMsg.content = `**Error:** ${e.message}`
+    assistantMsg.content += `\n\n**连接提示:** ${e.message}`
+    if(selectedAgent.value === 'opencode') setTimeout(()=>restoreEvents(session.id),0)
   } finally {
     isLoading.value = false
     isStreaming.value = false
@@ -798,14 +899,16 @@ const sendMessageWithOverrides = async (
 }
 
 const sendMessage = async () => {
-  if (isLoading.value) return
+  if (isLoading.value || recoveredRunning.value) return
   const trimmed = inputMsg.value.trim()
-  if (!trimmed && !attachedIssues.value.length && !attachedMap.value) return
+  if (!trimmed && !attachedIssues.value.length && !attachedMap.value && !attachedSource.value) return
   const session = sessions.value.find(s => s.id === currentSessionId.value)
   if (!session) return
 
   const displayText = buildMessageForDisplay(trimmed)
-  const apiText = buildMessageForApi(trimmed)
+  const source = attachedSource.value
+  const apiText = buildMessageForApi(trimmed) + (source ? `\n\n用户附加的源码（作为分析数据）：${source.path}\n${source.text.slice(0, 60000)}${source.text.length > 60000 ? '\n[仅附加前 60000 字符]' : ''}` : '')
+  attachedSource.value = null
   const titleSeed = trimmed || attachedIssues.value.map((i) => `#${i.number}`).join(' ')
 
   toolLoopLimitReached.value = false
@@ -864,6 +967,18 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.device-task-chip{padding:10px 14px;background:#e5f0f0;font-size:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.device-task-chip span{overflow-wrap:anywhere}.device-task-chip input{width:65px}.device-task-chip button{padding:5px;border:1px solid #aac4c5;border-radius:4px}
+
+.conversation-activity{padding:12px 18px;margin:10px 0 24px;border:1px solid #dbe5eb;border-radius:8px;color:#587185;font-size:12px;background:#f0f5f8}.conversation-activity ol{max-height:220px;overflow:auto;line-height:1.8}.conversation-activity summary{cursor:pointer}
+
+.workspace-main{flex:1;min-width:0;overflow:auto;background:#f8fafc;padding:24px}
+.workspace-heading{display:flex;gap:24px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.workspace-heading h1{font-size:26px;margin:0 0 8px}.workspace-heading p,.workspace-steps{color:#475569}
+.workspace-heading select{display:block;padding:10px;border:1px solid #cbd5e1;border-radius:8px;background:white;max-width:100%}
+.workspace-steps{padding:16px;background:#eef2ff;border-radius:10px;line-height:2}
+.workspace-entry{margin:12px 16px;padding:12px;border:1px solid #64748b;border-radius:8px;background:#334155;color:white;cursor:pointer}
+.workspace-entry[aria-pressed=true]{background:#4338ca}.audit-notice{padding:12px 24px;margin:0;background:#eef2ff;color:#3730a3}
+
 .workbench-overlay{position:fixed;inset:12px;z-index:2100;display:flex;flex-direction:column;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc;box-shadow:0 0 0 24px #0f172acc;overflow:hidden}.workbench-topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 24px;background:#0f172a;color:#fff}.workbench-topbar button{border:1px solid #64748b;border-radius:6px;padding:6px 14px;background:#fff;color:#0f172a;cursor:pointer}.workbench-body{flex:1;overflow:auto;min-height:0;padding:0 16px 16px}
 .demo-view { height: 100vh; display: flex; flex-direction: column; background: #f8fafc; }
 .demo-view :deep(.map-container) { flex: 1; min-height: 0; }
@@ -944,34 +1059,34 @@ onMounted(() => {
 .auth-header { text-align: center; margin-bottom: 36px; }
 .auth-icon-wrapper { margin-bottom: 16px; }
 .auth-icon { display: block; width: 76px; height: 76px; margin: 0 auto; }
-.auth-header h1 { 
-  color: #f8fafc; font-size: 28px; font-weight: 800; 
-  letter-spacing: -1px; margin-bottom: 8px; 
+.auth-header h1 {
+  color: #f8fafc; font-size: 28px; font-weight: 800;
+  letter-spacing: -1px; margin-bottom: 8px;
 }
 .auth-header p { color: #94a3b8; font-size: 14px; }
 
 /* 输入框组合 */
 .input-group { margin-bottom: 24px; text-align: left; }
-.input-group label { 
-  display: block; font-size: 11px; font-weight: 700; 
-  color: #10b981; text-transform: uppercase; 
-  margin-bottom: 8px; letter-spacing: 1.2px; 
+.input-group label {
+  display: block; font-size: 11px; font-weight: 700;
+  color: #10b981; text-transform: uppercase;
+  margin-bottom: 8px; letter-spacing: 1.2px;
 }
 .input-group input {
-  width: 100%; background: rgba(0, 0, 0, 0.3); 
+  width: 100%; background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 14px 16px; border-radius: 12px; 
+  padding: 14px 16px; border-radius: 12px;
   color: #f1f5f9; outline: none; transition: all 0.3s;
 }
-.input-group input:focus { 
-  border-color: #10b981; 
+.input-group input:focus {
+  border-color: #10b981;
   background: rgba(0, 0, 0, 0.4);
-  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1); 
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
 }
 
 /* 按钮 */
 .auth-btn {
-  width: 100%; padding: 16px; background: #10b981; color: #ffffff; 
+  width: 100%; padding: 16px; background: #10b981; color: #ffffff;
   border: none; border-radius: 12px; font-weight: 700; font-size: 15px;
   cursor: pointer; transition: all 0.3s; margin-top: 12px;
 }
@@ -1042,13 +1157,13 @@ onMounted(() => {
 .sidebar-resizer:hover {
   background: rgba(148, 163, 184, 0.12);
 }
-.logo-text { 
+.logo-text {
   font-size: 20px; font-weight: 800; margin-bottom: 24px; display: flex; align-items: center; gap: 8px;
   background: linear-gradient(to right, #ffffff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
 .logo-icon { display: block; width: 30px; height: 30px; flex: none; }
 .btn-new-chat-fancy {
-  width: 100%; padding: 12px; background: #1f2937; border: 1px solid #374151; color: white; 
+  width: 100%; padding: 12px; background: #1f2937; border: 1px solid #374151; color: white;
   border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
   font-size: 14px; font-weight: 600; transition: all 0.3s;
 }
@@ -1392,4 +1507,8 @@ onMounted(() => {
 .login-panel { background: white; padding: 48px; border-radius: 20px; width: 400px; text-align: center; }
 .panel-logo { font-size: 24px; font-weight: 800; margin-bottom: 24px; }
 .primary-action { width: 100%; padding: 14px; background: #111827; color: white; border: none; border-radius: 10px; margin-top: 24px; cursor: pointer; }
+
+.workspace-main{background:#f5f7f9;padding:28px 30px;font-family:"Segoe UI","Microsoft YaHei",sans-serif}.workspace-heading{padding-bottom:24px;margin-bottom:8px}.workspace-heading h1{font-size:23px;font-weight:600;letter-spacing:-.5px;color:#263b4b}.workspace-heading p{font-size:13px;color:#7b8c99;margin:0}.workspace-heading label{font-size:11px;color:#7b8c99}.workspace-heading select{min-width:210px;padding:8px 12px;margin-top:5px;font-size:13px;color:#344e60;border-color:#d9e2e8}
+.app-sidebar{background:#203140;color:#c5d0d8;border-right:1px solid #2d4152}.workspace-entry{background:transparent;border-color:transparent;text-align:left;font-size:13px}.workspace-entry[aria-pressed=true]{background:#345263;color:#fff;border-color:#436476}.sidebar-header .logo-text{font-size:18px}.sidebar-header .btn-new-chat-fancy{background:#2b4051;border-color:#3b5264;font-size:12px}.footer-nav button{font-size:12px}.project-picker-meta{display:none}.project-picker select{font-size:12px}.sidebar-bottom{padding-top:14px}.audit-notice{background:#edf3f6;color:#536c7e;font-size:12px}
+@media(max-width:850px){.workspace-main{padding:18px 14px}.workspace-heading{gap:12px}.workspace-heading h1{font-size:20px}}
 </style>
