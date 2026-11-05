@@ -13,11 +13,11 @@
       :style="{ width: sidebarCollapsed ? `${SIDEBAR_COLLAPSED_PX}px` : `${sidebarWidthPx}px` }"
     >
       <div class="sidebar-header">
-        <div class="logo-text">
-          <img class="logo-icon" src="./assets/mark.svg" alt="" />
-          <span v-if="!sidebarCollapsed">GUI-Anything</span>
-        </div>
-        <div class="sidebar-header-actions">
+        <div class="sidebar-brand-row">
+          <div class="logo-text">
+            <img class="logo-icon" src="./assets/mark.svg" alt="" />
+            <span v-if="!sidebarCollapsed">GUI-Anything</span>
+          </div>
           <button
             type="button"
             class="btn-icon"
@@ -28,10 +28,10 @@
             <PanelLeftClose v-if="!sidebarCollapsed" :size="18" />
             <PanelLeftOpen v-else :size="18" />
           </button>
-          <button @click="createNewChat()" class="btn-new-chat-fancy" :title="sidebarCollapsed ? '新建对话' : ''">
-            <Plus :size="16" /> <span v-if="!sidebarCollapsed">源码审计对话</span>
-          </button>
         </div>
+        <button @click="createNewChat()" class="btn-new-chat-fancy" :title="sidebarCollapsed ? '新建对话' : ''">
+          <Plus :size="16" /> <span v-if="!sidebarCollapsed">新建对话</span>
+        </button>
       </div>
 
       <div class="session-list" v-show="!sidebarCollapsed">
@@ -150,7 +150,7 @@
               ref="chatInput"
               v-model="inputMsg"
               @keyup.enter.exact.prevent="sendMessage"
-              placeholder="输入审计指令…（Shift+Enter 换行）"
+              placeholder="输入消息…（Shift+Enter 换行）"
               rows="1"
             ></textarea>
             <button v-if="(isLoading || recoveredRunning) && selectedAgent === 'opencode'" class="toolbar-attach" @click="stopReply">停止</button>
@@ -535,7 +535,14 @@ const initData = async () => {
     const appRes = await safeFetch(`${API_BASE}/apps`)
     appList.value = await appRes.json()
     const histRes = await safeFetch(`${API_BASE}/history/${currentUser.value}`)
-    const raw = await histRes.json()
+    const raw = (await histRes.json()).map((session:any)=>({
+      ...session,
+      title: session.title === '新审计会话' ? '新对话' : session.title,
+      messages: (session.messages || []).map((message:any)=>({
+        ...message,
+        content: message.content === '您好！GUI-Anything 审计助手已就绪。' ? '您好！GUI-Anything 已就绪。' : message.content
+      }))
+    }))
     // 最近会话在上：按会话 id（时间戳字符串）降序
     sessions.value = (raw as any[]).slice().sort((a, b) => {
       const na = parseInt(String(a.id), 10)
@@ -566,9 +573,9 @@ const createNewChat = () => {
   const id = Date.now().toString()
   const entry = {
     id,
-    title: '新审计会话',
+    title: '新对话',
     app_id: selectedAppId.value,
-    messages: [{ role: 'assistant', content: '您好！GUI-Anything 审计助手已就绪。' }]
+    messages: [{ role: 'assistant', content: '您好！GUI-Anything 已就绪。' }]
   }
   sessions.value = [entry, ...sessions.value]
   currentSessionId.value = id
@@ -829,7 +836,7 @@ const sendMessage = async () => {
   await nextTick()
   adjustChatInputHeight()
   await sendMessageWithOverrides(apiText, { tool_rounds: 6, force_no_tools: false })
-  if (session.title === '新审计会话') {
+  if (session.title === '新对话') {
     session.title = titleSeed.substring(0, 10)
   }
 }
@@ -1018,6 +1025,7 @@ onMounted(() => {
   align-items: center;
   gap: 10px;
 }
+.sidebar-brand-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:16px}.app-sidebar.collapsed .sidebar-brand-row{flex-direction:column;margin-bottom:12px}.app-sidebar.collapsed .btn-new-chat-fancy{width:36px;height:36px;padding:0}.app-sidebar.collapsed .logo-text{justify-content:center}
 .btn-icon {
   width: 36px;
   height: 36px;
@@ -1048,7 +1056,7 @@ onMounted(() => {
   background: rgba(148, 163, 184, 0.12);
 }
 .logo-text {
-  font-size: 20px; font-weight: 800; margin-bottom: 24px; display: flex; align-items: center; gap: 8px;
+  font-size: 20px; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px;
   background: linear-gradient(to right, #ffffff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
 .logo-icon { display: block; width: 30px; height: 30px; flex: none; }

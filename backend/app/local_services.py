@@ -11,6 +11,17 @@ from app.paths import BACKEND_ROOT, DATA_DIR
 from app.core.opencode_agent import executable_path
 
 
+def discover_adb():
+    configured=os.getenv('GUI_ADB_PATH') or shutil.which('adb')
+    if configured: return configured
+    roots=[os.getenv('ANDROID_SDK_ROOT'),os.getenv('ANDROID_HOME'),
+           str(Path.home()/'AppData'/'Local'/'Android'/'Sdk'),r'D:\Android\Sdk']
+    for root in filter(None,roots):
+        candidate=Path(root)/'platform-tools'/'adb.exe'
+        if candidate.is_file(): return str(candidate)
+    return None
+
+
 def main():
     executable=executable_path()
     if not executable: raise SystemExit('OpenCode executable is not installed')
@@ -23,6 +34,8 @@ def main():
          'OPENCODE_CONFIG_DIR':str(config),'GUI_AGENT_BRIDGE_URL':'http://127.0.0.1:8002',
          'GUI_OPENCODE_URL':'http://127.0.0.1:4096',
          'OPENCODE_CONFIG_CONTENT':json.dumps({'permission':{'edit':'deny','bash':'deny'},'autoupdate':False})}
+    adb=discover_adb()
+    if adb: env['GUI_ADB_PATH']=adb
     children=[]
     try:
         for command in [[executable,'serve','--hostname','127.0.0.1','--port','4096'],
