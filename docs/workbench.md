@@ -24,6 +24,8 @@ While awaiting a model response, the Run loop checks control changes every 250 m
 
 ## Acceptance evidence and remaining gates
 
+Actual subprocess calls to `python -m app.workbench_cli show` and the copied Skill's `scripts/run_task.py show` read the same HTTP-created Run using local authentication. Parsed responses were identical: schema version 1, matching source, six-screen frozen Map, and stopped runtime state. This verifies interoperability without substituting mocked command routing for the actual CLI wrappers.
+
 Browser version-mismatch acceptance created a Run from an exclusively created temporary Java probe, changed only that probe, and reopened the Run. The workbench displayed the source-changed warning while preserving the original excerpt. Clicking Start returned `Source version changed`; the Run did not begin. The exact temporary probe was checked and removed after acceptance.
 
 The result component was rendered in a local-only browser fixture using the persisted real OmniNotes Run and its derived results, without altering verdicts. The table displayed lines 1630–1635 newly hit, with line 1630 covered branches 0 → 2, and the separate business assertion displayed matching expected/actual rows `{total: 1, merged: 1}`. This verifies component rendering of real evidence; it does not substitute for the pending model-driven end-to-end Run. The fixture is excluded through local Git excludes and is not part of the public Demo.
