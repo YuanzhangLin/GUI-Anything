@@ -38,6 +38,9 @@ def parse_hierarchy(xml: str) -> list[dict[str, Any]]:
             "class": item.get("class", ""),
             "clickable": item.get("clickable") == "true",
             "enabled": item.get("enabled", "true") == "true",
+            "focused": item.get("focused") == "true",
+            "scrollable": item.get("scrollable") == "true",
+            "long_clickable": item.get("long-clickable") == "true",
             "bounds": [x1, y1, x2, y2],
             "center": [(x1 + x2) // 2, (y1 + y2) // 2],
         })

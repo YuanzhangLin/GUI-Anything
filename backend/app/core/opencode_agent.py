@@ -4,17 +4,29 @@ import asyncio
 import json
 import os
 import shutil
+import tempfile
+from pathlib import Path
 
 from app.services.code_manager import CodeManager
 from app.paths import BACKEND_ROOT
 
 
+def executable_path() -> str | None:
+    configured = os.getenv("OPENCODE_BIN")
+    found = shutil.which(configured or "opencode")
+    if os.name == "nt" and (not found or Path(found).suffix.lower() in {".cmd", ".ps1"}):
+        base = Path(found).parent if found else Path(os.getenv("APPDATA", "")) / "npm"
+        native = base / "node_modules/opencode-ai/bin/opencode.exe"
+        if native.is_file(): return str(native)
+    return found
+
+
 def available() -> bool:
-    return bool(shutil.which(os.getenv("OPENCODE_BIN", "opencode")))
+    return bool(executable_path())
 
 
 async def ask(message: str, app_id: str) -> str:
-    executable = shutil.which(os.getenv("OPENCODE_BIN", "opencode"))
+    executable = executable_path()
     if not executable:
         raise RuntimeError("OpenCode is not installed on the backend")
     repo = CodeManager().get_repo_path(app_id)
@@ -36,14 +48,30 @@ async def ask(message: str, app_id: str) -> str:
         command.extend(["--model", os.environ["OPENCODE_MODEL"]])
     if os.path.isfile(skill_path):
         command.extend(["--file", skill_path])
+    with tempfile.TemporaryDirectory(prefix="gui-anything-request-") as temporary:
+        request_path = Path(temporary) / "request.txt"
+        request_path.write_text(prompt, encoding="utf-8")
+        command.extend(["--file", str(request_path), "--", "Read the attached request.txt and follow its response protocol. The other attachment is the GUI-Anything skill."])
+        return await _run_command(command, env)
+
+
+async def _run_command(command, env):
     process = await asyncio.create_subprocess_exec(
-        *command, prompt,
+        *command,
         stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, env=env,
     )
     try:
         stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=300)
+    except asyncio.CancelledError:
+        if process.returncode is None:
+            try: process.kill()
+            except ProcessLookupError: pass
+        await process.communicate()
+        raise
     except asyncio.TimeoutError:
-        process.kill()
+        if process.returncode is None:
+            try: process.kill()
+            except ProcessLookupError: pass
         await process.communicate()
         raise RuntimeError("OpenCode analysis timed out after 5 minutes")
     if process.returncode:

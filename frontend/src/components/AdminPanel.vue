@@ -146,7 +146,8 @@ const onTaskTriggered = ({ id, type }) => {
 .admin-nav { width: 240px; background: #f8fafc; border-right: 1px solid #e2e8f0; padding: 20px; }
 .nav-item { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 10px; cursor: pointer; color: #64748b; font-size: 14px; margin-bottom: 6px; transition: 0.2s; }
 .nav-item.active { background: #10b981; color: white; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
-.admin-body { flex: 1; padding: 40px; overflow-y: auto; background: #ffffff; }
+.admin-body { flex: 1; min-width: 0; padding: 40px; overflow-y: auto; background: #ffffff; }
+@media(max-width:900px){.admin-screen{padding:12px}.admin-main{flex-direction:column}.admin-main .admin-nav{width:auto;padding:8px;display:flex;flex-wrap:wrap;gap:4px}.admin-main .nav-item{margin:0;padding:8px}.admin-body{padding:16px}}
 .view-card { max-width: 1000px; }
 .data-table { width: 100%; border-collapse: collapse; margin-top: 24px; }
 .data-table th { text-align: left; padding: 14px; background: #f1f5f9; color: #64748b; font-size: 13px; }

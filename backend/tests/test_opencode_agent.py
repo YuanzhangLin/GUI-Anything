@@ -19,6 +19,8 @@ class OpenCodeAdapterTests(unittest.TestCase):
             launched = []
 
             async def launch(*args, **kwargs):
+                request=Path(next(arg for arg in args if arg.endswith("request.txt")))
+                self.assertIn("Explain the route",request.read_text(encoding="utf-8"))
                 launched.append((args, kwargs))
                 return Process()
 
@@ -41,7 +43,7 @@ class OpenCodeAdapterTests(unittest.TestCase):
         skill = Path(args[args.index("--file") + 1])
         self.assertTrue(skill.is_file())
         self.assertEqual(skill.name, "SKILL.md")
-        self.assertIn("Explain the route", args[-1])
+        self.assertIn("request.txt", args[-1])
         self.assertEqual(kwargs["env"]["OPENCODE_CONFIG_CONTENT"],
                          '{"permission": {"edit": "deny", "bash": "deny"}}')
 

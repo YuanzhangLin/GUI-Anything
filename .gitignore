@@ -15,3 +15,5 @@ backend/data/*.json
 /backend/data/experiments/
 !backend/data/demo.json
 .DS_Store
+
+/backend/data/runs/

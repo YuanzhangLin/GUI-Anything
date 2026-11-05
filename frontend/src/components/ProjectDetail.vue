@@ -36,6 +36,8 @@
       </div>
     </Transition>
 
+    <RunWorkbench v-if="repoStatus === 'ready'" :app-id="project.id" :api-base="apiBase" />
+
     <div class="detail-grid">
       <section class="info-card">
         <h3><Info :size="18" /> 审计对象详情</h3>
@@ -166,6 +168,7 @@
 </template>
 
 <script setup>
+import RunWorkbench from './RunWorkbench.vue'
 import { ref, computed, onMounted } from 'vue'
 import { 
   ChevronLeft, Download, RefreshCw, XCircle, CheckCircle, 
@@ -368,7 +371,8 @@ const handleAction = async (type) => {
 
 /* Header & Breadcrumb */
 .breadcrumb { display: flex; align-items: center; gap: 5px; color: #10b981; cursor: pointer; font-weight: 600; margin-bottom: 24px; }
-.detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+.detail-header { display: flex; flex-wrap:wrap; gap:16px; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+.title-section{min-width:0;overflow-wrap:anywhere}.title-section>div{min-width:0}.detail-header .btn{white-space:nowrap}.app-icon{flex-shrink:0}
 .title-section { display: flex; align-items: center; gap: 20px; }
 .app-icon { width: 56px; height: 56px; background: #10b981; color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
 .repo-url { color: #64748b; font-size: 14px; font-family: monospace; }

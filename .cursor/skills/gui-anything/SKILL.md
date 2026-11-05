@@ -27,6 +27,8 @@ The primary output is a map of **user-visible screen candidates and action paths
 
 ## Plan while observing
 
+For a saved code-target Run in the local workbench, read [references/run-task.md](references/run-task.md). That workflow preserves the target and budgets and verifies code coverage separately from business outcomes.
+
 For a navigation task, read [references/navigation.md](references/navigation.md). First plan a path over `transitions` and identify weak steps. If the user has a connected Android device and asks you to operate it, observe the current UI, act on **one uniquely grounded control at a time**, then compare the resulting page with the Map. The navigation command records this as a trace. Stop when the trigger or page cannot be identified; inspect the cited code and ask for human validation of the uncertain step. Never present a planned edge as an executed one. Reaching a page is not automatically completion of a business task; check the requested outcome separately.
 
 The output schema and review fields are summarized in [references/map-review.md](references/map-review.md) when you need to consume or reconcile a review export.

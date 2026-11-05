@@ -4,6 +4,8 @@ import asyncio
 import json
 import os
 import shutil
+import tempfile
+from pathlib import Path
 
 from app.services.code_manager import CodeManager
 
@@ -27,15 +29,32 @@ async def ask(message: str, app_id: str) -> str:
         raise ValueError("GUI_AGENT_ARGS must be a JSON array") from exc
     if not isinstance(templates, list) or not all(isinstance(item, str) for item in templates):
         raise ValueError("GUI_AGENT_ARGS must be a JSON array of strings")
-    arguments = [item.replace("{repo}", repo).replace("{prompt}", message) for item in templates]
+    with tempfile.TemporaryDirectory(prefix="gui-anything-agent-") as temporary:
+        prompt_file = Path(temporary) / "request.txt"
+        prompt_file.write_text(message, encoding="utf-8")
+        arguments = [item.replace("{repo}", repo).replace("{prompt_file}", str(prompt_file)).replace("{prompt}", message) for item in templates]
+        if os.name == "nt" and sum(len(item) + 3 for item in [executable, *arguments]) > 30000:
+            raise ValueError("Agent command is too long; configure GUI_AGENT_ARGS with {prompt_file} instead of {prompt}")
+        return await _run_command(executable, arguments, repo)
+
+
+async def _run_command(executable, arguments, repo):
     process = await asyncio.create_subprocess_exec(
         executable, *arguments, cwd=repo,
         stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
     )
     try:
         stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=300)
+    except asyncio.CancelledError:
+        if process.returncode is None:
+            try: process.kill()
+            except ProcessLookupError: pass
+        await process.communicate()
+        raise
     except asyncio.TimeoutError:
-        process.kill()
+        if process.returncode is None:
+            try: process.kill()
+            except ProcessLookupError: pass
         await process.communicate()
         raise RuntimeError("External Agent timed out after 5 minutes")
     if process.returncode:

@@ -1,9 +1,10 @@
 <template>
   <div class="map-container">
     <div class="map-toolbar">
-      <button v-if="!props.demo" class="toolbar-btn" :disabled="isGenerating || !props.appId" @click="generateMap">
+      <button v-if="!props.demo && !props.snapshot" class="toolbar-btn" :disabled="isGenerating || !props.appId" @click="generateMap">
         {{ isGenerating ? `生成中… ${progress}%` : 'Fast 出图' }}
       </button>
+      <label v-if="edges.length">选择跳转 <select aria-label="选择图谱跳转" @change="selectTransition"><option value="">选择路径…</option><option v-for="edge in edges" :key="edge.id" :value="edge.id">{{ edge.source.split('.').pop() }} → {{ edge.target.split('.').pop() }} · {{ edge.label }}</option></select></label>
       <span v-if="errorMsg" class="toolbar-error">{{ errorMsg }}</span>
     </div>
     <VueFlow
@@ -23,7 +24,7 @@
       <p>{{ selection.detail }}</p>
       <p v-if="selection.relationship">{{ selection.relationship }}</p>
       <p v-if="selection.trigger">触发方式：{{ selection.trigger }}</p>
-      <p v-if="selection.evidence">依据：{{ selection.evidence }}</p>
+      <p v-if="selection.evidence">依据：{{ selection.evidence }}</p><button v-if="!props.demo && sourceReference" @click="emit('source', sourceReference)">打开对应源码</button>
       <small>{{ selection.verification }}</small>
       <div v-if="selection.elements.length" class="inspector-elements">
         <strong>静态识别元素（{{ selection.elements.length }}）</strong>
@@ -55,8 +56,11 @@ import '@vue-flow/core/dist/theme-default.css'
 const props = defineProps<{
   appId: string
   demo?: boolean
+  snapshot?: Record<string, any>
 }>()
 
+const emit = defineEmits<{ source: [reference: { path: string; line: number }] }>()
+const sourceReference = ref<{ path: string; line: number } | null>(null)
 const nodes = ref([])
 const edges = ref([])
 const { fitView } = useVueFlow()
@@ -70,6 +74,7 @@ const selection = ref<{ title: string, detail: string, relationship: string, evi
 const onNodeClick = ({ node }: any) => {
   const screen = node.data || {}
   const component = screen.components?.[0] || {}
+  sourceReference.value = component.file_path ? { path: component.file_path, line: component.line || 1 } : null
   selection.value = {
     title: screen.title || node.id,
     detail: `组件：${component.type || '未知'}；布局：${(screen.layouts || []).join(', ') || '未识别'}`,
@@ -87,6 +92,7 @@ const onNodeClick = ({ node }: any) => {
 const onEdgeClick = ({ edge }: any) => {
   const transition = edge.data || {}
   const evidence = transition.evidence?.[0] || {}
+  sourceReference.value = evidence.file_path ? { path: evidence.file_path, line: evidence.line || 1 } : null
   const origin = nodes.value.find((node: any) => node.id === edge.source)?.data || {}
   const trigger = (origin.elements || []).find((element: MapElement) => element.id === transition.trigger_id)
   selection.value = {
@@ -103,6 +109,11 @@ const onEdgeClick = ({ edge }: any) => {
     elements: []
   }
 }
+function selectTransition(event: Event) {
+  const id = (event.target as HTMLSelectElement).value
+  const edge = edges.value.find((item: any) => item.id === id)
+  if (edge) onEdgeClick({ edge })
+}
 
 const getApiBase = () => {
   const envBase = import.meta.env.VITE_API_BASE
@@ -116,10 +127,12 @@ const fetchMapData = async (id: string) => {
   if (!id) return
   try {
     errorMsg.value = ''
-    const response = await authFetch(props.demo ? `${API_BASE}/demo/map` : `${API_BASE}/map/${id}`)
-    if (!response.ok) throw new Error(`加载失败 (${response.status})`)
-
-    const data = await response.json()
+    let data = props.snapshot
+    if (!data) {
+      const response = await authFetch(props.demo ? `${API_BASE}/demo/map` : `${API_BASE}/map/${id}`)
+      if (!response.ok) throw new Error(`加载失败 (${response.status})`)
+      data = await response.json()
+    }
     const { nodes: pNodes, edges: pEdges } = parseAndroidJson(data)
 
     nodes.value = pNodes
@@ -187,6 +200,7 @@ watch(() => props.appId, (newId) => {
   progress.value = 0
   fetchMapData(newId)
 })
+watch(() => props.snapshot, () => fetchMapData(props.appId))
 </script>
 
 <style scoped>

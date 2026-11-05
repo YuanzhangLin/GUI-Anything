@@ -22,6 +22,8 @@ from app.services.issue_service import IssueService
 from app.services.uimap_report import build_report_from_map_json
 from app.services.apk_import import import_apk_file, MAX_APK_BYTES
 app = FastAPI(title="GUI-Anything Multi-Project")
+from app.workbench.api import router as workbench_router
+app.include_router(workbench_router)
 agent = GuiAgent()
 from app.services.issue_solver import IssueSolver
 

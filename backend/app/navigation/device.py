@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import xml.etree.ElementTree as ET
@@ -20,7 +21,7 @@ class Observation:
 
 class AdbDevice:
     def __init__(self, serial: str | None = None, *, screenshot: bool = True):
-        executable = shutil.which("adb")
+        executable = os.getenv("GUI_ADB_PATH") or shutil.which("adb")
         if not executable:
             raise RuntimeError("ADB is not installed or not on PATH")
         self.prefix = [executable, *(["-s", serial] if serial else [])]
@@ -31,6 +32,8 @@ class AdbDevice:
             result = subprocess.run([*self.prefix, *args], capture_output=True, timeout=timeout, check=False)
         except subprocess.TimeoutExpired as exc:
             raise RuntimeError(f"ADB timed out: {' '.join(args)}") from exc
+        except OSError as exc:
+            raise RuntimeError(f"Cannot start ADB: {exc}") from exc
         if result.returncode:
             detail = result.stderr.decode("utf-8", errors="replace").strip()
             raise RuntimeError(f"ADB failed: {detail or ' '.join(args)}")

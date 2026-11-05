@@ -121,6 +121,7 @@
         <nav class="footer-nav">
           <button @click="openDocs"><BookOpen :size="16" /> 使用手册</button>
           <button @click="showMap = !showMap"><Activity :size="16" /> Only Map</button>
+          <button :disabled="!selectedAppId" @click="showWorkbench = true"><Activity :size="16" /> 代码目标工作台</button>
           <button v-if="isAdmin" @click="showAdmin = true" class="admin-entry-btn">
     <Settings :size="16" /> 管理控制台
   </button>
@@ -286,6 +287,10 @@
       </div>
     </div>
   </div>
+    <section v-if="showWorkbench" class="workbench-overlay" role="dialog" aria-modal="true" aria-label="代码目标工作台">
+      <header class="workbench-topbar"><strong>{{ currentAppMeta?.name || selectedAppId }} · 代码目标测试</strong><button aria-label="关闭代码目标工作台" @click="showWorkbench = false">关闭</button></header>
+      <div class="workbench-body"><RunWorkbench :key="selectedAppId" :app-id="selectedAppId" :api-base="API_BASE" /></div>
+    </section>
     <AdminPanel 
     v-if="showAdmin" 
     @close="showAdmin = false" 
@@ -301,6 +306,7 @@ import { Plus, Send, Activity, X, BookOpen, LogOut, Settings, Tag, Trash2, Panel
 import { renderMarkdown } from './utils/markdown'
 import { authFetch, setToken, getToken, clearToken } from './utils/auth'
 import MapCanvas from './components/MapCanvas.vue'
+import RunWorkbench from './components/RunWorkbench.vue'
 import AdminPanel from './components/AdminPanel.vue' 
 
 
@@ -310,6 +316,7 @@ const demoVisible = ref(false)
 const isRegistering = ref(false)
 const showDocs = ref(false)
 const showMap = ref(false)
+const showWorkbench = ref(false)
 const isLoading = ref(false)
 const isStreaming = ref(false)
 const currentUser = ref('')
@@ -857,6 +864,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.workbench-overlay{position:fixed;inset:12px;z-index:2100;display:flex;flex-direction:column;border:1px solid #cbd5e1;border-radius:12px;background:#f8fafc;box-shadow:0 0 0 24px #0f172acc;overflow:hidden}.workbench-topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 24px;background:#0f172a;color:#fff}.workbench-topbar button{border:1px solid #64748b;border-radius:6px;padding:6px 14px;background:#fff;color:#0f172a;cursor:pointer}.workbench-body{flex:1;overflow:auto;min-height:0;padding:0 16px 16px}
 .demo-view { height: 100vh; display: flex; flex-direction: column; background: #f8fafc; }
 .demo-view :deep(.map-container) { flex: 1; min-height: 0; }
 .demo-header { display: flex; align-items: center; gap: 24px; padding: 14px 20px; background: #101d31; color: white; }
