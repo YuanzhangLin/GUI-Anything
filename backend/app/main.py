@@ -125,7 +125,7 @@ async def get_agents(username: str = Depends(current_user)):
     return {"default": "opencode", "agents": [
         {"id": "opencode", "name": "OpenCode", "available": ready,
          "installed": opencode_available(), "reason": reason,
-         "capabilities": {"sessions": True, "streaming": True, "tools": True, "abort": True, "device_actions": False}},
+         "capabilities": {"sessions": True, "streaming": True, "tools": True, "abort": True, "device_actions": True}},
         {"id": "builtin", "name": "内置 Agent", "available": bool(os.getenv("OPENAI_API_KEY")),
          "capabilities": {"sessions": False, "streaming": True, "tools": False, "abort": False, "device_actions": False}},
         {"id": "external", "name": "自定义 Agent", "available": external_available(),

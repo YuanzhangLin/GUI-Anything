@@ -11,9 +11,9 @@
         <div class="source-actions">
           <span>{{ startLine === endLine ? `已选第 ${startLine} 行` : `已选 ${startLine}–${endLine} 行` }}</span>
           <button @click="emit('attach', {path:source.path,text:source.text,appId})">附加全文</button>
-          <button class="bind-button" :disabled="!serial" @click="bindTarget">绑定所选代码</button>
+          <button class="bind-button" :disabled="!serial" @click="bindTarget">重新绑定</button>
         </div>
-        <p class="selection-help">点击行选择；按住 Shift 或拖动可选择连续代码。</p>
+        <p class="selection-help">点击行选择；按住 Shift 或拖动可选择连续代码。松开后自动绑定当前设备。</p>
         <div class="code-lines" role="listbox" aria-label="选择目标代码行" @pointerleave="finishLineSelection">
           <div v-for="line in sourceLines" :key="line.number" class="code-line" :class="{selected:isLineSelected(line.number)}" role="option" :aria-selected="isLineSelected(line.number)" @pointerdown="beginLineSelection(line.number,$event)" @pointerenter="extendLineSelection(line.number)">
             <span class="line-check" aria-hidden="true">{{ isLineSelected(line.number) ? '✓' : '' }}</span>
@@ -26,7 +26,7 @@
     <div class="row-resizer" aria-label="调节代码和虚拟机高度" @pointerdown="startHeightResize"><span /></div>
     <section class="device-pane">
       <header><strong>虚拟机 / 设备</strong><button :disabled="loading" @click="loadDevices">检测设备</button></header>
-      <select v-model="serial" aria-label="目标设备" @change="preview">
+      <select v-model="serial" aria-label="目标设备" @change="deviceChanged">
         <option value="">选择设备</option>
         <option v-for="d in devices" :key="d.serial" :value="d.serial" :disabled="d.state !== 'device'">{{ d.serial }} · {{ d.state }}</option>
       </select>
@@ -66,7 +66,7 @@ function beginLineSelection(line:number,event:PointerEvent){
   event.preventDefault()
 }
 function extendLineSelection(line:number){if(!selectingLines)return;startLine.value=Math.min(lineAnchor,line);endLine.value=Math.max(lineAnchor,line)}
-function finishLineSelection(){selectingLines=false}
+function finishLineSelection(){if(!selectingLines)return;selectingLines=false;if(serial.value)bindTarget()}
 function publishDeviceContext(){const device=devices.value.find(d=>d.serial===serial.value);emit('context',serial.value?{serial:serial.value,state:device?.state||'device',details:device?.details||'',activity:activity.value||'',screenshot_available:Boolean(picture.value),screenshot_data_url:picture.value||null,observed_at:new Date().toISOString()}:null)}
 let generation=0
 async function get(path:string){const r=await authFetch(`${props.apiBase}/workbench${path}`);const data=await r.json();if(!r.ok)throw new Error(data.detail || '请求失败');return data}
@@ -74,6 +74,7 @@ async function loadFiles(){const app=props.appId;sourceError.value='';try{const 
 async function openSource(path:string){const app=props.appId;try{const data=await get(`/projects/${app}/source?path=${encodeURIComponent(path)}`);if(app===props.appId){source.value=data;startLine.value=1;endLine.value=1}}catch(e){sourceError.value=String(e)}}
 async function loadDevices(){error.value='';try{const data=await get('/devices');devices.value=data.devices;serial.value=devices.value.find(d=>d.serial===serial.value&&d.state==='device')?.serial||devices.value.find(d=>d.state==='device')?.serial||'';if(!data.available)error.value=data.reason;if(serial.value)await preview();else{picture.value='';activity.value='';publishDeviceContext()}}catch(e){error.value=String(e);publishDeviceContext()}}
 async function preview(){const id=++generation;picture.value='';activity.value='';if(!serial.value){publishDeviceContext();return}loading.value=true;error.value='';try{const data=await get(`/devices/${encodeURIComponent(serial.value)}/preview`);if(id===generation){picture.value=`data:image/png;base64,${data.screenshot}`;activity.value=data.activity||'';publishDeviceContext()}}catch(e){if(id===generation){error.value=String(e);publishDeviceContext()}}finally{if(id===generation)loading.value=false}}
+async function deviceChanged(){await preview();if(serial.value&&source.value)bindTarget()}
 
 let resizeMode:''|'width'|'height'='',originX=0,originY=0,originWidth=0,originHeight=0
 function startWidthResize(event:PointerEvent){resizeMode='width';originX=event.clientX;originWidth=railWidth.value;event.preventDefault()}

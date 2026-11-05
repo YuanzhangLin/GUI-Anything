@@ -17,3 +17,4 @@ backend/data/*.json
 .DS_Store
 
 /backend/data/runs/
+/backend/local-services*.log

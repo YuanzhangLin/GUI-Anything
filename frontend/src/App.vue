@@ -766,7 +766,6 @@ const sendMessageWithOverrides = async (
       })
     })
 
-    deviceTarget.value = null
     const reader = res.body?.getReader()
     const decoder = new TextDecoder()
     if (!reader) throw new Error('读取器初始化失败')

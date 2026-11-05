@@ -197,6 +197,15 @@ class Runtime:
                 after,payload=self.observe(run,device)
                 self.event(run["id"],"action_completed",{"action_seq":action_seq,"after":payload})
                 return {"state":self.state(run["id"]),"observation":payload}
-            except (RuntimeError,ValueError) as exc:
+            except ValueError as exc:
+                # Stale or ambiguous selectors are recoverable. Preserve the
+                # rejection and let the agent observe again instead of ending
+                # the whole device task after one grounding mistake.
+                self.event(run["id"], "action_rejected", {"reason": str(exc), "action": action.model_dump()})
+                raise
+            except RuntimeError as exc:
+                if "SecurityException" in str(exc) or "Permission Denial" in str(exc):
+                    self.event(run["id"], "action_rejected", {"reason": str(exc), "action": action.model_dump()})
+                    raise
                 self.block(run["id"], exc)
                 raise

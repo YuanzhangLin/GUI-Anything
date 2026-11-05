@@ -99,6 +99,14 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(runtime.state(self.run["id"])["actions"],0)
         self.assertEqual(runtime.events(self.run["id"])[-1]["kind"],"blocked")
 
+    def test_invalid_selector_can_be_retried(self):
+        runtime=self.runtime;runtime.control(self.run,"start")
+        action=self.action();action.selector={"resource_id":"missing"}
+        with self.assertRaisesRegex(ValueError,"absent"):
+            runtime.step(self.run,action,lambda:True,self.device())
+        self.assertEqual(runtime.state(self.run["id"])["status"],"running")
+        self.assertEqual(runtime.events(self.run["id"])[-1]["kind"],"action_rejected")
+
     def test_missing_adb_blocks_run_and_preserves_reason(self):
         from unittest.mock import patch
         self.runtime.control(self.run,"start")
