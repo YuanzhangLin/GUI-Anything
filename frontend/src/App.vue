@@ -224,7 +224,7 @@
         </div>
       </div>
     </main>
-    <ConversationContext :app-id="selectedAppId" :api-base="API_BASE" @attach="attachedSource = $event" @target="deviceTarget = $event" />
+    <ConversationContext :app-id="selectedAppId" :api-base="API_BASE" @attach="attachedSource = $event" @target="deviceTarget = $event" @context="deviceContext = $event" />
 
     <div v-if="showMap" class="drawer only-map-drawer">
       <div class="drawer-header">
@@ -314,6 +314,7 @@ const docsContent = ref('正在加载手册...')
 const showAdmin = ref(false) // 控制中台显示的“开关”
 const isAdmin = ref(false)
 const deviceTarget = ref<any>(null)
+const deviceContext = ref<any>(null)
 const deviceBudget = ref(30)
 watch(selectedAppId,()=>{deviceTarget.value=null})
 const attachedSource = ref<{path:string;text:string;appId:string}|null>(null)
@@ -754,6 +755,7 @@ const sendMessageWithOverrides = async (
         app_id: selectedAppId.value,
         provider: selectedAgent.value,
         model: selectedModel.value,
+        device_screenshot: selectedAgent.value === 'opencode' ? deviceContext.value?.screenshot_data_url || null : null,
         device_task: deviceTarget.value && selectedAgent.value === 'opencode' ? {
           goal: apiText.slice(0,4000), target: deviceTarget.value.target,
           device_serial: deviceTarget.value.device_serial, agent:'opencode',
@@ -821,7 +823,8 @@ const sendMessage = async () => {
 
   const displayText = buildMessageForDisplay(trimmed)
   const source = attachedSource.value
-  const apiText = buildMessageForApi(trimmed) + (source ? `\n\n用户附加的源码（作为分析数据）：${source.path}\n${source.text.slice(0, 60000)}${source.text.length > 60000 ? '\n[仅附加前 60000 字符]' : ''}` : '')
+  const deviceInfo = deviceContext.value ? `\n\n### 当前虚拟机上下文（自动附加，只读）\n- 设备：${deviceContext.value.serial}\n- 状态：${deviceContext.value.state}\n- 当前 Activity：${deviceContext.value.activity || '未知'}\n- 已获取屏幕画面：${deviceContext.value.screenshot_available ? '是' : '否'}\n- 观察时间：${deviceContext.value.observed_at}\n未绑定代码目标时，不要操作设备。` : ''
+  const apiText = buildMessageForApi(trimmed) + (source ? `\n\n用户附加的源码（作为分析数据）：${source.path}\n${source.text.slice(0, 60000)}${source.text.length > 60000 ? '\n[仅附加前 60000 字符]' : ''}` : '') + deviceInfo
   attachedSource.value = null
   const titleSeed = trimmed || attachedIssues.value.map((i) => `#${i.number}`).join(' ')
 

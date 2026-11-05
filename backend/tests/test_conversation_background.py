@@ -14,10 +14,11 @@ class BackgroundConversationTests(unittest.IsolatedAsyncioTestCase):
             conn.execute('CREATE TABLE sessions(id TEXT PRIMARY KEY,title TEXT,username TEXT,app_id TEXT)')
             conn.execute('CREATE TABLE messages(session_id TEXT,role TEXT,content TEXT)')
             conn.commit();conn.close()
-            request=SimpleNamespace(username='alice',session_id='one',app_id='app',model=None,message='hello')
-            gate=asyncio.Event();calls=[]
+            request=SimpleNamespace(username='alice',session_id='one',app_id='app',model=None,message='hello',device_screenshot='data:image/png;base64,AA==')
+            gate=asyncio.Event();calls=[];attachments=[]
             async def fake_stream(*args,**kwargs):
                 calls.append(kwargs['text'])
+                attachments.append(kwargs['attachments'])
                 yield {'kind':'text_delta','part_id':'p','text':'first'}
                 await gate.wait()
                 yield {'kind':'text_delta','part_id':'p','text':' second'}
@@ -35,6 +36,8 @@ class BackgroundConversationTests(unittest.IsolatedAsyncioTestCase):
                 gate.set();await task
             self.assertEqual(len(calls),1)
             self.assertTrue(calls[0].startswith('hello'))
+            self.assertEqual(attachments[0][0]['mime'],'image/png')
+            self.assertEqual(attachments[0][0]['url'],'data:image/png;base64,AA==')
             events=c.read_events(db,'one','alice')
             self.assertFalse(events['running'])
             self.assertEqual(events['events'][-1]['kind'],'turn_finished')

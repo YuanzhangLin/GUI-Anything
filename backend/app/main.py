@@ -9,7 +9,7 @@ import tempfile
 from pathlib import Path
 from datetime import datetime, timezone
 from fastapi import FastAPI, HTTPException, Depends, Header, UploadFile, File, Form
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional, Literal
 from fastapi.responses import StreamingResponse
 from app.core.agent import GuiAgent
@@ -107,6 +107,7 @@ class ChatRequest(BaseModel):
     tool_rounds: Optional[int] = 6
     force_no_tools: Optional[bool] = False
     provider: Literal["opencode", "builtin", "external"] = "opencode"
+    device_screenshot: Optional[str] = Field(default=None,max_length=8_000_000,pattern=r'^data:image/png;base64,[A-Za-z0-9+/=\r\n]+$')
 
 
 @app.get("/api/agents")

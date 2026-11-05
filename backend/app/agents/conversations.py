@@ -145,7 +145,9 @@ async def chat(path, request, owner, directory):
         parts = {}
         failure = ''
         try:
-            async for event in stream_reply(upstream,directory=directory,session_id=remote,text=request.message + ("\n\nA device task is bound to this turn. Use gui_device to observe before acting. Target: " + json.dumps(device_run['target'],ensure_ascii=False) + ". Use independent baseline/after/assertions tools for verification; do not claim a pass from narration." if device_run else "\n\nNo device task is bound to this turn; do not operate a device."),model=request.model.model_dump() if request.model else None):
+            screenshot=getattr(request,'device_screenshot',None)
+            attachments=[{'type':'file','mime':'image/png','filename':'current-device.png','url':screenshot}] if screenshot else None
+            async for event in stream_reply(upstream,directory=directory,session_id=remote,text=request.message + ("\n\nA device task is bound to this turn. Use gui_device to observe before acting. Target: " + json.dumps(device_run['target'],ensure_ascii=False) + ". Use independent baseline/after/assertions tools for verification; do not claim a pass from narration." if device_run else "\n\nNo device task is bound to this turn; do not operate a device."),model=request.model.model_dump() if request.model else None,attachments=attachments):
                 if event['kind'] == 'text_snapshot': parts[event['part_id']] = event['text']
                 elif event['kind'] == 'text_delta': parts[event['part_id']] = parts.get(event['part_id'],'') + event['text']
                 elif event['kind'] == 'error': failure = event['message']

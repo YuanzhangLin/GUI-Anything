@@ -71,7 +71,7 @@ class EventNormalizer:
         if kind == 'session.status': return {'kind':'status','status':p.get('status',{}).get('type')}
 
 
-async def _stream_reply(connection, *, directory, session_id, text, model=None, permissions=None):
+async def _stream_reply(connection, *, directory, session_id, text, model=None, permissions=None, attachments=None):
     import json
     import asyncio
     normalizer = EventNormalizer(session_id)
@@ -84,7 +84,7 @@ async def _stream_reply(connection, *, directory, session_id, text, model=None, 
             async with client.stream('GET', '/event', timeout=httpx.Timeout(30, read=90)) as stream:
                 stream.raise_for_status()
                 # Subscribe before dispatch so the initial assistant metadata is retained.
-                body = {'parts':[{'type':'text','text':text}]}
+                body = {'parts':[{'type':'text','text':text},*(attachments or [])]}
                 if model: body['model'] = model
                 response = await client.post(f'/session/{session_id}/prompt_async', json=body)
                 response.raise_for_status()
@@ -103,12 +103,12 @@ async def _stream_reply(connection, *, directory, session_id, text, model=None, 
             except httpx.HTTPError: pass
 
 
-async def stream_reply(connection, *, directory, session_id, text, model=None):
+async def stream_reply(connection, *, directory, session_id, text, model=None, attachments=None):
     import asyncio
     try:
         async with asyncio.timeout(300):
             async for event in _stream_reply(connection, directory=directory,
-                    session_id=session_id, text=text, model=model):
+                    session_id=session_id, text=text, model=model, attachments=attachments):
                 yield event
     except TimeoutError as exc:
         raise RuntimeError('OpenCode generation exceeded the five-minute limit') from exc
