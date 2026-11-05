@@ -8,3 +8,7 @@ class ConversationEventTests(unittest.TestCase):
         n.accept({'type':'message.updated','properties':{'sessionID':'s','info':{'id':'a','role':'assistant'}}})
         self.assertEqual(n.accept({'type':'message.part.delta','properties':{'sessionID':'s','messageID':'a','field':'text','partID':'p','delta':'hello'}})['text'],'hello')
         self.assertEqual(n.accept({'type':'session.idle','properties':{'sessionID':'s'}})['kind'],'done')
+
+    def test_preserves_upstream_error_message(self):
+        event={'type':'session.error','properties':{'sessionID':'s','error':{'data':{'message':'Unsupported model'}}}}
+        self.assertEqual(EventNormalizer('s').accept(event),{'kind':'error','message':'Unsupported model'})

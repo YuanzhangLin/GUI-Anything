@@ -61,7 +61,12 @@ class EventNormalizer:
             if part['type'] == 'tool': return {'kind':'tool','part_id':part['id'],'tool':part.get('tool'),'state':part.get('state',{}).get('status')}
         if kind == 'message.part.delta' and p.get('messageID') in self.assistants and p.get('field') == 'text':
             return {'kind':'text_delta','part_id':p['partID'],'text':p['delta']}
-        if kind == 'session.error': return {'kind':'error','message':'OpenCode 执行失败，请检查模型配置与服务日志。'}
+        if kind == 'session.error':
+            error=p.get('error') or {}
+            data=error.get('data') if isinstance(error,dict) else {}
+            detail=(data or {}).get('message') or (error.get('message') if isinstance(error,dict) else None)
+            if not isinstance(detail,str) or not detail.strip(): detail='OpenCode 执行失败，请检查模型配置与服务日志。'
+            return {'kind':'error','message':detail[:1000]}
         if kind == 'session.idle': return {'kind':'done'}
         if kind == 'session.status': return {'kind':'status','status':p.get('status',{}).get('type')}
 
