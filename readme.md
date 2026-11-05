@@ -86,7 +86,7 @@ Only the curated case and short attributed code excerpt are published. APKs, ext
 * **📦 APK Import**: Admins can upload an APK for JADX decompilation and Fast mapping.
 * **🗺️ Only Map / Demo**: View the map alone; the fixed public demo contains no decompilation or discussion history.
 * **⚡ Chat Output**: The built-in Agent streams Markdown; CLI Agents return an answer when their run completes.
-* **🔐 Login**: Password hashes and expiring sessions protect project data and analysis endpoints.
+* **🧪 Local-first access**: Local development opens directly as the `local` administrator. Set `GUI_AUTH_ENABLED=1` to restore account login for shared deployments.
 * **🚀 Single-Origin Deployment**: The web server serves the frontend and proxies `/api` to the backend.
 
 ## 🛠️ Tech Stack
