@@ -10,6 +10,19 @@ from pathlib import Path
 from app.paths import BACKEND_ROOT, DATA_DIR
 from app.core.opencode_agent import executable_path
 
+HICODE_PROVIDER={
+    'npm':'@ai-sdk/openai',
+    'name':'Hi-Code（中国站）',
+    'options':{'baseURL':'https://api-cn.hi-code.cc/v1'},
+    'models':{
+        'gpt-5.6-sol':{'name':'GPT-5.6 Sol（推荐）'},
+        'gpt-5.6':{'name':'GPT-5.6'},
+        'gpt-5.5':{'name':'GPT-5.5'},
+        'gpt-5.4':{'name':'GPT-5.4'},
+        'gpt-5.4-mini':{'name':'GPT-5.4 Mini'},
+    },
+}
+
 
 def discover_adb():
     configured=os.getenv('GUI_ADB_PATH') or shutil.which('adb')
@@ -33,7 +46,11 @@ def main():
          'OPENCODE_SERVER_PASSWORD':secrets.token_urlsafe(48),
          'OPENCODE_CONFIG_DIR':str(config),'GUI_AGENT_BRIDGE_URL':'http://127.0.0.1:8002',
          'GUI_OPENCODE_URL':'http://127.0.0.1:4096',
-         'OPENCODE_CONFIG_CONTENT':json.dumps({'permission':{'edit':'deny','bash':'deny'},'autoupdate':False})}
+         'OPENCODE_CONFIG_CONTENT':json.dumps({
+             'permission':{'edit':'deny','bash':'deny'},
+             'autoupdate':False,
+             'provider':{'hicode':HICODE_PROVIDER},
+         })}
     adb=discover_adb()
     if adb: env['GUI_ADB_PATH']=adb
     children=[]
