@@ -24,6 +24,7 @@ class CliTests(unittest.TestCase):
         self.assertIsNotNone(payload)
         self.assertEqual(json.loads(payload.group(1)), graph)
         self.assertNotIn('<script src=', html)
+        self.assertIn('Switch to Chinese', html)
         self.assertNotIn('<link rel="stylesheet"', html)
         self.assertNotIn('</script><script>alert(1)', html)
 

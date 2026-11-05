@@ -21,6 +21,7 @@ def write_standalone_html(graph: dict, destination: Path, *, trace: dict | None 
     template = (WEBSITE / "viewer.html").read_text(encoding="utf-8")
     styles = (WEBSITE / "viewer.css").read_text(encoding="utf-8")
     script = (WEBSITE / "viewer.js").read_text(encoding="utf-8")
+    i18n = (WEBSITE / "i18n.js").read_text(encoding="utf-8")
     payload = json.dumps(graph, ensure_ascii=False).replace("<", "\\u003c")
     template = template.replace('<link rel="icon" href="./mark.svg" type="image/svg+xml" />', "")
     template = template.replace('<link rel="stylesheet" href="./viewer.css" />', f"<style>\n{styles}\n</style>")
@@ -42,6 +43,7 @@ def write_standalone_html(graph: dict, destination: Path, *, trace: dict | None 
         trace_payload = json.dumps(embedded_trace, ensure_ascii=False).replace("<", "\\u003c")
         template = template.replace('<script id="embedded-trace" type="application/json"></script>',
                                     f'<script id="embedded-trace" type="application/json">{trace_payload}</script>')
+    template = template.replace('<script src="./i18n.js" defer></script>', f"<script>\n{i18n}\n</script>")
     template = template.replace('<script src="./viewer.js" defer></script>', f"<script>\n{script}\n</script>")
     template = template.replace('href="./index.html"', 'href="#"').replace('<img src="./mark.svg" alt="" /> ', '')
     destination.parent.mkdir(parents=True, exist_ok=True)

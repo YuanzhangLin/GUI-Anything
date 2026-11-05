@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend/ ./
 COPY agent-skills/ /app/agent-skills/
-COPY website/viewer.html website/viewer.css website/viewer.js /app/website/
+COPY website/viewer.html website/viewer.css website/viewer.js website/i18n.js /app/website/
 
 EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -18,6 +18,8 @@
 .inspector-evidence code{display:block;color:#526b7b;font-family:var(--mono);font-size:10px;line-height:1.6;overflow-wrap:anywhere}
 @media(max-width:450px){.map-stage{transform:none}}
 .map-inspector{max-height:460px;overflow-y:auto}
+.site-header nav .language-switch{border:1px solid #cddbe2;border-radius:6px;background:#fff;color:var(--ink);padding:7px 10px;font:600 12px var(--sans);cursor:pointer;white-space:nowrap}
+.site-header nav .language-switch:hover{border-color:#0e9c7e;color:#07846e}
 .map-inspector p{white-space:pre-line}
 .inspector-elements{border-top:1px solid #e4eced;margin-top:19px;padding-top:16px}
 .inspector-elements>span{display:block;color:#0c9b7a;font:500 10px var(--mono);letter-spacing:.07em}

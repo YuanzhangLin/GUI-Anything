@@ -2,6 +2,8 @@
 
 This is the static GitHub Pages website for GUI-Anything. It is published from the existing repository through `.github/workflows/pages.yml`. `website/demo.json` is a copy of `backend/data/demo.json`; the workflow verifies that they match. The map comes from a real Fast scan of Activity Diary source at commit `71254d4`; the website shows a readable subset of the 13 screens and 20 paths, with static UI element candidates and three Activity-to-Fragment hosting relations in page details. The site does not host the API, APKs, source files, decompiled files, or conversation data.
 
+The homepage and map reviewer default to English. Use the language button for Chinese; the choice is shared between pages and can also be set with `?lang=en` or `?lang=zh`. Switching language in the reviewer does not reload an imported map. The standalone HTML reviewer embeds the same bilingual script.
+
 ## Preview locally
 
 From the repository root, run:
