@@ -11,7 +11,7 @@
 
 > Analyze Android screens and action paths with an Agent Skill, then review source evidence in an independent map viewer.
 
-**[Project website](https://yuanzhanglin.github.io/GUI-Anything/)** · [中文说明](./README_zh.md)
+**[Project website](https://yuanzhanglin.github.io/GUI-Anything/)** · [2.0 roadmap](./TODO.md) · [中文说明](./README_zh.md)
 
 ---
 
