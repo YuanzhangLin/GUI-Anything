@@ -114,35 +114,6 @@
       <footer class="input-area">
         <ModelSettings v-if="selectedAgent === 'opencode'" :api-base="API_BASE" :admin="false" @change="selectedModel = $event" />
         <div class="composer-card">
-          <div v-if="attachedIssues.length || attachedMap" class="composer-chips">
-            <span v-for="a in attachedIssues" :key="a.number" class="issue-chip">
-              <Tag :size="12" class="chip-icon" />
-              <span class="chip-label">#{{ a.number }}</span>
-              <span class="chip-title">{{ a.title }}</span>
-              <button
-                type="button"
-                class="chip-remove"
-                :aria-label="'移除 Issue ' + a.number"
-                @click="removeAttachedIssue(a.number)"
-              >
-                ×
-              </button>
-            </span>
-
-            <span v-if="attachedMap" class="issue-chip map-chip">
-              <Activity :size="12" class="chip-icon" />
-              <span class="chip-label">MAP</span>
-              <span class="chip-title">UI Map 摘要: {{ attachedMap.appId }}</span>
-              <button
-                type="button"
-                class="chip-remove"
-                aria-label="移除 UI Map"
-                @click="removeAttachedMap()"
-              >
-                ×
-              </button>
-            </span>
-          </div>
           <div v-if="attachedSource" class="toolbar-hint">已附加源码：{{ attachedSource.path }} <button @click="attachedSource = null">移除</button></div>
           <div v-if="deviceTarget" class="device-task-chip"><strong>本次允许设备执行</strong><span>{{ deviceTarget.device_serial }} · {{ deviceTarget.target.path }}:{{ deviceTarget.target.start_line }}–{{ deviceTarget.target.end_line }}</span><label>最多动作 <input type="number" v-model.number="deviceBudget" min="1" max="1000"></label><button @click="deviceTarget = null">取消设备执行</button></div>
           <div class="input-container">
@@ -167,23 +138,6 @@
                 </option>
               </select>
             </label>
-            <button type="button" class="toolbar-attach" @click="openIssuePicker">
-              <Tag :size="15" />
-              添加 ISSUE
-            </button>
-            <span v-if="issuePickerHint" class="toolbar-hint">{{ issuePickerHint }}</span>
-            <button
-              type="button"
-              class="toolbar-attach"
-              :disabled="mapAttachLoading"
-              @click="toggleAttachMap"
-              :title="attachedMap ? '已添加，点击可移除' : '把当前项目 UI Map 的人类可读摘要作为附件加入对话（非整份 JSON）'"
-            >
-              <Activity :size="15" />
-              {{ attachedMap ? '移除图谱摘要' : (mapAttachLoading ? '加载摘要…' : '添加图谱摘要') }}
-            </button>
-            <span v-if="mapAttachHint" class="toolbar-hint">{{ mapAttachHint }}</span>
-
             <div v-if="toolLoopLimitReached && !isLoading" class="tool-loop-actions">
               <button type="button" class="toolbar-attach" @click="continueToolLoop">
                 继续
@@ -197,32 +151,6 @@
         </div>
       </footer>
 
-      <div v-if="showIssuePicker" class="issue-picker-overlay" @click.self="showIssuePicker = false">
-        <div class="issue-picker" role="dialog" aria-modal="true" aria-labelledby="issue-picker-title">
-          <div class="issue-picker-head">
-            <h3 id="issue-picker-title">选择要附加的 Issue</h3>
-            <button type="button" class="issue-picker-close" @click="showIssuePicker = false" aria-label="关闭">
-              <X :size="18" />
-            </button>
-          </div>
-          <p v-if="issuePickerLoading" class="issue-picker-status">加载中…</p>
-          <p v-else-if="!issueCatalog.length" class="issue-picker-status">
-            当前项目没有 Issue 缓存。请在「管理控制台」中同步仓库 Issue 后再试。
-          </p>
-          <ul v-else class="issue-picker-list">
-            <li
-              v-for="issue in issueCatalog"
-              :key="issue.id"
-              :class="['issue-picker-item', isIssueAttached(issue.number) ? 'attached' : '']"
-              @click="toggleAttachIssue(issue)"
-            >
-              <span class="ip-num">#{{ issue.number }}</span>
-              <span class="ip-title">{{ issue.title }}</span>
-              <span class="ip-state">{{ issue.state }}</span>
-            </li>
-          </ul>
-        </div>
-      </div>
     </main>
     <ConversationContext :app-id="selectedAppId" :api-base="API_BASE" @attach="attachedSource = $event" @target="deviceTarget = $event" @context="deviceContext = $event" />
 
@@ -257,7 +185,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick, watch, onBeforeUnmount } from 'vue'
-import { Plus, Send, Activity, X, BookOpen, Settings, Tag, Trash2, PanelLeftClose, PanelLeftOpen } from 'lucide-vue-next'
+import { Plus, Send, Activity, X, BookOpen, Settings, Trash2, PanelLeftClose, PanelLeftOpen } from 'lucide-vue-next'
 import { renderMarkdown } from './utils/markdown'
 import { authFetch } from './utils/auth'
 import MapCanvas from './components/MapCanvas.vue'
@@ -391,34 +319,6 @@ const loadAgents = async () => {
     }
   } catch { availableAgents.value = [] }
 }
-
-type AttachedIssue = { number: number; title: string; body: string }
-const MAX_ATTACHED_ISSUES = 5
-const ISSUE_BODY_MAX = 6000
-const attachedIssues = ref<AttachedIssue[]>([])
-const showIssuePicker = ref(false)
-const issueCatalog = ref<
-  { id: number; number: number; title: string; state: string; body: string | null }[]
->([])
-const issuePickerLoading = ref(false)
-
-const issuePickerHint = computed(() => {
-  if (attachedIssues.value.length >= MAX_ATTACHED_ISSUES) {
-    return `最多附加 ${MAX_ATTACHED_ISSUES} 个 Issue`
-  }
-  return ''
-})
-
-type AttachedMap = { appId: string; content: string }
-const attachedMap = ref<AttachedMap | null>(null)
-const mapAttachLoading = ref(false)
-const MAP_BODY_MAX = 16000
-
-const mapAttachHint = computed(() => {
-  if (mapAttachLoading.value) return '正在加载 UI Map…'
-  if (attachedMap.value) return 'UI Map 已附加'
-  return ''
-})
 
 // Tool-loop control (when backend reaches tool-call limit)
 const toolLoopLimitReached = ref(false)
@@ -607,106 +507,8 @@ const deleteSession = (id: string) => {
 
 const onAppChange = () => { createNewChat() }
 
-const buildMessageForApi = (userText: string) => {
-  const userPart =
-    userText ||
-    '请结合上述 GitHub Issue 进行静态分析与审计，并给出结论或修复思路。'
-  if (!attachedIssues.value.length && !attachedMap.value) return userPart
-  const blocks = attachedIssues.value.map((i) => {
-    let body = (i.body || '').trim() || '（无正文）'
-    if (body.length > ISSUE_BODY_MAX) {
-      body = `${body.slice(0, ISSUE_BODY_MAX)}\n\n…（正文已截断）`
-    }
-    return `### 附件：GitHub Issue #${i.number}\n**标题：** ${i.title}\n\n${body}`
-  })
-
-  if (attachedMap.value) {
-    let m = (attachedMap.value.content || '').trim()
-    if (m.length > MAP_BODY_MAX) {
-      m = `${m.slice(0, MAP_BODY_MAX)}\n\n…（图谱内容已截断）`
-    }
-    blocks.push(`### 附件：UI Map 摘要 (${attachedMap.value.appId})\n\n${m}`)
-  }
-
-  return `${blocks.join('\n\n---\n\n')}\n\n---\n\n### 用户指令\n${userPart}`
-}
-
-const buildMessageForDisplay = (userText: string) => {
-  const line =
-    userText ||
-    '请结合附件中的 Issue 给出分析与审计建议。'
-  if (!attachedIssues.value.length && !attachedMap.value) return line
-  const parts: string[] = []
-  if (attachedIssues.value.length) {
-    parts.push(attachedIssues.value.map((i) => `Issue #${i.number}`).join('、'))
-  }
-  if (attachedMap.value) {
-    parts.push(`UI Map 摘要(${attachedMap.value.appId})`)
-  }
-  const head = `📎 已附加 ${parts.join('、')}`
-  return `${head}\n\n${line}`
-}
-
-const openIssuePicker = async () => {
-  showIssuePicker.value = true
-  issuePickerLoading.value = true
-  try {
-    const res = await safeFetch(`${API_BASE}/issues/${selectedAppId.value}`)
-    issueCatalog.value = await res.json()
-  } catch {
-    issueCatalog.value = []
-  } finally {
-    issuePickerLoading.value = false
-  }
-}
-
-const removeAttachedMap = () => {
-  attachedMap.value = null
-}
-
-const toggleAttachMap = async () => {
-  if (mapAttachLoading.value) return
-  if (attachedMap.value) {
-    removeAttachedMap()
-    return
-  }
-  mapAttachLoading.value = true
-  try {
-    const res = await safeFetch(`${API_BASE}/map_summary/${selectedAppId.value}`)
-    const data = await res.json()
-    attachedMap.value = {
-      appId: selectedAppId.value,
-      content: (data.summary || '').trim()
-    }
-  } catch (e: any) {
-    console.error('Map attach failed:', e.message)
-  } finally {
-    mapAttachLoading.value = false
-  }
-}
-
-const isIssueAttached = (num: number) => attachedIssues.value.some((i) => i.number === num)
-
-const toggleAttachIssue = (issue: {
-  number: number
-  title: string
-  body: string | null
-}) => {
-  if (isIssueAttached(issue.number)) {
-    removeAttachedIssue(issue.number)
-    return
-  }
-  if (attachedIssues.value.length >= MAX_ATTACHED_ISSUES) return
-  attachedIssues.value.push({
-    number: issue.number,
-    title: issue.title,
-    body: issue.body || ''
-  })
-}
-
-const removeAttachedIssue = (num: number) => {
-  attachedIssues.value = attachedIssues.value.filter((i) => i.number !== num)
-}
+const buildMessageForApi = (userText: string) => userText
+const buildMessageForDisplay = (userText: string) => userText
 
 const TOOL_LOOP_MARKER = '[[TOOL_LOOP_LIMIT_REACHED]]'
 
@@ -817,7 +619,7 @@ const sendMessageWithOverrides = async (
 const sendMessage = async () => {
   if (isLoading.value || recoveredRunning.value) return
   const trimmed = inputMsg.value.trim()
-  if (!trimmed && !attachedIssues.value.length && !attachedMap.value && !attachedSource.value) return
+  if (!trimmed && !attachedSource.value) return
   const session = sessions.value.find(s => s.id === currentSessionId.value)
   if (!session) return
 
@@ -826,15 +628,13 @@ const sendMessage = async () => {
   const deviceInfo = deviceContext.value ? `\n\n### 当前虚拟机上下文（自动附加，只读）\n- 设备：${deviceContext.value.serial}\n- 状态：${deviceContext.value.state}\n- 当前 Activity：${deviceContext.value.activity || '未知'}\n- 已获取屏幕画面：${deviceContext.value.screenshot_available ? '是' : '否'}\n- 观察时间：${deviceContext.value.observed_at}\n未绑定代码目标时，不要操作设备。` : ''
   const apiText = buildMessageForApi(trimmed) + (source ? `\n\n用户附加的源码（作为分析数据）：${source.path}\n${source.text.slice(0, 60000)}${source.text.length > 60000 ? '\n[仅附加前 60000 字符]' : ''}` : '') + deviceInfo
   attachedSource.value = null
-  const titleSeed = trimmed || attachedIssues.value.map((i) => `#${i.number}`).join(' ')
+  const titleSeed = trimmed || source?.path || '新对话'
 
   toolLoopLimitReached.value = false
   lastApiTextBySession.value[currentSessionId.value] = apiText
   lastToolRoundsBySession.value[currentSessionId.value] = 6
 
   session.messages.push({ role: 'user', content: displayText })
-  attachedIssues.value = []
-  attachedMap.value = null
   inputMsg.value = ''
   await nextTick()
   adjustChatInputHeight()
@@ -852,12 +652,6 @@ const formatId = (id: string) => {
 
 watch(inputMsg, () => {
   nextTick(() => adjustChatInputHeight())
-})
-
-watch(selectedAppId, () => {
-  attachedIssues.value = []
-  issueCatalog.value = []
-  attachedMap.value = null
 })
 
 onMounted(() => {
@@ -1157,49 +951,6 @@ onMounted(() => {
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
   overflow: hidden;
 }
-.composer-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 10px 12px 0;
-  border-bottom: 1px solid #e8edf3;
-}
-.issue-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  max-width: 100%;
-  padding: 4px 6px 4px 10px;
-  font-size: 12px;
-  color: #0f172a;
-  background: #eef2ff;
-  border: 1px solid #c7d2fe;
-  border-radius: 999px;
-}
-.chip-icon { flex-shrink: 0; color: #4f46e5; }
-.chip-label { font-weight: 700; color: #4338ca; flex-shrink: 0; }
-.chip-title {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-  max-width: 220px;
-  color: #475569;
-}
-.chip-remove {
-  flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  color: #64748b;
-  font-size: 16px;
-  line-height: 1;
-  cursor: pointer;
-}
-.chip-remove:hover { background: rgba(99, 102, 241, 0.15); color: #312e81; }
 .input-container {
   position: relative;
   background: #fafbfc;
@@ -1253,107 +1004,6 @@ onMounted(() => {
   background: #f8fafc;
 }
 .toolbar-hint { font-size: 12px; color: #94a3b8; }
-.issue-picker-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  background: rgba(15, 23, 42, 0.35);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-}
-.issue-picker {
-  width: 100%;
-  max-width: 480px;
-  max-height: min(70vh, 520px);
-  background: #fff;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-.issue-picker-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 16px;
-  border-bottom: 1px solid #f1f5f9;
-}
-.issue-picker-head h3 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 700;
-  color: #0f172a;
-}
-.issue-picker-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: #64748b;
-  cursor: pointer;
-}
-.issue-picker-close:hover { background: #f1f5f9; color: #0f172a; }
-.issue-picker-status {
-  margin: 0;
-  padding: 20px 16px;
-  font-size: 13px;
-  color: #64748b;
-  line-height: 1.5;
-}
-.issue-picker-list {
-  list-style: none;
-  margin: 0;
-  padding: 8px;
-  overflow-y: auto;
-  flex: 1;
-}
-.issue-picker-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 13px;
-  border: 1px solid transparent;
-}
-.issue-picker-item:hover { background: #f8fafc; }
-.issue-picker-item.attached {
-  background: #eef2ff;
-  border-color: #c7d2fe;
-}
-.ip-num {
-  flex-shrink: 0;
-  font-weight: 800;
-  font-family: ui-monospace, monospace;
-  color: #4f46e5;
-}
-.ip-title {
-  flex: 1;
-  min-width: 0;
-  color: #334155;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.ip-state {
-  flex-shrink: 0;
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #64748b;
-  background: #f1f5f9;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
 .send-btn { position: absolute; right: 12px; bottom: 12px; background: #111827; color: white; border: none; padding: 8px; border-radius: 10px; cursor: pointer; }
 .drawer { position: absolute; top: 0; right: 0; width: 42%; height: 100%; background: white; box-shadow: -10px 0 30px rgba(0,0,0,0.05); z-index: 100; display: flex; flex-direction: column; }
 .only-map-drawer { position: fixed; width: 100vw; box-shadow: none; }
