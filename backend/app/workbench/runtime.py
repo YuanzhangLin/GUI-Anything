@@ -4,10 +4,8 @@ import base64
 from contextlib import closing
 from datetime import datetime, timezone
 import json
-import os
 import re
 from pathlib import Path
-import shutil
 import sqlite3
 import subprocess
 import threading
@@ -17,6 +15,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 from app.navigation.device import AdbDevice
 from app.navigation.observation import locate_trigger
+from app.local_services import discover_adb
 
 _locks: dict[str, threading.RLock] = {}
 _guard = threading.Lock()
@@ -27,7 +26,7 @@ def lock(key):
         return _locks.setdefault(key, threading.RLock())
 
 def devices():
-    executable = os.getenv("GUI_ADB_PATH") or shutil.which("adb")
+    executable = discover_adb()
     if not executable:
         return {"available": False, "devices": [], "reason": "ADB not configured; set GUI_ADB_PATH or PATH"}
     result = subprocess.run([executable, "devices", "-l"], capture_output=True, timeout=15)

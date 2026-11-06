@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-import os
-import shutil
 import subprocess
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 
 from app.navigation.observation import parse_activity, parse_hierarchy
+from app.local_services import discover_adb
 
 
 @dataclass
@@ -21,7 +20,7 @@ class Observation:
 
 class AdbDevice:
     def __init__(self, serial: str | None = None, *, screenshot: bool = True):
-        executable = os.getenv("GUI_ADB_PATH") or shutil.which("adb")
+        executable = discover_adb()
         if not executable:
             raise RuntimeError("ADB is not installed or not on PATH")
         self.prefix = [executable, *(["-s", serial] if serial else [])]
