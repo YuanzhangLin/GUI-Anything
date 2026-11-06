@@ -1,16 +1,35 @@
 <template>
-  <details class="task-evidence" @toggle="toggle"><summary><strong>设备任务</strong><span>{{ run?.goal || '查看目标、步骤与验证结果' }}</span><small>{{ statusLabel }}</small></summary><p v-if="error" role="alert">{{ error }}</p><template v-if="run"><header><span>{{ run.device_serial }} · 动作 {{ run.actions }}/{{ run.action_budget }}</span><button @click="refresh">刷新证据</button></header><div class="task-controls"><button v-if="run.status === 'running'" :disabled="busy" @click="control('pause')">暂停设备执行</button><button v-if="run.status === 'paused'" :disabled="busy" @click="control('resume')">继续设备执行</button><button v-if="!['stopped','draft'].includes(run.status)" :disabled="busy" @click="control('stop')">停止设备执行</button></div><p v-if="blockedReason" role="alert">已阻塞：{{ blockedReason }}</p><p>{{ run.target.path }}:{{ run.target.start_line }}–{{ run.target.end_line }}</p><details><summary>冻结的目标代码</summary><pre>{{ run.target.excerpt }}</pre></details><p v-if="!run.source_check?.matches" role="alert">源码已变化；此处展示的是任务创建时的证据。</p><h4>执行步骤</h4><p v-if="!actions.length">尚无设备动作记录。</p><ol><li v-for="event in actions" :key="event.seq"><button @click="inspect(event)">{{ event.seq }} · {{ event.payload.kind }} · {{ event.payload.reason || '查看动作证据' }}</button></li></ol><div v-if="chosen" class="evidence-pair"><figure><figcaption>执行前</figcaption><img v-if="before" :src="before" alt="动作执行前截图"><p v-else>无截图</p></figure><figure><figcaption>执行后</figcaption><img v-if="after" :src="after" alt="动作执行后截图"><p v-else>尚无执行后证据</p></figure></div><RunResults :run="run" @source="showTarget = true"/><pre v-if="showTarget">{{ run.target.path }}:{{ run.target.start_line }}–{{ run.target.end_line }}
-{{ run.target.excerpt }}</pre><details><summary>全部执行事件</summary><ol><li v-for="e in events" :key="e.seq">{{ e.seq }} · {{ e.kind }} {{ e.payload.reason || '' }}</li></ol></details></template></details>
+  <details class="task-evidence" @toggle="toggle">
+    <summary><strong>设备任务</strong><span>{{ run?.goal || '查看目标、步骤与验证结果' }}</span><small>{{ statusLabel }}</small></summary>
+    <p v-if="error" role="alert">{{ error }}</p>
+    <template v-if="run">
+      <header><span>{{ run.device_serial }} · 动作 {{ run.actions }}/{{ run.action_budget }}</span><button @click="refresh">刷新证据</button></header>
+      <div class="task-controls"><button v-if="run.status === 'running'" :disabled="busy" @click="control('pause')">暂停设备执行</button><button v-if="run.status === 'paused'" :disabled="busy" @click="control('resume')">继续设备执行</button><button v-if="!['stopped','draft'].includes(run.status)" :disabled="busy" @click="control('stop')">停止设备执行</button></div>
+      <p v-if="blockedReason" role="alert">已阻塞：{{ blockedReason }}</p>
+      <p><button class="source-link" @click="locateTarget">{{ run.target.path }}:{{ run.target.start_line }}–{{ run.target.end_line }} · 定位源码</button></p>
+      <details><summary>冻结的目标代码</summary><pre>{{ run.target.excerpt }}</pre></details>
+      <p v-if="!run.source_check?.matches" role="alert">源码已变化；此处展示的是任务创建时的证据。</p>
+      <h4>执行步骤</h4><p v-if="!actions.length">尚无设备动作记录。</p>
+      <ol><li v-for="event in actions" :key="event.seq"><button @click="inspect(event)">{{ event.seq }} · {{ event.payload.kind }} · {{ event.payload.reason || '查看动作证据' }}</button></li></ol>
+      <div v-if="chosen" class="evidence-pair"><figure><figcaption>执行前</figcaption><img v-if="before" :src="before" alt="动作执行前截图"><p v-else>无截图</p></figure><figure><figcaption>执行后</figcaption><img v-if="after" :src="after" alt="动作执行后截图"><p v-else>尚无执行后证据</p></figure></div>
+      <RunResults :run="run" @source="locateRunReference"/>
+      <details><summary>全部执行事件</summary><ol><li v-for="e in events" :key="e.seq">{{ e.seq }} · {{ e.kind }} {{ e.payload.reason || '' }}</li></ol></details>
+    </template>
+  </details>
 </template>
+
 <script setup lang="ts">
 import {ref,computed,onUnmounted,watch} from 'vue'
 import {authFetch} from '../utils/auth'
+import {openCodeLocation} from '../utils/codeLocation'
 import RunResults from './RunResults.vue'
-const props=defineProps<{runId:string;apiBase:string}>()
-const run=ref<any>(null),events=ref<any[]>([]),error=ref(''),opened=ref(false),chosen=ref<any>(null),before=ref(''),after=ref(''),showTarget=ref(false),busy=ref(false)
+const props=defineProps<{runId:string;apiBase:string;appId:string}>()
+const run=ref<any>(null),events=ref<any[]>([]),error=ref(''),opened=ref(false),chosen=ref<any>(null),before=ref(''),after=ref(''),busy=ref(false)
 const actions=computed(()=>events.value.filter(e=>e.kind==='action'))
 const blockedReason=computed(()=>[...events.value].reverse().find(e=>e.kind==='blocked')?.payload.reason || '')
 const statusLabel=computed(()=>({draft:'待开始',running:'执行中',paused:'已暂停',blocked:'已阻塞',stopped:'已停止'} as Record<string,string>)[run.value?.status] || run.value?.status || '')
+function locateTarget(){if(run.value?.target)openCodeLocation({appId:props.appId,path:run.value.target.path,startLine:run.value.target.start_line,endLine:run.value.target.end_line,fileSha256:run.value.target.file_sha256,origin:'run'})}
+function locateRunReference(reference:{path?:string;line?:number}){if(!run.value?.target)return;openCodeLocation({appId:props.appId,path:reference?.path||run.value.target.path,startLine:reference?.line||run.value.target.start_line,endLine:reference?.line||run.value.target.end_line,fileSha256:(reference?.path && reference.path!==run.value.target.path)?undefined:run.value.target.file_sha256,origin:'run'})}
 let timer:ReturnType<typeof setTimeout>|undefined,requestVersion=0,imageVersion=0
 async function json(path:string){const r=await authFetch(`${props.apiBase}/workbench/runs/${props.runId}${path}`);const d=await r.json();if(!r.ok)throw new Error(d.detail || '证据读取失败');return d}
 async function refresh(){if(timer)clearTimeout(timer);const version=++requestVersion;try{const [r,e]=await Promise.all([json(''),json('/events')]);if(version!==requestVersion)return;run.value=r;events.value=e;error.value='';if(opened.value && r.status==='running')timer=setTimeout(refresh,2000)}catch(e){if(version===requestVersion)error.value=String(e)}}
@@ -21,6 +40,7 @@ function toggle(e:Event){opened.value=(e.target as HTMLDetailsElement).open;if(o
 watch(()=>props.runId,()=>{++requestVersion;clearImages();run.value=null;events.value=[];chosen.value=null;if(opened.value)refresh()})
 onUnmounted(()=>{++requestVersion;clearImages();if(timer)clearTimeout(timer)})
 </script>
+
 <style scoped>
-.task-evidence{border:1px solid #cbdde4;background:#f5fafb;border-radius:9px;padding:14px 18px;margin:12px 0;font-size:12px;color:#476070}.task-evidence>summary{display:flex;gap:12px;cursor:pointer;align-items:center}.task-evidence>summary span{flex:1;overflow-wrap:anywhere}.task-evidence header{display:flex;justify-content:space-between;align-items:center;margin-top:16px}.task-evidence button{padding:6px 10px;border:1px solid #c4d6df;border-radius:5px;background:white;color:#356078;cursor:pointer;text-align:left}.task-evidence button:disabled{opacity:.5;cursor:not-allowed}.task-controls{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.task-evidence p{overflow-wrap:anywhere}.task-evidence pre{font:11px/1.7 Consolas,monospace;overflow:auto;max-height:260px}.task-evidence li{margin:6px 0}.evidence-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}.evidence-pair figure{margin:0;text-align:center}.evidence-pair img{max-height:330px;max-width:100%;object-fit:contain}.evidence-pair figcaption{margin:10px;color:#718794}[role=alert]{color:#aa483a}
+.task-evidence{border:1px solid #cbdde4;background:#f5fafb;border-radius:9px;padding:14px 18px;margin:12px 0;font-size:12px;color:#476070}.task-evidence>summary{display:flex;gap:12px;cursor:pointer;align-items:center}.task-evidence>summary span{flex:1;overflow-wrap:anywhere}.task-evidence header{display:flex;justify-content:space-between;align-items:center;margin-top:16px}.task-evidence button{padding:6px 10px;border:1px solid #c4d6df;border-radius:5px;background:white;color:#356078;cursor:pointer;text-align:left}.task-evidence button:disabled{opacity:.5;cursor:not-allowed}.task-controls{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0}.task-evidence p{overflow-wrap:anywhere}.task-evidence pre{font:11px/1.7 Consolas,monospace;overflow:auto;max-height:260px}.task-evidence li{margin:6px 0}.source-link{font-family:Consolas,monospace}.evidence-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}.evidence-pair figure{margin:0;text-align:center}.evidence-pair img{max-height:330px;max-width:100%;object-fit:contain}.evidence-pair figcaption{margin:10px;color:#718794}[role=alert]{color:#aa483a}
 </style>

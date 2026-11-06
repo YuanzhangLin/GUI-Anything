@@ -63,8 +63,9 @@
 </template>
 
 <script setup lang="ts">
-import {computed,onBeforeUnmount,onMounted,ref,watch} from 'vue'
+import {computed,nextTick,onBeforeUnmount,onMounted,ref,watch} from 'vue'
 import {authFetch} from '../utils/auth'
+import {CODE_LOCATION_EVENT,type CodeLocation} from '../utils/codeLocation'
 import SourceTree from './SourceTree.vue'
 
 const props=defineProps<{appId:string;apiBase:string}>()
@@ -93,6 +94,23 @@ function publishDeviceContext(){const device=devices.value.find(d=>d.serial===se
 async function get(path:string){const r=await authFetch(`${props.apiBase}/workbench${path}`);const data=await r.json();if(!r.ok)throw new Error(data.detail || '请求失败');return data}
 async function loadFiles(){const app=props.appId;sourceError.value='';try{const data=await get(`/projects/${app}/files`);if(app===props.appId)files.value=data.files}catch(e){if(app===props.appId)sourceError.value=String(e)}}
 async function openSource(path:string){const app=props.appId;try{const data=await get(`/projects/${app}/source?path=${encodeURIComponent(path)}`);if(app===props.appId){source.value=data;startLine.value=1;endLine.value=1}}catch(e){sourceError.value=String(e)}}
+async function locateCode(event:Event){
+  const location=(event as CustomEvent<CodeLocation>).detail
+  if(!location || location.appId!==props.appId)return
+  sourceError.value=''
+  expanded.value=true
+  await openSource(location.path)
+  if(source.value?.path!==location.path)return
+  if(location.fileSha256 && source.value.file_sha256!==location.fileSha256){
+    sourceError.value='当前文件版本与该引用保存的版本不同；已打开文件，请重新核对目标行。'
+    return
+  }
+  const last=Math.max(1,sourceLines.value.length)
+  startLine.value=clamp(location.startLine||1,1,last)
+  endLine.value=clamp(location.endLine||startLine.value,startLine.value,last)
+  await nextTick()
+  ;(document.querySelector('.code-dialog .code-line.selected') as HTMLElement|null)?.scrollIntoView({block:'center',inline:'nearest'})
+}
 async function loadDevices(){error.value='';loading.value=true;try{const data=await get('/devices');devices.value=data.devices;serial.value=devices.value.find(d=>d.serial===serial.value&&d.state==='device')?.serial||devices.value.find(d=>d.state==='device')?.serial||'';if(!data.available)error.value=data.reason;await Promise.all(devices.value.filter(d=>d.state==='device').map(d=>previewDevice(d.serial,false)));syncSelectedContext()}catch(e){error.value=String(e);publishDeviceContext()}finally{loading.value=false}}
 async function previewDevice(targetSerial:string,publish=true){deviceViews.value[targetSerial]={...(deviceViews.value[targetSerial]||{}),loading:true};try{const data=await get(`/devices/${encodeURIComponent(targetSerial)}/preview`);deviceViews.value[targetSerial]={picture:`data:image/png;base64,${data.screenshot}`,activity:data.activity||'',observed_at:new Date().toISOString(),last_action:'最近动作：刷新画面',loading:false};if(targetSerial===serial.value)syncSelectedContext(publish)}catch(e){deviceViews.value[targetSerial]={...(deviceViews.value[targetSerial]||{}),loading:false,error:String(e),observed_at:new Date().toISOString()};if(targetSerial===serial.value){error.value=String(e);syncSelectedContext(publish)}}}
 function syncSelectedContext(publish=true){const view=deviceViews.value[serial.value]||{};picture.value=view.picture||'';activity.value=view.activity||'';if(publish)publishDeviceContext()}
@@ -117,8 +135,8 @@ function resize(event:PointerEvent){
 }
 function stopResize(){resizeMode=''}
 
-onMounted(()=>{window.addEventListener('pointermove',resize);window.addEventListener('pointerup',stopResize);window.addEventListener('pointerup',finishLineSelection);loadFiles();loadDevices()})
-onBeforeUnmount(()=>{window.removeEventListener('pointermove',resize);window.removeEventListener('pointerup',stopResize);window.removeEventListener('pointerup',finishLineSelection)})
+onMounted(()=>{window.addEventListener('pointermove',resize);window.addEventListener('pointerup',stopResize);window.addEventListener('pointerup',finishLineSelection);window.addEventListener(CODE_LOCATION_EVENT,locateCode);loadFiles();loadDevices()})
+onBeforeUnmount(()=>{window.removeEventListener('pointermove',resize);window.removeEventListener('pointerup',stopResize);window.removeEventListener('pointerup',finishLineSelection);window.removeEventListener(CODE_LOCATION_EVENT,locateCode)})
 watch(()=>props.appId,()=>{source.value=null;files.value=[];expanded.value=false;loadFiles()})
 </script>
 

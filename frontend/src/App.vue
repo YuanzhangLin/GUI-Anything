@@ -76,7 +76,7 @@
     <main class="chat-main">
       <div class="chat-scroller" ref="messageScroll">
         <div class="chat-content">
-          <ConversationRun v-for="id in conversationRunIds" :key="id" :run-id="id" :api-base="API_BASE" />
+          <ConversationRun v-for="id in conversationRunIds" :key="id" :run-id="id" :api-base="API_BASE" :app-id="selectedAppId" />
           <details v-if="conversationEvents.length" class="conversation-activity"><summary>执行记录（{{ conversationEvents.length }}）</summary><ol><li v-for="event in conversationEvents" :key="event.seq">{{ event.tool || event.kind }} · {{ event.state || event.message || event.status || '已结束' }}</li></ol></details>
           <div v-for="(msg, i) in currentMessages" :key="i" :class="['msg-row', msg.role]">
             <div v-if="msg.role === 'assistant'" class="avatar ai">AI</div>
@@ -87,6 +87,9 @@
                   <span class="dot-flashing"></span> 正在思考并调取图谱...
                 </div>
                 <div v-else v-html="renderMarkdown(msg.content)"></div>
+                <div v-if="messageCodeLocations(msg.content).length" class="message-source-links" aria-label="消息中的源码引用">
+                  <button v-for="location in messageCodeLocations(msg.content)" :key="`${location.path}:${location.startLine}:${location.endLine}`" @click="openCodeLocation(location)">{{ location.path }}:{{ location.startLine }}{{ location.endLine !== location.startLine ? `–${location.endLine}` : '' }}</button>
+                </div>
               </div>
             </div>
 
@@ -151,7 +154,7 @@
         <X @click="showMap = false" class="close-icon" />
       </div>
       <div class="drawer-view">
-        <MapCanvas :appId="selectedAppId" />
+        <MapCanvas :appId="selectedAppId" @source="locateMapSource" />
       </div>
     </div>
 
@@ -179,6 +182,7 @@ import { ref, computed, onMounted, nextTick, watch, onBeforeUnmount } from 'vue'
 import { Plus, Send, Activity, X, BookOpen, Settings, Trash2, PanelLeftClose, PanelLeftOpen } from 'lucide-vue-next'
 import { renderMarkdown } from './utils/markdown'
 import { authFetch } from './utils/auth'
+import {extractCodeLocations,openCodeLocation} from './utils/codeLocation'
 import MapCanvas from './components/MapCanvas.vue'
 import ConversationContext from './components/ConversationContext.vue'
 import ModelSettings from './components/ModelSettings.vue'
@@ -367,6 +371,11 @@ const currentMessages = computed(() => {
   const session = sessions.value.find(s => s.id === currentSessionId.value)
   return session ? session.messages : []
 })
+const messageCodeLocations = (content:string) => extractCodeLocations(content || '', selectedAppId.value)
+const locateMapSource = (reference:{path:string;line:number}) => {
+  showMap.value=false
+  openCodeLocation({appId:selectedAppId.value,path:reference.path,startLine:reference.line,endLine:reference.line,origin:'map'})
+}
 
 /** 与 backend/data/app_list.yml 中当前选中项对应（name 为展示名，id 为数据/接口用标识） */
 const currentAppMeta = computed(() => {
@@ -669,6 +678,9 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.message-source-links{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:9px;border-top:1px solid rgba(120,145,158,.22)}
+.message-source-links button{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:5px 8px;border:1px solid #bfd1d9;border-radius:5px;background:#f7fbfc;color:#2c6678;font:11px Consolas,monospace;cursor:pointer}
+.message-source-links button:hover{border-color:#2c7182;background:#eaf4f6}
 .device-task-chip{padding:10px 14px;background:#e5f0f0;font-size:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}.device-task-chip span{overflow-wrap:anywhere}.device-task-chip input{width:65px}.device-task-chip button{padding:5px;border:1px solid #aac4c5;border-radius:4px}
 
 .conversation-activity{padding:12px 18px;margin:10px 0 24px;border:1px solid #dbe5eb;border-radius:8px;color:#587185;font-size:12px;background:#f0f5f8}.conversation-activity ol{max-height:220px;overflow:auto;line-height:1.8}.conversation-activity summary{cursor:pointer}
