@@ -98,7 +98,7 @@ From `backend`, run `python -m app.local_services` to start the paired local
 services. The launcher copies the versioned `agent-tools/opencode/gui_*.ts`
 tools into an ignored service config directory. It generates separate random OpenCode
 server and device bridge credentials in process memory and passes them only to
-its children. It verifies `gui_observe`, `gui_act`, and `gui_verify` through the authenticated tool catalog.
+its children. It verifies `gui_observe`, `gui_act`, and `gui_verify` through the authenticated tool catalog, and copies plus verifies the `gui-anything` Skill in the isolated OpenCode config.
 
 The right source pane lets the user choose a line range and bind it with the
 selected device. The composer displays the explicit per-message device task and

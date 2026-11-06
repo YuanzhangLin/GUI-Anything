@@ -27,7 +27,7 @@ class OpenCodeConnection:
     def permissions():
         rules = [{'permission': '*', 'pattern': '*', 'action': 'deny'}]
         rules += [{'permission': name, 'pattern': '*', 'action': 'allow'}
-                  for name in ['read', 'glob', 'grep', 'list', 'gui_observe', 'gui_act', 'gui_verify']]
+                  for name in ['read', 'glob', 'grep', 'list', 'skill', 'gui_observe', 'gui_act', 'gui_verify']]
         return rules
 
     async def create(self, *, directory, title, permissions=None):

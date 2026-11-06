@@ -43,12 +43,16 @@ def main():
     templates=Path(BACKEND_ROOT).parent/'agent-tools'/'opencode'
     for template in templates.glob('gui_*.ts'):
         shutil.copyfile(template,tools/template.name)
+    skill_source=Path(BACKEND_ROOT).parent/'agent-skills'/'gui-anything'
+    skill_target=config/'skills'/'gui-anything'
+    if skill_target.exists():shutil.rmtree(skill_target)
+    shutil.copytree(skill_source,skill_target)
     env={**os.environ,'GUI_AGENT_BRIDGE_TOKEN':secrets.token_urlsafe(48),
          'OPENCODE_SERVER_PASSWORD':secrets.token_urlsafe(48),
          'OPENCODE_CONFIG_DIR':str(config),'GUI_AGENT_BRIDGE_URL':'http://127.0.0.1:8002',
          'GUI_OPENCODE_URL':'http://127.0.0.1:4096',
          'OPENCODE_CONFIG_CONTENT':json.dumps({
-             'permission':{'edit':'deny','bash':'deny'},
+             'permission':{'edit':'deny','bash':'deny','skill':'allow'},
              'autoupdate':False,
              'provider':{'hicode':HICODE_PROVIDER},
          })}
@@ -72,6 +76,11 @@ def main():
                     loaded=set(result.json());required={'gui_observe','gui_act','gui_verify'}
                     print('OpenCode device tools registered: '+str(sorted(required & loaded)),flush=True)
                     if not required <= loaded: raise RuntimeError('OpenCode did not register all device tools')
+                    skills=client.get('http://127.0.0.1:4096/skill',params={'directory':BACKEND_ROOT})
+                    skills.raise_for_status()
+                    skill_loaded='gui-anything' in json.dumps(skills.json())
+                    print('GUI-Anything skill registered: '+str(skill_loaded),flush=True)
+                    if not skill_loaded:raise RuntimeError('OpenCode did not register the GUI-Anything skill')
                     break
             except httpx.ConnectError:
                 time.sleep(1)
