@@ -60,6 +60,7 @@ def generate_uimap(
     project_config: Optional[Dict[str, Any]] = None,
     secrets_path: Optional[str] = None,
     output_dir: Optional[str] = None,
+    model: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
     """
     Real UI Map generation entrypoint.
@@ -89,7 +90,11 @@ def generate_uimap(
     analyzer.analyze()
     all_units = analyzer.results
 
-    llm_client = LLMClient(secrets_path) if secrets_path else LLMClient()
+    if model:
+        from app.engine.uimapgenerate.opencode_llm import OpenCodeLLMClient
+        llm_client = OpenCodeLLMClient(model)
+    else:
+        llm_client = LLMClient(secrets_path) if secrets_path else LLMClient()
     builder = TopologyBuilder(all_units, llm_client)
     sorted_unit_ids = _sort_units_by_inheritance_depth(all_units, analyzer.class_index)
     builder.build_parallel(sorted_unit_ids, max_workers=8)

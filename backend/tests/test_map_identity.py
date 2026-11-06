@@ -30,6 +30,7 @@ class MapIdentityTests(unittest.TestCase):
                 result = json.loads((root / "sample.json").read_text(encoding="utf-8"))
                 self.assertEqual(result["id"],task_id)
                 self.assertEqual(result["source_revision"],"git:abc123")
+                self.assertIsNone(result["model"])
                 with closing(sqlite3.connect(db)) as connection:
                     row=connection.execute("SELECT id,app_id,source_revision,mode FROM maps").fetchone()
                 self.assertEqual(row,(task_id,"sample","git:abc123","fast"))

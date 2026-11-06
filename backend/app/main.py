@@ -144,6 +144,7 @@ class SourceImportRequest(BaseModel):
     new_project: bool = False
     map_mode: Literal["none","fast","full"] = "none"
     full_confirmed: bool = False
+    model: Optional[ModelChoice] = None
 
 from app.workbench.store import RunRequest
 
@@ -347,11 +348,12 @@ async def import_source(request: SourceImportRequest, username: str = Depends(re
     if request.project_id and not request.new_project and not _project_exists(request.project_id): raise HTTPException(status_code=404,detail="Project does not exist")
     if request.new_project and _project_exists(project_id): raise HTTPException(status_code=409,detail="Project ID already exists")
     if request.map_mode == "full" and not request.full_confirmed: raise HTTPException(status_code=409,detail="Full Map requires explicit model and cost confirmation")
+    if request.map_mode == "full": await _validate_full_map_model(request.model)
     result = await asyncio.to_thread(code_manager.download_repo,request.repo_url,request.app_id)
     if result.get("status") != "success": raise HTTPException(status_code=400,detail=result.get("message") or "Repository import failed")
     _register_app(request.app_id,project_id,request.name,"source",request.repo_url,request.project_name)
     _db_execute("UPDATE project_apps SET source_revision=? WHERE id=?",(_source_revision(request.app_id),request.app_id))
-    map_task_id = _queue_map_task(request.app_id,"deep" if request.map_mode == "full" else request.map_mode) if request.map_mode != "none" else None
+    map_task_id = _queue_map_task(request.app_id,"deep" if request.map_mode == "full" else request.map_mode,request.model.model_dump() if request.model else None) if request.map_mode != "none" else None
     return {"project_id":project_id,"app_id":request.app_id,"status":"ready","stage":"cloned","map_task_id":map_task_id}
 
 
@@ -423,6 +425,19 @@ async def get_map_status(app_id: str, username: str = Depends(current_user)):
 
 class MapGenerateRequest(BaseModel):
     mode: Literal["fast", "deep"] = "fast"
+    model: Optional[ModelChoice] = None
+
+
+async def _validate_full_map_model(model: Optional[ModelChoice]):
+    if model is None:
+        raise HTTPException(status_code=400,detail="Full Map requires an explicit OpenCode model")
+    from app.agents.settings import catalog
+    providers={provider['id']:provider for provider in (await catalog())['providers']}
+    provider=providers.get(model.providerID)
+    if not provider or model.modelID not in {item['id'] for item in provider['models']}:
+        raise HTTPException(status_code=400,detail="Unknown Full Map model")
+    if not provider['connected']:
+        raise HTTPException(status_code=400,detail="Configure this model provider in Model Services before Full Map generation")
 
 
 def _db_execute(sql: str, params: tuple = ()):
@@ -458,7 +473,7 @@ def _agent_context(app_id: str, message: str, previous_messages: list[tuple[str,
     return "\n\n".join(parts)
 
 
-async def _run_map_task(task_id: str, app_id: str, mode: str):
+async def _run_map_task(task_id: str, app_id: str, mode: str, model: Optional[dict] = None):
     try:
         _db_execute(
             "UPDATE map_tasks SET status=?, progress=?, message=? WHERE id=?",
@@ -470,10 +485,10 @@ async def _run_map_task(task_id: str, app_id: str, mode: str):
         else:
             from app.engine.uimapgenerate.service import generate_uimap
             from app.engine.uimapgenerate.graph import build_graph
-            result = await asyncio.to_thread(generate_uimap, app_id=app_id)
+            result = await asyncio.to_thread(generate_uimap, app_id=app_id, model=model)
             result.update(build_graph(result["units"], mode="deep", source="android_repository"))
         source_revision=_source_revision(app_id)
-        result={"id":task_id,"app_id":app_id,"source_revision":source_revision,
+        result={"id":task_id,"app_id":app_id,"source_revision":source_revision,"model":model,
                 "created_at":datetime.now(timezone.utc).isoformat(),**result}
         os.makedirs(DATA_DIR, exist_ok=True)
         result_path = os.path.join(DATA_DIR, f"{validate_app_id(app_id)}.json")
@@ -493,13 +508,13 @@ async def _run_map_task(task_id: str, app_id: str, mode: str):
             ("error", str(e), task_id)
         )
 
-def _queue_map_task(app_id: str, mode: str) -> str:
+def _queue_map_task(app_id: str, mode: str, model: Optional[dict] = None) -> str:
     task_id = uuid.uuid4().hex
     _db_execute(
         "INSERT INTO map_tasks (id, app_id, status, progress, message, result_path, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
         (task_id, app_id, "queued", 0, "Queued.", "", datetime.now(timezone.utc).isoformat())
     )
-    asyncio.create_task(_run_map_task(task_id, app_id, mode))
+    asyncio.create_task(_run_map_task(task_id, app_id, mode, model))
     return task_id
 
 
@@ -513,7 +528,8 @@ async def generate_map(app_id: str, payload: MapGenerateRequest, username: str =
         raise HTTPException(status_code=400, detail="Invalid app ID")
     if payload.mode == "deep" and (Path(code_manager.get_repo_path(app_id)) / "source.apk").is_file():
         raise HTTPException(status_code=400, detail="Deep map generation for APK projects is not supported; use Fast map and Agent chat")
-    task_id = _queue_map_task(app_id,payload.mode)
+    if payload.mode == "deep": await _validate_full_map_model(payload.model)
+    task_id = _queue_map_task(app_id,payload.mode,payload.model.model_dump() if payload.model else None)
     return {"task_id": task_id, "status": "queued"}
 
 

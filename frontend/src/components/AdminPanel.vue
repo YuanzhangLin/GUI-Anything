@@ -43,8 +43,9 @@
                   <label>Map<select v-model="mapMode"><option value="none">暂不生成</option><option value="fast">Fast（本地静态分析，不调用模型）</option><option value="full" :disabled="sourceType === 'apk'">Full（模型分析）</option></select></label>
                 </div>
                 <div v-if="sourceType === 'apk'" class="wizard-note">APK 会先由 JADX 反编译。Full Map 尚未支持 APK，因此只能选择不生成或 Fast。</div>
-                <label v-if="mapMode === 'full'" class="full-confirm"><input v-model="fullConfirmed" type="checkbox" required><span>我确认 Full 会把源码与静态分析结果发送给管理台当前配置的模型。消耗取决于项目规模，当前无法准确估算，可能产生供应商费用。</span></label>
-                <div class="wizard-actions"><button type="submit" :disabled="isImporting || (mapMode === 'full' && !fullConfirmed)">{{ isImporting ? '正在导入…' : '开始导入' }}</button><span v-if="importError" class="import-error">{{ importError }}</span></div>
+                <div v-if="mapMode === 'full'" class="full-model"><strong>Full 使用模型</strong><ModelSettings :api-base="apiBase" :admin="false" @change="fullModel = $event"/><p v-if="fullModel">将使用 {{ fullModel.providerID }} / {{ fullModel.modelID }}</p><p v-else>请选择已在“模型服务”中配置凭证的模型。</p></div>
+                <label v-if="mapMode === 'full'" class="full-confirm"><input v-model="fullConfirmed" type="checkbox" required><span>我确认 Full 会把源码与静态分析结果发送给上面选择的模型。消耗取决于项目规模，当前无法准确估算，可能产生供应商费用。</span></label>
+                <div class="wizard-actions"><button type="submit" :disabled="isImporting || (mapMode === 'full' && (!fullConfirmed || !fullModel))">{{ isImporting ? '正在导入…' : '开始导入' }}</button><span v-if="importError" class="import-error">{{ importError }}</span></div>
               </form>
               <table class="data-table">
                 <thead>
@@ -111,6 +112,7 @@ const appName = ref('')
 const repoUrl = ref('')
 const mapMode = ref('none')
 const fullConfirmed = ref(false)
+const fullModel = ref(null)
 const apkFile = ref(null)
 const isImporting = ref(false)
 const importError = ref('')
@@ -124,6 +126,7 @@ const projectOptions = computed(() => {
   return [...seen.values()]
 })
 watch(sourceType, value => { if (value === 'apk' && mapMode.value === 'full') mapMode.value = 'fast' })
+watch(mapMode, value => { if (value !== 'full') { fullConfirmed.value = false; fullModel.value = null } })
 watch(projectMode, () => { projectId.value = ''; projectName.value = '' })
 const onApkSelected = (event) => { apkFile.value = event.target.files?.[0] || null }
 const pollMap = async (taskId) => {
@@ -151,7 +154,7 @@ const submitImport = async () => {
       if (projectMode.value === 'new') { body.set('project_name', projectName.value); body.set('new_project', 'true') }
       response = await authFetch(`${props.apiBase}/import/apk`, { method: 'POST', body })
     } else {
-      response = await authFetch(`${props.apiBase}/import/source`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ app_id: appId.value, name: appName.value, repo_url: repoUrl.value, project_id: projectId.value, project_name: projectMode.value === 'new' ? projectName.value : null, new_project: projectMode.value === 'new', map_mode: mapMode.value, full_confirmed: fullConfirmed.value }) })
+      response = await authFetch(`${props.apiBase}/import/source`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ app_id: appId.value, name: appName.value, repo_url: repoUrl.value, project_id: projectId.value, project_name: projectMode.value === 'new' ? projectName.value : null, new_project: projectMode.value === 'new', map_mode: mapMode.value, full_confirmed: fullConfirmed.value, model: mapMode.value === 'full' ? fullModel.value : null }) })
     }
     const result = await response.json()
     if (!response.ok) throw new Error(result.detail || `导入失败 (${response.status})`)
@@ -195,6 +198,7 @@ const onTaskTriggered = ({ id, type }) => {
 
 <style scoped>
 .import-wizard{margin:20px 0 28px;padding:20px;border:1px solid #dbe4e8;border-radius:14px;background:#f8fafc}.wizard-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px}.wizard-heading div{display:flex;flex-direction:column;gap:4px}.wizard-heading span{color:#64748b;font-size:12px}.wizard-heading .stage{padding:5px 9px;border-radius:20px;background:#e2f3ef;color:#0f766e}.wizard-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.wizard-grid label{display:flex;flex-direction:column;gap:6px;color:#475569;font-size:12px;font-weight:600}.wizard-grid label.wide{grid-column:1/-1}.wizard-grid input,.wizard-grid select{width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;color:#1e293b}.wizard-note{margin-top:12px;padding:10px 12px;border-left:3px solid #d49b2c;background:#fff8e8;color:#795d22;font-size:12px}.full-confirm{display:flex;align-items:flex-start;gap:9px;margin-top:12px;padding:12px;background:#fff4e5;color:#7c4a13;font-size:12px;line-height:1.5}.full-confirm input{margin-top:3px}.wizard-actions{display:flex;align-items:center;gap:12px;margin-top:16px}.wizard-actions button{padding:10px 16px;border:0;border-radius:7px;background:#0d9488;color:white;cursor:pointer}.wizard-actions button:disabled{opacity:.6;cursor:wait}
+.full-model{margin-top:12px;padding:12px;border:1px solid #d5e0e6;border-radius:8px;background:white}.full-model>strong,.full-model>p{display:block;margin:0 0 7px}.full-model :deep(.model-settings){padding:7px 0;border:0}
 .import-error { width: 100%; color: #b91c1c; font-size: 13px; }
 /* 保持你之前喜欢的样式风格 */
 .admin-screen { position: fixed; inset: 0; background: rgba(2, 6, 23, 0.9); z-index: 2000; display: flex; padding: 30px; }

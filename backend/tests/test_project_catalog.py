@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from contextlib import closing
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from app import main
 
@@ -58,6 +58,32 @@ class ProjectCatalogTests(unittest.TestCase):
                 self.assertEqual(result["project_id"], "sample-project")
                 self.assertEqual(result["map_task_id"], "task-id")
                 self.assertEqual(main.resolve_project_id("sample-app"), "sample-project")
+
+    def test_full_import_requires_connected_model_and_passes_selection_to_task(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "app_list.yml").write_text("apps: []\n", encoding="utf-8")
+            db = str(root / "catalog.db")
+            request = main.SourceImportRequest(
+                app_id="full-app", name="Full", repo_url="https://example.test/full.git",
+                map_mode="full", full_confirmed=True,
+                model=main.ModelChoice(providerID="provider-a", modelID="model-a"),
+            )
+            catalog = {"providers":[{"id":"provider-a","connected":True,"models":[{"id":"model-a"}]}]}
+            with patch.object(main, "DB_PATH", db), patch.object(main, "DATA_DIR", str(root)), \
+                 patch.object(main.code_manager, "download_repo", return_value={"status":"success"}), \
+                 patch("app.agents.settings.catalog", new=AsyncMock(return_value=catalog)), \
+                 patch.object(main, "_queue_map_task", return_value="deep-task") as queue:
+                main.init_db()
+                result = asyncio.run(main.import_source(request, "local"))
+                self.assertEqual(result["map_task_id"], "deep-task")
+                queue.assert_called_once_with("full-app", "deep", {"providerID":"provider-a", "modelID":"model-a"})
+
+    def test_full_model_rejects_provider_without_credentials(self):
+        catalog = {"providers":[{"id":"provider-a","connected":False,"models":[{"id":"model-a"}]}]}
+        with patch("app.agents.settings.catalog", new=AsyncMock(return_value=catalog)):
+            with self.assertRaisesRegex(Exception, "Configure this model provider"):
+                asyncio.run(main._validate_full_map_model(main.ModelChoice(providerID="provider-a", modelID="model-a")))
 
 
 if __name__ == "__main__":
