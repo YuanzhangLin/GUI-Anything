@@ -47,6 +47,14 @@ def main():
     skill_target=config/'skills'/'gui-anything'
     if skill_target.exists():shutil.rmtree(skill_target)
     shutil.copytree(skill_source,skill_target)
+    providers={'hicode':HICODE_PROVIDER}
+    acceptance_url=os.getenv('GUI_ACCEPTANCE_PROVIDER_URL')
+    if acceptance_url:
+        providers['acceptance']={
+            'npm':'@ai-sdk/openai-compatible','name':'Loopback acceptance model',
+            'options':{'baseURL':acceptance_url,'apiKey':'loopback-acceptance-only'},
+            'models':{'acceptance-model':{'name':'Deterministic Skill acceptance'}},
+        }
     env={**os.environ,'GUI_AGENT_BRIDGE_TOKEN':secrets.token_urlsafe(48),
          'OPENCODE_SERVER_PASSWORD':secrets.token_urlsafe(48),
          'OPENCODE_CONFIG_DIR':str(config),'GUI_AGENT_BRIDGE_URL':'http://127.0.0.1:8002',
@@ -54,7 +62,7 @@ def main():
          'OPENCODE_CONFIG_CONTENT':json.dumps({
              'permission':{'edit':'deny','bash':'deny','skill':'allow'},
              'autoupdate':False,
-             'provider':{'hicode':HICODE_PROVIDER},
+             'provider':providers,
          })}
     adb=discover_adb()
     if adb: env['GUI_ADB_PATH']=adb

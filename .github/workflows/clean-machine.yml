@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/clean-machine.yml'
       - 'scripts/clean-machine-acceptance.ps1'
+      - 'scripts/mock_openai_server.py'
       - 'backend/app/local_services.py'
       - 'backend/app/opencode_install.py'
       - 'backend/app/agents/**'
