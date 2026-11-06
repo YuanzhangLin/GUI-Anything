@@ -1,0 +1,41 @@
+name: Clean Windows acceptance
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - '.github/workflows/clean-machine.yml'
+      - 'scripts/clean-machine-acceptance.ps1'
+      - 'backend/app/local_services.py'
+      - 'backend/app/opencode_install.py'
+      - 'backend/app/agents/**'
+      - 'agent-skills/gui-anything/**'
+      - 'agent-tools/opencode/**'
+
+jobs:
+  managed-opencode-first-conversation:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install backend dependencies
+        working-directory: backend
+        run: python -m pip install -r requirements.txt
+      - name: Verify managed install and first Skill conversation
+        shell: pwsh
+        run: ./scripts/clean-machine-acceptance.ps1
+      - name: Upload paired-service logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clean-machine-service-logs
+          path: ${{ runner.temp }}/gui-anything-clean-acceptance/*.log
