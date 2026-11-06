@@ -756,6 +756,7 @@ const sendMessageWithOverrides = async (
         provider: selectedAgent.value,
         model: selectedModel.value,
         device_screenshot: selectedAgent.value === 'opencode' ? deviceContext.value?.screenshot_data_url || null : null,
+        selected_device_serial: selectedAgent.value === 'opencode' ? deviceContext.value?.serial || null : null,
         device_task: deviceTarget.value && selectedAgent.value === 'opencode' ? {
           goal: apiText.slice(0,4000), target: deviceTarget.value.target,
           device_serial: deviceTarget.value.device_serial, agent:'opencode',

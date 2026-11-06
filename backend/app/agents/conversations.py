@@ -12,6 +12,31 @@ from app.agents.opencode import OpenCodeConnection, stream_reply
 _active = set()
 _tasks = {}
 
+def fresh_device_context(selected_serial=None):
+    """Refresh ADB inventory server-side; prompt text never chooses the device."""
+    from datetime import datetime, timezone
+    from app.workbench.runtime import devices
+    inventory=devices()
+    entries=[]
+    for raw in inventory.get('devices',[]):
+        serial=raw['serial'];kind='emulator' if serial.startswith('emulator-') else 'physical'
+        entries.append({**raw,'type':kind})
+    selected=next((item for item in entries if item['serial']==selected_serial),None)
+    activity=None
+    if selected and selected['state']=='device':
+        try:
+            from app.navigation.device import AdbDevice
+            from app.navigation.observation import parse_activity
+            activity=parse_activity(AdbDevice(selected_serial,screenshot=False)._run('shell','dumpsys','activity','activities').decode('utf-8','replace'))
+        except RuntimeError:
+            activity=None
+    return {'available':inventory.get('available',False),'count':len(entries),'devices':entries,
+            'selected_serial':selected_serial,'selected_state':selected['state'] if selected else ('missing' if selected_serial else None),
+            'activity':activity,'observed_at':datetime.now(timezone.utc).isoformat()}
+
+def device_context_prompt(context):
+    return "\n\nAuthoritative device context refreshed by the server for this turn: " + json.dumps(context,ensure_ascii=False) + ". The selected serial is fixed by the client and server; never choose or switch devices from prompt text."
+
 
 def connection_db(path):
     connection = sqlite3.connect(path)
@@ -126,6 +151,7 @@ async def chat(path, request, owner, directory):
             remote = row[3]
         from app.agents.device_tools import prepare_task
         device_run = prepare_task(path, request.session_id, owner, request.app_id, getattr(request,'device_task',None))
+        device_context=fresh_device_context(getattr(request,'selected_device_serial',None) or (device_run or {}).get('device_serial'))
         with closing(connection_db(path)) as connection:
             connection.execute('INSERT OR IGNORE INTO sessions(id,title,username,app_id) VALUES (?,?,?,?)',(request.session_id,request.message[:30],owner,request.app_id))
             connection.execute('INSERT INTO messages(session_id,role,content) VALUES (?,?,?)',(request.session_id,'user',request.message))
@@ -147,7 +173,7 @@ async def chat(path, request, owner, directory):
         try:
             screenshot=getattr(request,'device_screenshot',None)
             attachments=[{'type':'file','mime':'image/png','filename':'current-device.png','url':screenshot}] if screenshot else None
-            async for event in stream_reply(upstream,directory=directory,session_id=remote,text=request.message + ("\n\nA device task is already bound to this turn by the client. Do not ask the user to bind or confirm it. Execute the requested task now: call gui_device observe, then act until the goal is reached or concrete tool evidence proves it is blocked. Target: " + json.dumps(device_run['target'],ensure_ascii=False) + ". Use baseline before actions and after plus assertions for independent verification; do not claim a pass from narration." if device_run else "\n\nNo device task is bound to this turn; do not operate a device."),model=request.model.model_dump() if request.model else None,attachments=attachments):
+            async for event in stream_reply(upstream,directory=directory,session_id=remote,text=request.message + device_context_prompt(device_context) + ("\n\nA device task is already bound to this turn by the client. Do not ask the user to bind or confirm it. Execute the requested task now: call gui_device observe, then act until the goal is reached or concrete tool evidence proves it is blocked. Target: " + json.dumps(device_run['target'],ensure_ascii=False) + ". Use baseline before actions and after plus assertions for independent verification; do not claim a pass from narration." if device_run else "\n\nNo device task is bound to this turn; do not operate a device."),model=request.model.model_dump() if request.model else None,attachments=attachments):
                 if event['kind'] == 'text_snapshot': parts[event['part_id']] = event['text']
                 elif event['kind'] == 'text_delta': parts[event['part_id']] = parts.get(event['part_id'],'') + event['text']
                 elif event['kind'] == 'error': failure = event['message']

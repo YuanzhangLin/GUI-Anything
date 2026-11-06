@@ -14,7 +14,7 @@ class BackgroundConversationTests(unittest.IsolatedAsyncioTestCase):
             conn.execute('CREATE TABLE sessions(id TEXT PRIMARY KEY,title TEXT,username TEXT,app_id TEXT)')
             conn.execute('CREATE TABLE messages(session_id TEXT,role TEXT,content TEXT)')
             conn.commit();conn.close()
-            request=SimpleNamespace(username='alice',session_id='one',app_id='app',model=None,message='hello',device_screenshot='data:image/png;base64,AA==')
+            request=SimpleNamespace(username='alice',session_id='one',app_id='app',model=None,message='hello',device_screenshot='data:image/png;base64,AA==',selected_device_serial='emulator-5554')
             gate=asyncio.Event();calls=[];attachments=[]
             async def fake_stream(*args,**kwargs):
                 calls.append(kwargs['text'])
@@ -23,7 +23,8 @@ class BackgroundConversationTests(unittest.IsolatedAsyncioTestCase):
                 await gate.wait()
                 yield {'kind':'text_delta','part_id':'p','text':' second'}
                 yield {'kind':'done'}
-            with patch.object(c.OpenCodeConnection,'create',AsyncMock(return_value='remote')),patch.object(c,'stream_reply',fake_stream):
+            context={'available':True,'count':2,'devices':[{'serial':'emulator-5554','state':'device','type':'emulator'},{'serial':'phone','state':'device','type':'physical'}],'selected_serial':'emulator-5554','selected_state':'device','activity':'example.Main','observed_at':'now'}
+            with patch.object(c.OpenCodeConnection,'create',AsyncMock(return_value='remote')),patch.object(c,'stream_reply',fake_stream),patch.object(c,'fresh_device_context',return_value=context):
                 response=await c.chat(db,request,'alice',root)
                 task=c._tasks['one']
                 await asyncio.sleep(0)
@@ -36,6 +37,7 @@ class BackgroundConversationTests(unittest.IsolatedAsyncioTestCase):
                 gate.set();await task
             self.assertEqual(len(calls),1)
             self.assertTrue(calls[0].startswith('hello'))
+            self.assertIn('"count": 2',calls[0]);self.assertIn('"selected_serial": "emulator-5554"',calls[0])
             self.assertEqual(attachments[0][0]['mime'],'image/png')
             self.assertEqual(attachments[0][0]['url'],'data:image/png;base64,AA==')
             events=c.read_events(db,'one','alice')

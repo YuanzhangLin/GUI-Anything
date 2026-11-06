@@ -108,6 +108,7 @@ class ChatRequest(BaseModel):
     force_no_tools: Optional[bool] = False
     provider: Literal["opencode", "builtin", "external"] = "opencode"
     device_screenshot: Optional[str] = Field(default=None,max_length=8_000_000,pattern=r'^data:image/png;base64,[A-Za-z0-9+/=\r\n]+$')
+    selected_device_serial: Optional[str] = Field(default=None,max_length=200)
 
 
 @app.get("/api/agents")
