@@ -10,6 +10,27 @@ from app import main
 
 
 class ProjectCatalogTests(unittest.TestCase):
+    def test_one_project_contains_two_apps_with_independent_conversations(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "app_list.yml").write_text("apps: []\n", encoding="utf-8")
+            db = str(root / "catalog.db")
+            with patch.object(main, "DB_PATH", db), patch.object(main, "DATA_DIR", str(root)):
+                main.init_db()
+                main._register_app("app-one", "shared-project", "App One", "source", "https://example.test/one.git", "Shared")
+                main._register_app("app-two", "shared-project", "App Two", "source", "https://example.test/two.git")
+                with closing(sqlite3.connect(db)) as connection:
+                    connection.execute("INSERT INTO sessions(id,title,username,app_id,project_id) VALUES (?,?,?,?,?)", ("chat-one", "First", "local", "app-one", "shared-project"))
+                    connection.execute("INSERT INTO sessions(id,title,username,app_id,project_id) VALUES (?,?,?,?,?)", ("chat-two", "Second", "local", "app-two", "shared-project"))
+                    connection.commit()
+
+                projects = asyncio.run(main.get_projects("local"))
+                shared = next(project for project in projects if project["id"] == "shared-project")
+                self.assertEqual({app["id"] for app in shared["apps"]}, {"app-one", "app-two"})
+                with closing(sqlite3.connect(db)) as connection:
+                    chats = connection.execute("SELECT id,app_id FROM sessions WHERE project_id=? ORDER BY id", ("shared-project",)).fetchall()
+                self.assertEqual(chats, [("chat-one", "app-one"), ("chat-two", "app-two")])
+
     def test_legacy_app_becomes_stable_project_app_relationship(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

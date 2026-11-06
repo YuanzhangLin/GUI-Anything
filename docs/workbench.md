@@ -68,9 +68,10 @@ Operator configuration may contain `business_checks` entries, each with a databa
 
 UI conditions can instead specify exact resource/text/description selectors and an expected count. Coverage, UI observations and database verdicts are separate events; Agent claims cannot replace them.
 
-## Outstanding delivery gates
+## Delivery-gate evidence and remaining limits
 
-- Run the supported clean-machine installation gate without a preinstalled OpenCode, then complete the first Web conversation and Skill call through the managed installation.
+The clean Windows installation gate passed in GitHub Actions run [42175509469](https://github.com/YuanzhangLin/GUI-Anything/actions/runs/42175509469) at commit `b62b75dab9ad0558841ce40fdc7ef1f534df7c7b`. The `windows-latest` runner began without OpenCode on `PATH`, installed the managed pinned OpenCode 1.19.5 into a fresh temporary root, started the paired services, registered all three GUI tools and the project Skill, and completed the first Web conversation through the actual OpenCode server. The CI model endpoint is a deterministic local OpenAI-compatible fixture so this gate tests installation, transport and Skill invocation without external credentials. The separate Hi-Code acceptance above proves the real external model and device path.
+
 - Exercise another configured compatible Agent on the same Run protocol; protocol/unit tests alone do not establish autonomous model behavior.
 - Coverage and business verification remain app-specific capabilities. The real OpenCode acceptance above proves the default model/device/UI assertion path; it does not claim JaCoCo coverage for Activity Diary because that project has no operator coverage configuration on this host.
 - This implementation remains an alpha checkpoint; runtime and experiment artifacts stay excluded from Git.

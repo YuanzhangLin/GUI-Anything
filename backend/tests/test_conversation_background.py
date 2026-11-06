@@ -6,6 +6,23 @@ from types import SimpleNamespace
 from unittest.mock import patch, AsyncMock
 from app.agents import conversations as c
 
+
+class DeviceContextTests(unittest.TestCase):
+    def test_each_turn_refreshes_inventory_and_selected_serial(self):
+        inventory = {'available': True, 'devices': [
+            {'serial': 'emulator-5554', 'state': 'device'},
+            {'serial': 'emulator-5556', 'state': 'device'},
+        ]}
+        with patch('app.workbench.runtime.devices', return_value=inventory), \
+             patch('app.navigation.device.AdbDevice._run', return_value=b'mResumedActivity: first.Main'):
+            first = c.fresh_device_context('emulator-5554')
+            second = c.fresh_device_context('emulator-5556')
+
+        self.assertEqual(first['count'], 2)
+        self.assertEqual(first['selected_serial'], 'emulator-5554')
+        self.assertEqual(second['selected_serial'], 'emulator-5556')
+        self.assertEqual([item['serial'] for item in second['devices']], ['emulator-5554', 'emulator-5556'])
+
 class BackgroundConversationTests(unittest.IsolatedAsyncioTestCase):
     async def test_browser_disconnect_does_not_cancel_or_resend(self):
         with tempfile.TemporaryDirectory() as root:
