@@ -11,7 +11,7 @@
 
 > 从 Android 应用提取用户可见页面与操作路径，用 Skill 驱动分析，并在独立网页中人工校验源码依据。
 
-**[项目官网](https://yuanzhanglin.github.io/GUI-Anything/)** · [2.0 待办](./TODO.md) · [English README](./readme.md)
+**[项目官网](https://yuanzhanglin.github.io/GUI-Anything/)** · [下一版本待办](./NEXT.md) · [2.0 进度](./TODO.md) · [English README](./readme.md)
 
 ---
 
