@@ -40,6 +40,25 @@ class ProjectCatalogTests(unittest.TestCase):
                 with self.assertRaisesRegex(Exception, "does not belong"):
                     main.resolve_project_id("first-app", "another-project")
 
+    def test_source_import_can_create_project_and_queue_fast_map(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "app_list.yml").write_text("apps: []\n", encoding="utf-8")
+            db = str(root / "catalog.db")
+            request = main.SourceImportRequest(
+                app_id="sample-app", name="Sample", repo_url="https://example.test/sample.git",
+                project_id="sample-project", project_name="Sample Project", new_project=True,
+                map_mode="fast",
+            )
+            with patch.object(main, "DB_PATH", db), patch.object(main, "DATA_DIR", str(root)), \
+                 patch.object(main.code_manager, "download_repo", return_value={"status":"success"}), \
+                 patch.object(main, "_queue_map_task", return_value="task-id"):
+                main.init_db()
+                result = asyncio.run(main.import_source(request, "local"))
+                self.assertEqual(result["project_id"], "sample-project")
+                self.assertEqual(result["map_task_id"], "task-id")
+                self.assertEqual(main.resolve_project_id("sample-app"), "sample-project")
+
 
 if __name__ == "__main__":
     unittest.main()

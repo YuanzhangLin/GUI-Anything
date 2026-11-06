@@ -130,6 +130,16 @@ class AvdCreateRequest(BaseModel):
     device: str = 'pixel'
     install_image: bool = False
 
+class SourceImportRequest(BaseModel):
+    app_id: str
+    name: str = Field(min_length=1,max_length=120)
+    repo_url: str = Field(min_length=8,max_length=2000)
+    project_id: Optional[str] = None
+    project_name: Optional[str] = Field(default=None,max_length=120)
+    new_project: bool = False
+    map_mode: Literal["none","fast","full"] = "none"
+    full_confirmed: bool = False
+
 from app.workbench.store import RunRequest
 
 class ChatRequest(BaseModel):
@@ -248,9 +258,21 @@ def resolve_project_id(app_id: str, requested_project_id: Optional[str] = None) 
         raise HTTPException(status_code=409, detail="App does not belong to the selected project")
     return row[0]
 
+def _project_exists(project_id: str) -> bool:
+    with closing(sqlite3.connect(DB_PATH)) as conn:
+        return bool(conn.execute("SELECT 1 FROM projects WHERE id=?", (project_id,)).fetchone())
+
+def _register_app(app_id: str, project_id: str, name: str, source_type: str, repo_url: Optional[str], project_name: Optional[str] = None):
+    now = datetime.now(timezone.utc).isoformat()
+    with closing(sqlite3.connect(DB_PATH)) as conn:
+        conn.execute("INSERT OR IGNORE INTO projects (id,name,created_at) VALUES (?,?,?)", (project_id,project_name or name,now))
+        conn.execute("""INSERT INTO project_apps (id,project_id,name,source_type,repo_url,description,created_at)
+            VALUES (?,?,?,?,?,?,?)""", (app_id,project_id,name,source_type,repo_url,"Imported APK" if source_type == "apk" else "Imported source repository",now))
+        conn.commit()
+
 
 @app.post("/api/import/apk")
-async def import_apk(app_id: str = Form(), project_id: Optional[str] = Form(None), project_name: Optional[str] = Form(None), file: UploadFile = File(), username: str = Depends(require_admin)):
+async def import_apk(app_id: str = Form(), app_name: Optional[str] = Form(None), project_id: Optional[str] = Form(None), project_name: Optional[str] = Form(None), new_project: bool = Form(False), map_mode: Literal["none","fast"] = Form("none"), file: UploadFile = File(), username: str = Depends(require_admin)):
     try:
         validate_app_id(app_id)
     except ValueError:
@@ -262,10 +284,8 @@ async def import_apk(app_id: str = Form(), project_id: Optional[str] = Form(None
     resolved_project_id = project_id or app_id
     try: validate_app_id(resolved_project_id)
     except ValueError: raise HTTPException(status_code=400, detail="Invalid project ID")
-    if project_id:
-        with closing(sqlite3.connect(DB_PATH)) as conn:
-            if not conn.execute("SELECT 1 FROM projects WHERE id=?", (project_id,)).fetchone():
-                raise HTTPException(status_code=404, detail="Project does not exist")
+    if project_id and not new_project and not _project_exists(project_id): raise HTTPException(status_code=404, detail="Project does not exist")
+    if new_project and _project_exists(resolved_project_id): raise HTTPException(status_code=409,detail="Project ID already exists")
     repos_root = Path(code_manager.repos_root)
     temporary = tempfile.NamedTemporaryFile(prefix="upload-", suffix=".apk", dir=repos_root, delete=False)
     temp_path = Path(temporary.name)
@@ -287,16 +307,30 @@ async def import_apk(app_id: str = Form(), project_id: Optional[str] = Form(None
         temp_path.unlink(missing_ok=True)
     imported_path = Path(DATA_DIR) / "imported_apps.json"
     entries = json.loads(imported_path.read_text(encoding="utf-8")) if imported_path.exists() else []
-    app_entry = {"id": app_id, "project_id": resolved_project_id, "name": file.filename[:-4], "source_type": "apk", "description": "Imported APK"}
+    resolved_name = app_name or file.filename[:-4]
+    app_entry = {"id": app_id, "project_id": resolved_project_id, "name": resolved_name, "source_type": "apk", "description": "Imported APK"}
     entries.append(app_entry)
     imported_path.write_text(json.dumps(entries, ensure_ascii=False, indent=2), encoding="utf-8")
-    now = datetime.now(timezone.utc).isoformat()
-    with closing(sqlite3.connect(DB_PATH)) as conn:
-        conn.execute("INSERT OR IGNORE INTO projects (id,name,created_at) VALUES (?,?,?)", (resolved_project_id,project_name or file.filename[:-4],now))
-        conn.execute("""INSERT INTO project_apps (id,project_id,name,source_type,description,created_at)
-            VALUES (?,?,?,?,?,?)""", (app_id,resolved_project_id,file.filename[:-4],"apk","Imported APK",now))
-        conn.commit()
-    return {"project_id": resolved_project_id, "app_id": app_id, "status": "ready"}
+    _register_app(app_id,resolved_project_id,resolved_name,"apk",None,project_name)
+    map_task_id = _queue_map_task(app_id,"fast") if map_mode == "fast" else None
+    return {"project_id": resolved_project_id, "app_id": app_id, "status": "ready", "stage": "decompiled", "map_task_id": map_task_id}
+
+@app.post("/api/import/source")
+async def import_source(request: SourceImportRequest, username: str = Depends(require_admin)):
+    try: validate_app_id(request.app_id)
+    except ValueError: raise HTTPException(status_code=400,detail="Invalid App ID")
+    project_id = request.project_id or request.app_id
+    try: validate_app_id(project_id)
+    except ValueError: raise HTTPException(status_code=400,detail="Invalid project ID")
+    if any(app.get("id") == request.app_id for app in await get_app_list()): raise HTTPException(status_code=409,detail="App ID already exists")
+    if request.project_id and not request.new_project and not _project_exists(request.project_id): raise HTTPException(status_code=404,detail="Project does not exist")
+    if request.new_project and _project_exists(project_id): raise HTTPException(status_code=409,detail="Project ID already exists")
+    if request.map_mode == "full" and not request.full_confirmed: raise HTTPException(status_code=409,detail="Full Map requires explicit model and cost confirmation")
+    result = await asyncio.to_thread(code_manager.download_repo,request.repo_url,request.app_id)
+    if result.get("status") != "success": raise HTTPException(status_code=400,detail=result.get("message") or "Repository import failed")
+    _register_app(request.app_id,project_id,request.name,"source",request.repo_url,request.project_name)
+    map_task_id = _queue_map_task(request.app_id,"deep" if request.map_mode == "full" else request.map_mode) if request.map_mode != "none" else None
+    return {"project_id":project_id,"app_id":request.app_id,"status":"ready","stage":"cloned","map_task_id":map_task_id}
 
 
 @app.get("/api/demo/map")
@@ -430,6 +464,15 @@ async def _run_map_task(task_id: str, app_id: str, mode: str):
             ("error", str(e), task_id)
         )
 
+def _queue_map_task(app_id: str, mode: str) -> str:
+    task_id = uuid.uuid4().hex
+    _db_execute(
+        "INSERT INTO map_tasks (id, app_id, status, progress, message, result_path, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (task_id, app_id, "queued", 0, "Queued.", "", datetime.now(timezone.utc).isoformat())
+    )
+    asyncio.create_task(_run_map_task(task_id, app_id, mode))
+    return task_id
+
 
 @app.post("/api/map/{app_id}/generate")
 async def generate_map(app_id: str, payload: MapGenerateRequest, username: str = Depends(current_user)):
@@ -441,12 +484,7 @@ async def generate_map(app_id: str, payload: MapGenerateRequest, username: str =
         raise HTTPException(status_code=400, detail="Invalid app ID")
     if payload.mode == "deep" and (Path(code_manager.get_repo_path(app_id)) / "source.apk").is_file():
         raise HTTPException(status_code=400, detail="Deep map generation for APK projects is not supported; use Fast map and Agent chat")
-    task_id = uuid.uuid4().hex
-    _db_execute(
-        "INSERT INTO map_tasks (id, app_id, status, progress, message, result_path, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        (task_id, app_id, "queued", 0, "Queued.", "", datetime.now(timezone.utc).isoformat())
-    )
-    asyncio.create_task(_run_map_task(task_id, app_id, payload.mode))
+    task_id = _queue_map_task(app_id,payload.mode)
     return {"task_id": task_id, "status": "queued"}
 
 
