@@ -35,25 +35,16 @@
       </div>
 
       <div class="session-list" v-show="!sidebarCollapsed">
-        <div
-          v-for="s in sessions"
-          :key="s.id"
-          :class="['session-item', currentSessionId === s.id ? 'active' : '']"
-          @click="switchSession(s)"
-        >
-          <div class="session-item-main">
-            <div class="s-title">{{ s.title }}</div>
-            <div class="s-meta">{{ s.app_id }}</div>
+        <section v-for="project in projectTree" :key="project.id" class="project-tree-group">
+          <div class="project-tree-title"><span>{{ project.name }}</span><small>{{ project.apps.length }} App</small></div>
+          <div v-for="app in project.apps" :key="app.id" class="app-tree-group">
+            <button type="button" :class="['app-tree-title', selectedAppId === app.id ? 'selected' : '']" @click="chooseApp(app.id)"><span>{{ app.name }}</span><small>{{ app.id }}</small></button>
+            <div v-for="s in sessions.filter((item:any) => item.app_id === app.id)" :key="s.id" :class="['session-item', currentSessionId === s.id ? 'active' : '']" @click="switchSession(s)">
+              <div class="session-item-main"><div class="s-title">{{ s.title }}</div></div>
+              <button type="button" class="session-delete" :aria-label="'删除会话 ' + s.title" @click.stop="deleteSession(s.id)"><Trash2 :size="14" /></button>
+            </div>
           </div>
-          <button
-            type="button"
-            class="session-delete"
-            :aria-label="'删除会话 ' + s.title"
-            @click.stop="deleteSession(s.id)"
-          >
-            <Trash2 :size="14" />
-          </button>
-        </div>
+        </section>
       </div>
 
       <div class="sidebar-bottom" v-show="!sidebarCollapsed">
@@ -205,6 +196,7 @@ const isStreaming = ref(false)
 const currentUser = ref('local')
 const selectedAppId = ref('activitydiary')
 const appList = ref([])
+const projects = ref<any[]>([])
 const sessions = ref([])
 const currentSessionId = ref('')
 const inputMsg = ref('')
@@ -387,6 +379,12 @@ const currentAppMeta = computed(() => {
   }[]
   return list.find((a) => a.id === selectedAppId.value) ?? null
 })
+const projectTree = computed(() => projects.value.length ? projects.value : Object.values((appList.value as any[]).reduce((tree: any, app: any) => {
+  const id = app.project_id || app.id
+  tree[id] ||= { id, name: id, apps: [] }
+  tree[id].apps.push(app)
+  return tree
+}, {})))
 
 // --- 4. 彻底去掉硬编码的 API 地址推导 (核心修复) ---
 const getApiBase = () => {
@@ -434,8 +432,9 @@ const initData = async () => {
     const identity = await meRes.json()
     isAdmin.value = !!identity.is_admin
     await loadAgents()
-    const appRes = await safeFetch(`${API_BASE}/apps`)
+    const [appRes, projectRes] = await Promise.all([safeFetch(`${API_BASE}/apps`), safeFetch(`${API_BASE}/projects`)])
     appList.value = await appRes.json()
+    projects.value = projectRes.ok ? await projectRes.json() : []
     const histRes = await safeFetch(`${API_BASE}/history/${currentUser.value}`)
     const raw = (await histRes.json()).map((session:any)=>({
       ...session,
@@ -466,8 +465,9 @@ const initData = async () => {
 }
 
 const refreshApps = async (appId?: string) => {
-  const response = await safeFetch(`${API_BASE}/apps`)
+  const [response, projectResponse] = await Promise.all([safeFetch(`${API_BASE}/apps`), safeFetch(`${API_BASE}/projects`)])
   appList.value = await response.json()
+  projects.value = projectResponse.ok ? await projectResponse.json() : []
   if (appId) selectedAppId.value = appId
 }
 
@@ -508,6 +508,11 @@ const deleteSession = (id: string) => {
 }
 
 const onAppChange = () => { createNewChat() }
+const chooseApp = (appId: string) => {
+  if (selectedAppId.value === appId) return
+  selectedAppId.value = appId
+  createNewChat()
+}
 
 const buildMessageForApi = (userText: string) => userText
 const buildMessageForDisplay = (userText: string) => userText
@@ -867,6 +872,7 @@ onMounted(() => {
 }
 .btn-new-chat-fancy:hover { background: #374151; transform: translateY(-1px); }
 .session-list { flex: 1; overflow-y: auto; margin-top: 16px; }
+.project-tree-group{margin-bottom:14px}.project-tree-title{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;color:#e5e7eb;font-size:12px;font-weight:700}.project-tree-title small{color:#64748b;font-size:9px;font-weight:500}.app-tree-group{margin-top:3px}.app-tree-title{display:flex;width:100%;align-items:center;justify-content:space-between;gap:8px;padding:7px 9px;border:0;border-left:2px solid transparent;background:transparent;color:#9ca3af;text-align:left;cursor:pointer}.app-tree-title span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}.app-tree-title small{color:#4b5563;font-size:9px}.app-tree-title:hover,.app-tree-title.selected{background:#111827;color:#f3f4f6;border-left-color:#14b8a6}.app-tree-group .session-item{margin-left:10px;padding-top:8px;padding-bottom:8px}
 .session-item {
   display: flex;
   align-items: center;
