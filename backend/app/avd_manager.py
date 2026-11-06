@@ -98,6 +98,21 @@ def _avd_name(adb,serial):
         return lines[0] if result.returncode==0 and lines else None
     except (OSError,subprocess.SubprocessError):return None
 
+def _process_usage(pid):
+    try:
+        if os.name=='nt':
+            command=['powershell','-NoProfile','-Command',f"$p=Get-Process -Id {int(pid)} -ErrorAction Stop; [pscustomobject]@{{memory_mb=[math]::Round($p.WorkingSet64/1MB,1);cpu_seconds=[math]::Round($p.CPU,1)}} | ConvertTo-Json -Compress"]
+            result=subprocess.run(command,capture_output=True,timeout=5)
+            if result.returncode==0:
+                import json
+                return json.loads(result.stdout.decode('utf-8','replace'))
+        else:
+            result=subprocess.run(['ps','-o','rss=,time=','-p',str(pid)],capture_output=True,timeout=5)
+            parts=result.stdout.decode().split()
+            if result.returncode==0 and len(parts)>=2:return {'memory_mb':round(int(parts[0])/1024,1),'cpu_time':parts[1]}
+    except (OSError,ValueError,subprocess.SubprocessError):pass
+    return None
+
 def inventory():
     emulator=emulator_path();adb=discover_adb();names=[]
     if emulator:
@@ -111,14 +126,24 @@ def inventory():
     with _lock:
         for name,record in list(_managed.items()):
             if record['process'].poll() is not None:_managed.pop(name,None)
-        managed=set(_managed)
+        managed={name:{'pid':record['process'].pid,'started_at':record['started_at']} for name,record in _managed.items()}
     avds=[]
     for name in names:
         config=_config(name);image=config.get('image.sysdir.1','')
         api=next((part[8:] for part in image.replace('\\','/').split('/') if part.startswith('android-')),None)
-        avds.append({'name':name,'api':api,'image':image or None,'status':'running' if name in running else 'stopped',
-                     'serial':running.get(name,{}).get('serial'),'state':running.get(name,{}).get('state'),'managed':name in managed})
-    return {'emulator_available':bool(emulator),'adb_available':bool(adb),'avds':avds,'devices':_devices(adb)}
+        record=managed.get(name);elapsed=time.time()-record['started_at'] if record else None
+        status='running' if name in running else ('startup_timeout' if record and elapsed>=120 else 'starting' if record else 'stopped')
+        avds.append({'name':name,'api':api,'image':image or None,'status':status,
+                     'serial':running.get(name,{}).get('serial'),'state':running.get(name,{}).get('state'),'managed':bool(record),
+                     'source':'gui-anything' if record else ('external' if name in running else None),
+                     'pid':record['pid'] if record else None,'started_at':record['started_at'] if record else None,
+                     'uptime_seconds':round(elapsed) if elapsed is not None else None,
+                     'resources':_process_usage(record['pid']) if record else None})
+    devices=[]
+    for device in _devices(adb):
+        name=next((n for n,value in running.items() if value['serial']==device['serial']),None)
+        devices.append({**device,'avd_name':name,'source':'gui-anything' if name in managed else 'external'})
+    return {'emulator_available':bool(emulator),'adb_available':bool(adb),'avds':avds,'devices':devices}
 
 def start(name):
     current=inventory();avd=next((x for x in current['avds'] if x['name']==name),None)
@@ -133,9 +158,14 @@ def start(name):
 
 def stop(name):
     current=inventory();avd=next((x for x in current['avds'] if x['name']==name),None)
-    if not avd or avd['status']!='running':raise ValueError('AVD is not running')
+    if not avd or avd['status']=='stopped':raise ValueError('AVD is not running')
     with _lock:
         if name not in _managed:raise ValueError('Refusing to stop an emulator not started by GUI-Anything')
+        if avd['status'] in {'starting','startup_timeout'}:
+            process=_managed.pop(name)['process'];process.terminate()
+            try:process.wait(timeout=10)
+            except subprocess.TimeoutExpired:process.kill();process.wait()
+            return {'name':name,'status':'stopped'}
     adb=discover_adb()
     if not avd.get('serial') or not adb:raise ValueError('Managed emulator serial is unavailable')
     result=subprocess.run([adb,'-s',avd['serial'],'emu','kill'],capture_output=True,timeout=10)
