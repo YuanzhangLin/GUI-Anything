@@ -73,9 +73,11 @@ def main():
             children.append(subprocess.Popen(command,cwd=BACKEND_ROOT,env=env))
         print('Local services started; credentials remain in process memory.',flush=True)
         import httpx
-        for attempt in range(30):
+        startup_deadline=time.monotonic()+180
+        last_startup_error=None
+        while time.monotonic()<startup_deadline:
             try:
-                with httpx.Client(auth=('opencode',env['OPENCODE_SERVER_PASSWORD']),trust_env=False,timeout=15) as client:
+                with httpx.Client(auth=('opencode',env['OPENCODE_SERVER_PASSWORD']),trust_env=False,timeout=60) as client:
                     result=client.get('http://127.0.0.1:4096/experimental/tool/ids',params={'directory':BACKEND_ROOT})
                     result.raise_for_status()
                     schema=client.get('http://127.0.0.1:4096/doc')
@@ -90,9 +92,10 @@ def main():
                     print('GUI-Anything skill registered: '+str(skill_loaded),flush=True)
                     if not skill_loaded:raise RuntimeError('OpenCode did not register the GUI-Anything skill')
                     break
-            except httpx.ConnectError:
-                time.sleep(1)
-        else: raise RuntimeError('OpenCode startup health timeout')
+            except httpx.HTTPError as exc:
+                last_startup_error=exc
+                time.sleep(2)
+        else: raise RuntimeError(f'OpenCode startup health timeout: {last_startup_error}')
         while all(child.poll() is None for child in children): time.sleep(1)
         raise SystemExit('A service exited; stopping the paired service.')
     finally:
