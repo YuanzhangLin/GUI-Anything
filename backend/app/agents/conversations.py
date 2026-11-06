@@ -135,10 +135,16 @@ async def chat(path, request, owner, directory):
     _active.add(request.session_id)
     upstream = OpenCodeConnection()
     device_run = None
+    project_id = getattr(request, 'project_id', None) or request.app_id
     try:
         with closing(connection_db(path)) as connection:
-            existing = connection.execute('SELECT username,app_id FROM sessions WHERE id=?',(request.session_id,)).fetchone()
-            if existing and existing != (owner, request.app_id): raise HTTPException(403,'Conversation owner or project does not match')
+            columns = {row[1] for row in connection.execute('PRAGMA table_info(sessions)')}
+            if 'project_id' not in columns:
+                connection.execute('ALTER TABLE sessions ADD COLUMN project_id TEXT')
+                connection.execute('UPDATE sessions SET project_id=app_id WHERE project_id IS NULL')
+                connection.commit()
+            existing = connection.execute('SELECT username,project_id,app_id FROM sessions WHERE id=?',(request.session_id,)).fetchone()
+            if existing and existing != (owner, project_id, request.app_id): raise HTTPException(403,'Conversation owner, project or app does not match')
         row = binding(path,request.session_id,owner)
         if row and (row[1] != request.app_id or row[2] != directory): raise HTTPException(409,'Create a new conversation for this project')
         if not row:
@@ -153,7 +159,7 @@ async def chat(path, request, owner, directory):
         device_run = prepare_task(path, request.session_id, owner, request.app_id, getattr(request,'device_task',None))
         device_context=fresh_device_context(getattr(request,'selected_device_serial',None) or (device_run or {}).get('device_serial'))
         with closing(connection_db(path)) as connection:
-            connection.execute('INSERT OR IGNORE INTO sessions(id,title,username,app_id) VALUES (?,?,?,?)',(request.session_id,request.message[:30],owner,request.app_id))
+            connection.execute('INSERT OR IGNORE INTO sessions(id,title,username,app_id,project_id) VALUES (?,?,?,?,?)',(request.session_id,request.message[:30],owner,request.app_id,project_id))
             connection.execute('INSERT INTO messages(session_id,role,content) VALUES (?,?,?)',(request.session_id,'user',request.message))
             connection.commit()
     except BaseException as exc:

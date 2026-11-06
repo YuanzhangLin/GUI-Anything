@@ -6,6 +6,7 @@ import yaml
 import uuid
 import asyncio
 import tempfile
+from contextlib import closing
 from pathlib import Path
 from datetime import datetime, timezone
 from fastapi import FastAPI, HTTPException, Depends, Header, UploadFile, File, Form
@@ -49,6 +50,15 @@ def init_db():
         cursor.execute("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'")
         cursor.execute("UPDATE users SET role='admin' WHERE username=(SELECT username FROM users ORDER BY rowid LIMIT 1)")
     cursor.execute('CREATE TABLE IF NOT EXISTS auth_tokens (token_hash TEXT PRIMARY KEY, username TEXT NOT NULL, expires_at INTEGER NOT NULL)')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS projects (
+        id TEXT PRIMARY KEY, name TEXT NOT NULL, created_at TEXT NOT NULL
+    )''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS project_apps (
+        id TEXT PRIMARY KEY, project_id TEXT NOT NULL, name TEXT NOT NULL,
+        source_type TEXT NOT NULL DEFAULT 'source', repo_url TEXT,
+        description TEXT, source_revision TEXT, created_at TEXT NOT NULL,
+        FOREIGN KEY(project_id) REFERENCES projects(id)
+    )''')
     # 增加 app_id 字段
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS sessions (
@@ -58,6 +68,9 @@ def init_db():
             app_id TEXT
         )
     ''')
+    session_columns = {row[1] for row in cursor.execute('PRAGMA table_info(sessions)')}
+    if 'project_id' not in session_columns:
+        cursor.execute("ALTER TABLE sessions ADD COLUMN project_id TEXT")
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS messages (
             session_id TEXT, 
@@ -66,6 +79,26 @@ def init_db():
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    legacy_apps = []
+    try:
+        with open(os.path.join(DATA_DIR, "app_list.yml"), "r", encoding="utf-8") as file:
+            legacy_apps.extend((yaml.safe_load(file) or {}).get("apps", []) or [])
+    except (OSError, yaml.YAMLError):
+        pass
+    imported_path = Path(DATA_DIR) / "imported_apps.json"
+    if imported_path.is_file():
+        try: legacy_apps.extend(json.loads(imported_path.read_text(encoding="utf-8")))
+        except (OSError, json.JSONDecodeError): pass
+    now = datetime.now(timezone.utc).isoformat()
+    for legacy in legacy_apps:
+        app_id = legacy.get("id")
+        if not app_id: continue
+        project_id = legacy.get("project_id") or app_id
+        cursor.execute("INSERT OR IGNORE INTO projects (id,name,created_at) VALUES (?,?,?)", (project_id,legacy.get("project_name") or legacy.get("name") or project_id,now))
+        cursor.execute("""INSERT OR IGNORE INTO project_apps
+            (id,project_id,name,source_type,repo_url,description,source_revision,created_at)
+            VALUES (?,?,?,?,?,?,?,?)""", (app_id,project_id,legacy.get("name") or app_id,legacy.get("source_type") or "source",legacy.get("repo_url"),legacy.get("description"),legacy.get("source_revision"),now))
+    cursor.execute("UPDATE sessions SET project_id=app_id WHERE project_id IS NULL AND app_id IS NOT NULL")
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS map_tasks (
@@ -106,6 +139,7 @@ class ChatRequest(BaseModel):
     session_id: str
     username: str
     app_id: str # 新增：告知后端当前是哪个APP
+    project_id: Optional[str] = None
     tool_rounds: Optional[int] = 6
     force_no_tools: Optional[bool] = False
     provider: Literal["opencode", "builtin", "external"] = "opencode"
@@ -191,22 +225,32 @@ async def avd_delete(name: str, username: str = Depends(current_user)):
 
 @app.get("/api/apps")
 async def get_app_list():
-    apps = []
-    try:
-        with open(os.path.join(DATA_DIR, "app_list.yml"), "r", encoding="utf-8") as f:
-            config = yaml.safe_load(f)
-            apps = (config or {}).get("apps", []) or []
-    except (OSError, yaml.YAMLError):
-        pass
-    imported = os.path.join(DATA_DIR, "imported_apps.json")
-    if os.path.isfile(imported):
-        with open(imported, "r", encoding="utf-8") as f:
-            apps.extend(json.load(f))
-    return apps
+    with closing(sqlite3.connect(DB_PATH)) as conn:
+        rows = conn.execute("SELECT id,project_id,name,source_type,repo_url,description,source_revision FROM project_apps ORDER BY created_at,id").fetchall()
+    return [{"id":row[0],"project_id":row[1],"name":row[2],"source_type":row[3],"repo_url":row[4],"description":row[5],"source_revision":row[6]} for row in rows]
+
+@app.get("/api/projects")
+async def get_projects(username: str = Depends(current_user)):
+    apps = await get_app_list()
+    by_project = {}
+    with closing(sqlite3.connect(DB_PATH)) as conn:
+        for project_id,name,created_at in conn.execute("SELECT id,name,created_at FROM projects ORDER BY created_at,id"):
+            by_project[project_id] = {"id":project_id,"name":name,"created_at":created_at,"apps":[]}
+    for app_info in apps:
+        if app_info["project_id"] in by_project: by_project[app_info["project_id"]]["apps"].append(app_info)
+    return list(by_project.values())
+
+def resolve_project_id(app_id: str, requested_project_id: Optional[str] = None) -> str:
+    with closing(sqlite3.connect(DB_PATH)) as conn:
+        row = conn.execute("SELECT project_id FROM project_apps WHERE id=?", (app_id,)).fetchone()
+    if not row: raise HTTPException(status_code=404, detail="App does not exist")
+    if requested_project_id and requested_project_id != row[0]:
+        raise HTTPException(status_code=409, detail="App does not belong to the selected project")
+    return row[0]
 
 
 @app.post("/api/import/apk")
-async def import_apk(app_id: str = Form(), file: UploadFile = File(), username: str = Depends(require_admin)):
+async def import_apk(app_id: str = Form(), project_id: Optional[str] = Form(None), project_name: Optional[str] = Form(None), file: UploadFile = File(), username: str = Depends(require_admin)):
     try:
         validate_app_id(app_id)
     except ValueError:
@@ -214,7 +258,14 @@ async def import_apk(app_id: str = Form(), file: UploadFile = File(), username: 
     if not file.filename or not file.filename.lower().endswith(".apk"):
         raise HTTPException(status_code=400, detail="Select an APK file")
     if any(app.get("id") == app_id for app in await get_app_list()):
-        raise HTTPException(status_code=409, detail="Project ID already exists")
+        raise HTTPException(status_code=409, detail="App ID already exists")
+    resolved_project_id = project_id or app_id
+    try: validate_app_id(resolved_project_id)
+    except ValueError: raise HTTPException(status_code=400, detail="Invalid project ID")
+    if project_id:
+        with closing(sqlite3.connect(DB_PATH)) as conn:
+            if not conn.execute("SELECT 1 FROM projects WHERE id=?", (project_id,)).fetchone():
+                raise HTTPException(status_code=404, detail="Project does not exist")
     repos_root = Path(code_manager.repos_root)
     temporary = tempfile.NamedTemporaryFile(prefix="upload-", suffix=".apk", dir=repos_root, delete=False)
     temp_path = Path(temporary.name)
@@ -236,9 +287,16 @@ async def import_apk(app_id: str = Form(), file: UploadFile = File(), username: 
         temp_path.unlink(missing_ok=True)
     imported_path = Path(DATA_DIR) / "imported_apps.json"
     entries = json.loads(imported_path.read_text(encoding="utf-8")) if imported_path.exists() else []
-    entries.append({"id": app_id, "name": file.filename[:-4], "source_type": "apk", "description": "Imported APK"})
+    app_entry = {"id": app_id, "project_id": resolved_project_id, "name": file.filename[:-4], "source_type": "apk", "description": "Imported APK"}
+    entries.append(app_entry)
     imported_path.write_text(json.dumps(entries, ensure_ascii=False, indent=2), encoding="utf-8")
-    return {"app_id": app_id, "status": "ready"}
+    now = datetime.now(timezone.utc).isoformat()
+    with closing(sqlite3.connect(DB_PATH)) as conn:
+        conn.execute("INSERT OR IGNORE INTO projects (id,name,created_at) VALUES (?,?,?)", (resolved_project_id,project_name or file.filename[:-4],now))
+        conn.execute("""INSERT INTO project_apps (id,project_id,name,source_type,description,created_at)
+            VALUES (?,?,?,?,?,?)""", (app_id,resolved_project_id,file.filename[:-4],"apk","Imported APK",now))
+        conn.commit()
+    return {"project_id": resolved_project_id, "app_id": app_id, "status": "ready"}
 
 
 @app.get("/api/demo/map")
@@ -455,6 +513,7 @@ async def me(username: str = Depends(current_user)):
 
 @app.post("/api/chat")
 async def chat(request: ChatRequest, username: str = Depends(current_user)):
+    request.project_id = resolve_project_id(validate_app_id(request.app_id), request.project_id)
     if request.provider == "opencode":
         from app.agents.conversations import chat as conversation_chat
         return await conversation_chat(DB_PATH, request, username, CodeManager().get_repo_path(validate_app_id(request.app_id)))
@@ -477,8 +536,8 @@ async def chat(request: ChatRequest, username: str = Depends(current_user)):
         "SELECT role, content FROM messages WHERE session_id=? ORDER BY rowid DESC LIMIT 6",
         (request.session_id,),
     ).fetchall()
-    cursor.execute("INSERT OR IGNORE INTO sessions (id, title, username, app_id) VALUES (?, ?, ?, ?)", 
-                   (request.session_id, request.message[:15], request.username, request.app_id))
+    cursor.execute("INSERT OR IGNORE INTO sessions (id, title, username, app_id, project_id) VALUES (?, ?, ?, ?, ?)",
+                   (request.session_id, request.message[:15], request.username, request.app_id, request.project_id))
     cursor.execute("INSERT INTO messages (session_id, role, content) VALUES (?, ?, ?)", 
                    (request.session_id, 'user', request.message))
     conn.commit()
@@ -533,13 +592,13 @@ async def get_history(username: str, authenticated_user: str = Depends(current_u
         raise HTTPException(status_code=403, detail="Cannot read another user's history")
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT id, title, app_id FROM sessions WHERE username=?", (username,))
+    cursor.execute("SELECT id, title, app_id, project_id FROM sessions WHERE username=?", (username,))
     sessions_list = cursor.fetchall()
     history = []
-    for s_id, s_title, s_app in sessions_list:
+    for s_id, s_title, s_app, s_project in sessions_list:
         cursor.execute("SELECT role, content FROM messages WHERE session_id=? ORDER BY rowid ASC", (s_id,))
         msgs = [{"role": r, "content": c} for r, c in cursor.fetchall()]
-        history.append({"id": s_id, "title": s_title, "app_id": s_app, "messages": msgs})
+        history.append({"id": s_id, "title": s_title, "project_id": s_project or s_app, "app_id": s_app, "messages": msgs})
     conn.close()
     return history
 

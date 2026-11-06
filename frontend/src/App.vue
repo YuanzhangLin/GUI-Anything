@@ -380,6 +380,7 @@ const currentMessages = computed(() => {
 const currentAppMeta = computed(() => {
   const list = appList.value as {
     id: string
+    project_id?: string
     name?: string
     description?: string
     repo_url?: string
@@ -475,6 +476,7 @@ const createNewChat = () => {
   const entry = {
     id,
     title: '新对话',
+    project_id: currentAppMeta.value?.project_id || selectedAppId.value,
     app_id: selectedAppId.value,
     messages: [{ role: 'assistant', content: '您好！GUI-Anything 已就绪。' }]
   }
@@ -554,6 +556,7 @@ const sendMessageWithOverrides = async (
         message: apiText,
         session_id: currentSessionId.value,
         username: currentUser.value,
+        project_id: currentAppMeta.value?.project_id || selectedAppId.value,
         app_id: selectedAppId.value,
         provider: selectedAgent.value,
         model: selectedModel.value,
