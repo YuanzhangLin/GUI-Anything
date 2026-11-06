@@ -18,3 +18,4 @@ backend/data/*.json
 
 /backend/data/runs/
 /backend/local-services*.log
+/frontend/vite-*.log

@@ -95,6 +95,12 @@ class ModelChoice(BaseModel):
     providerID: str
     modelID: str
 
+class AvdCreateRequest(BaseModel):
+    name: str = Field(min_length=1,max_length=80)
+    image: str
+    device: str = 'pixel'
+    install_image: bool = False
+
 from app.workbench.store import RunRequest
 
 class ChatRequest(BaseModel):
@@ -143,6 +149,18 @@ async def avd_inventory(username: str = Depends(current_user)):
     from app.avd_manager import inventory
     return await asyncio.to_thread(inventory)
 
+@app.get("/api/environment/system-images")
+async def avd_images(username: str = Depends(current_user)):
+    from app.avd_manager import system_images
+    try:return await asyncio.to_thread(system_images)
+    except RuntimeError as exc:raise HTTPException(409,str(exc)) from exc
+
+@app.post("/api/environment/avds",status_code=201)
+async def avd_create(request: AvdCreateRequest, username: str = Depends(current_user)):
+    from app.avd_manager import create
+    try:return await asyncio.to_thread(create,request.name,request.image,request.device,request.install_image)
+    except (ValueError,RuntimeError) as exc:raise HTTPException(409,str(exc)) from exc
+
 @app.post("/api/environment/avds/{name}/start")
 async def avd_start(name: str, username: str = Depends(current_user)):
     from app.avd_manager import start
@@ -153,6 +171,18 @@ async def avd_start(name: str, username: str = Depends(current_user)):
 async def avd_stop(name: str, username: str = Depends(current_user)):
     from app.avd_manager import stop
     try:return await asyncio.to_thread(stop,name)
+    except (ValueError,RuntimeError) as exc:raise HTTPException(409,str(exc)) from exc
+
+@app.post("/api/environment/avds/{name}/erase")
+async def avd_erase(name: str, username: str = Depends(current_user)):
+    from app.avd_manager import erase
+    try:return await asyncio.to_thread(erase,name)
+    except (ValueError,RuntimeError) as exc:raise HTTPException(409,str(exc)) from exc
+
+@app.delete("/api/environment/avds/{name}")
+async def avd_delete(name: str, username: str = Depends(current_user)):
+    from app.avd_manager import delete
+    try:return await asyncio.to_thread(delete,name)
     except (ValueError,RuntimeError) as exc:raise HTTPException(409,str(exc)) from exc
 
 @app.get("/api/apps")
