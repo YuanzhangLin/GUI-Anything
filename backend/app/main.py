@@ -6,6 +6,7 @@ import yaml
 import uuid
 import asyncio
 import tempfile
+import hashlib
 from contextlib import closing
 from pathlib import Path
 from datetime import datetime, timezone
@@ -58,6 +59,10 @@ def init_db():
         source_type TEXT NOT NULL DEFAULT 'source', repo_url TEXT,
         description TEXT, source_revision TEXT, created_at TEXT NOT NULL,
         FOREIGN KEY(project_id) REFERENCES projects(id)
+    )''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS maps (
+        id TEXT PRIMARY KEY, app_id TEXT NOT NULL, source_revision TEXT,
+        mode TEXT NOT NULL, path TEXT NOT NULL, created_at TEXT NOT NULL
     )''')
     # 增加 app_id 字段
     cursor.execute('''
@@ -270,6 +275,21 @@ def _register_app(app_id: str, project_id: str, name: str, source_type: str, rep
             VALUES (?,?,?,?,?,?,?)""", (app_id,project_id,name,source_type,repo_url,"Imported APK" if source_type == "apk" else "Imported source repository",now))
         conn.commit()
 
+def _source_revision(app_id: str) -> str:
+    root = Path(code_manager.get_repo_path(app_id))
+    apk = root / "source.apk"
+    if apk.is_file():
+        digest = hashlib.sha256()
+        with apk.open("rb") as file:
+            for chunk in iter(lambda:file.read(1024*1024),b""): digest.update(chunk)
+        return "apk-sha256:" + digest.hexdigest()
+    try:
+        from app.workbench.store import Source
+        revision = Source(root).revision()
+        if revision.get("commit"): return "git:" + revision["commit"] + (":dirty" if revision.get("dirty") else "")
+    except (OSError,ValueError): pass
+    return "unversioned:" + datetime.now(timezone.utc).isoformat()
+
 
 @app.post("/api/import/apk")
 async def import_apk(app_id: str = Form(), app_name: Optional[str] = Form(None), project_id: Optional[str] = Form(None), project_name: Optional[str] = Form(None), new_project: bool = Form(False), map_mode: Literal["none","fast"] = Form("none"), file: UploadFile = File(), username: str = Depends(require_admin)):
@@ -312,6 +332,7 @@ async def import_apk(app_id: str = Form(), app_name: Optional[str] = Form(None),
     entries.append(app_entry)
     imported_path.write_text(json.dumps(entries, ensure_ascii=False, indent=2), encoding="utf-8")
     _register_app(app_id,resolved_project_id,resolved_name,"apk",None,project_name)
+    _db_execute("UPDATE project_apps SET source_revision=? WHERE id=?",(_source_revision(app_id),app_id))
     map_task_id = _queue_map_task(app_id,"fast") if map_mode == "fast" else None
     return {"project_id": resolved_project_id, "app_id": app_id, "status": "ready", "stage": "decompiled", "map_task_id": map_task_id}
 
@@ -329,6 +350,7 @@ async def import_source(request: SourceImportRequest, username: str = Depends(re
     result = await asyncio.to_thread(code_manager.download_repo,request.repo_url,request.app_id)
     if result.get("status") != "success": raise HTTPException(status_code=400,detail=result.get("message") or "Repository import failed")
     _register_app(request.app_id,project_id,request.name,"source",request.repo_url,request.project_name)
+    _db_execute("UPDATE project_apps SET source_revision=? WHERE id=?",(_source_revision(request.app_id),request.app_id))
     map_task_id = _queue_map_task(request.app_id,"deep" if request.map_mode == "full" else request.map_mode) if request.map_mode != "none" else None
     return {"project_id":project_id,"app_id":request.app_id,"status":"ready","stage":"cloned","map_task_id":map_task_id}
 
@@ -387,8 +409,10 @@ async def get_map_status(app_id: str, username: str = Depends(current_user)):
         return {"app_id": app_id, "exists": False}
     try:
         stat = os.stat(file_path)
+        with open(file_path,"r",encoding="utf-8") as file:data=json.load(file)
         return {
             "app_id": app_id,
+            "map_id": data.get("id"),
             "exists": True,
             "bytes": stat.st_size,
             "updated_at": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat(),
@@ -448,6 +472,9 @@ async def _run_map_task(task_id: str, app_id: str, mode: str):
             from app.engine.uimapgenerate.graph import build_graph
             result = await asyncio.to_thread(generate_uimap, app_id=app_id)
             result.update(build_graph(result["units"], mode="deep", source="android_repository"))
+        source_revision=_source_revision(app_id)
+        result={"id":task_id,"app_id":app_id,"source_revision":source_revision,
+                "created_at":datetime.now(timezone.utc).isoformat(),**result}
         os.makedirs(DATA_DIR, exist_ok=True)
         result_path = os.path.join(DATA_DIR, f"{validate_app_id(app_id)}.json")
         with open(result_path, "w", encoding="utf-8") as f:
@@ -457,6 +484,8 @@ async def _run_map_task(task_id: str, app_id: str, mode: str):
             "UPDATE map_tasks SET status=?, progress=?, message=?, result_path=? WHERE id=?",
             ("success", 100, "UI Map generated.", result_path, task_id)
         )
+        _db_execute("INSERT OR REPLACE INTO maps (id,app_id,source_revision,mode,path,created_at) VALUES (?,?,?,?,?,?)",
+                    (task_id,app_id,source_revision,mode,result_path,result["created_at"]))
     except Exception as e:
         logger.exception("map task failed: %s", e)
         _db_execute(
