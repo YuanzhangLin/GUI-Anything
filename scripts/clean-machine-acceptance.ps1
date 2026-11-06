@@ -95,7 +95,15 @@ try {
 
   Write-Output "CLEAN_MACHINE_ACCEPTANCE_OK version=$($install.version) model=acceptance/$($model.id) session=$sessionId"
 } catch {
-  $message = ($_.Exception.Message -replace '[\r\n]+',' ' -replace '%','%25').Trim()
+  $diagnostic = @($_.Exception.Message)
+  foreach ($path in $serviceLog,$serviceErrorLog,$modelLog,$modelErrorLog) {
+    if (Test-Path $path) {
+      $tail = (Get-Content $path -Tail 20) -join ' | '
+      if ($tail) { $diagnostic += "$(Split-Path $path -Leaf): $tail" }
+    }
+  }
+  $message = (($diagnostic -join ' || ') -replace '[\r\n]+',' ' -replace '%','%25').Trim()
+  if ($message.Length -gt 4000) { $message = $message.Substring(0,4000) }
   Write-Host "::error title=Clean machine acceptance::$message"
   throw
 } finally {
