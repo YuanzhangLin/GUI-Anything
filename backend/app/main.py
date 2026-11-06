@@ -18,7 +18,6 @@ from app.core.external_agent import ask as ask_external, available as external_a
 from app.core.auth import current_user, hash_password, verify_password, issue_token, revoke_token, require_admin, is_admin
 from app.paths import BACKEND_ROOT, DATA_DIR, validate_app_id
 from app.services.code_manager import CodeManager
-from app.services.issue_service import IssueService
 from app.services.uimap_report import build_report_from_map_json
 from app.services.apk_import import import_apk_file, MAX_APK_BYTES
 app = FastAPI(title="GUI-Anything Multi-Project")
@@ -29,9 +28,6 @@ app.include_router(conversation_settings_router)
 from app.agents.device_tools import router as agent_tools_router
 app.include_router(agent_tools_router)
 agent = GuiAgent()
-from app.services.issue_solver import IssueSolver
-
-issue_solver = IssueSolver()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -567,8 +563,6 @@ async def get_app_status(app_id: str, username: str = Depends(current_user)):
     return {"app_id": app_id, "status": status}
 
 
-issue_service = IssueService()
-
 @app.post("/api/admin/task/{app_id}")
 async def run_admin_task(app_id: str, payload: dict, username: str = Depends(require_admin)):
     task_type = payload.get("type")
@@ -592,37 +586,4 @@ async def run_admin_task(app_id: str, payload: dict, username: str = Depends(req
         result["repo_status"] = code_manager.check_status(app_id)
         return result
 
-    # 新增：处理 Issue 同步任务
-    elif task_type == "sync_issues":
-        repo_url = app_info.get("repo_url")
-        if not repo_url:
-            return {"status": "error", "message": "该项目未配置仓库地址"}
-        return issue_service.fetch_and_save_issues(repo_url, app_id)
-
     return {"status": "error", "message": "未知任务类型"}
-
-@app.post("/api/admin/analyze_issue")
-async def analyze_issue(payload: dict, username: str = Depends(require_admin)):
-    """
-    召唤 AI 专家：针对特定的 Issue 调用 IssueSolver 进行诊断
-    """
-    app_id = payload.get("app_id")
-    title = payload.get("title")
-    body = payload.get("body")
-    issue_number = payload.get("issue_number") 
-    if not app_id or not body:
-        raise HTTPException(status_code=400, detail="缺少必要参数 (app_id 或内容)")
-
-    try:
-        solution = await issue_solver.solve(
-        agent=agent, 
-        app_id=app_id, 
-        title=payload.get("title"), 
-        body=payload.get("body"),
-        issue_number=issue_number 
-        )
-        
-        return {"analysis": solution}
-    except Exception as e:
-        logger.error(f"AI 诊断失败: {e}")
-        return {"analysis": f"### ❌ 诊断服务异常\n原因: {str(e)}"}
