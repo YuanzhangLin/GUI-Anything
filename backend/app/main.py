@@ -138,6 +138,23 @@ async def environment_diagnostics(username: str = Depends(current_user)):
     from app.environment import diagnose
     return await asyncio.to_thread(diagnose)
 
+@app.get("/api/environment/avds")
+async def avd_inventory(username: str = Depends(current_user)):
+    from app.avd_manager import inventory
+    return await asyncio.to_thread(inventory)
+
+@app.post("/api/environment/avds/{name}/start")
+async def avd_start(name: str, username: str = Depends(current_user)):
+    from app.avd_manager import start
+    try:return await asyncio.to_thread(start,name)
+    except (ValueError,RuntimeError) as exc:raise HTTPException(409,str(exc)) from exc
+
+@app.post("/api/environment/avds/{name}/stop")
+async def avd_stop(name: str, username: str = Depends(current_user)):
+    from app.avd_manager import stop
+    try:return await asyncio.to_thread(stop,name)
+    except (ValueError,RuntimeError) as exc:raise HTTPException(409,str(exc)) from exc
+
 @app.get("/api/apps")
 async def get_app_list():
     apps = []
