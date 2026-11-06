@@ -73,6 +73,7 @@
           <div v-if="activeTab === 'models'" class="view-card model-service-view">
             <ModelSettings :api-base="apiBase" :admin="true" />
           </div>
+          <div v-if="activeTab === 'environment'" class="view-card"><EnvironmentDiagnostics :api-base="apiBase" /></div>
         </section>
       </div>
     </div>
@@ -81,9 +82,10 @@
 
 <script setup>
 import { ref } from 'vue'
-import { X, Settings, Database, Terminal, ShieldCheck, ChevronRight, Bot } from 'lucide-vue-next'
+import { X, Settings, Database, Terminal, ShieldCheck, ChevronRight, Bot, Wrench } from 'lucide-vue-next'
 import ProjectDetail from './ProjectDetail.vue' // 引入详情子组件
 import ModelSettings from './ModelSettings.vue'
+import EnvironmentDiagnostics from './EnvironmentDiagnostics.vue'
 import { authFetch } from '../utils/auth'
 
 const props = defineProps(['appList', 'apiBase'])
@@ -126,6 +128,7 @@ const logs = ref([
 const menuItems = [
   { id: 'projects', label: '项目资源管理', icon: Database },
   { id: 'models', label: '模型服务', icon: Bot },
+  { id: 'environment', label: '本机环境', icon: Wrench },
   { id: 'logs', label: '任务执行日志', icon: Terminal },
   { id: 'security', label: '审计策略配置', icon: ShieldCheck }
 ]

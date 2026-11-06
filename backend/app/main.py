@@ -132,6 +132,11 @@ async def get_agents(username: str = Depends(current_user)):
          "capabilities": {"sessions": False, "streaming": False, "tools": False, "abort": False, "device_actions": False}},
     ]}
 
+@app.get("/api/environment/diagnostics")
+async def environment_diagnostics(username: str = Depends(current_user)):
+    from app.environment import diagnose
+    return await asyncio.to_thread(diagnose)
+
 @app.get("/api/apps")
 async def get_app_list():
     apps = []

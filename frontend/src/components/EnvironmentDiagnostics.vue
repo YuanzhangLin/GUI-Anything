@@ -1,0 +1,14 @@
+<template><section class="diagnostics"><header><div><h2>本机环境</h2><p>检查 OpenCode 与 Android 测试所需组件，不会修改系统。</p></div><button :disabled="busy" @click="load">{{ busy?'检测中…':'重新检测' }}</button></header><p v-if="error" class="error">{{ error }}</p><div v-if="report" class="summary"><strong>{{ report.status==='ready'?'基础环境可用':'需要完成配置' }}</strong><span>{{ report.platform.system }} {{ report.platform.release }} · {{ report.platform.machine }}</span></div><div class="checks"><article v-for="item in report?.items||[]" :key="item.id" :class="item.status"><b>{{ item.status==='ready'?'✓':item.status==='missing'?'×':'!' }}</b><div><h3>{{ item.label }}</h3><p>{{ item.detail }}</p><small v-if="item.fix">{{ item.fix }}</small></div></article></div><details v-if="report"><summary>机器可读诊断</summary><pre>{{ JSON.stringify(report,null,2) }}</pre></details></section></template>
+<script setup lang="ts">
+import {onMounted,ref} from 'vue'
+import {authFetch} from '../utils/auth'
+const props=defineProps<{apiBase:string}>()
+const report=ref<any>(),busy=ref(false),error=ref('')
+async function load(){
+  busy.value=true;error.value=''
+  try{const r=await authFetch(`${props.apiBase}/environment/diagnostics`);const d=await r.json();if(!r.ok)throw new Error(d.detail||'环境检测失败');report.value=d}
+  catch(e){error.value=String(e)}finally{busy.value=false}
+}
+onMounted(load)
+</script>
+<style scoped>.diagnostics{max-width:920px;color:#405667}.diagnostics header{display:flex;justify-content:space-between;gap:20px;border-bottom:1px solid #dbe4e9;padding-bottom:18px}.diagnostics h2{margin:0 0 6px;color:#263b4b}.diagnostics header p{margin:0;color:#708391}.diagnostics button{align-self:flex-start;padding:9px 14px;border:1px solid #bed0d9;border-radius:6px;background:#edf4f6;color:#2d6372}.summary{display:flex;justify-content:space-between;gap:20px;margin:20px 0;padding:14px 16px;background:#eef5f5;border-left:3px solid #2c7182}.checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.checks article{display:flex;gap:12px;padding:14px;border:1px solid #dbe4e8;border-radius:8px;background:#fafcfc}.checks article>b{display:grid;place-items:center;flex:none;width:24px;height:24px;border-radius:50%;background:#e5ecef}.checks .ready>b{background:#dcefe5;color:#24724f}.checks .missing>b{background:#f5dfdc;color:#a74335}.checks .warning>b{background:#f4ead0;color:#886b24}.checks h3{margin:2px 0 5px;font-size:13px}.checks p{margin:0;font-size:12px}.checks small{display:block;margin-top:7px;color:#778994;line-height:1.5}.diagnostics details{margin-top:18px}.diagnostics pre{max-height:300px;overflow:auto;padding:14px;background:#17232c;color:#d5e2e7;border-radius:6px;font-size:11px}.error{color:#a74335}@media(max-width:760px){.checks{grid-template-columns:1fr}.summary{flex-direction:column}}</style>
