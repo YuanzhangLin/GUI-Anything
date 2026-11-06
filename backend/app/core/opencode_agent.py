@@ -18,7 +18,9 @@ def executable_path() -> str | None:
         base = Path(found).parent if found else Path(os.getenv("APPDATA", "")) / "npm"
         native = base / "node_modules/opencode-ai/bin/opencode.exe"
         if native.is_file(): return str(native)
-    return found
+    if found: return found
+    from app.opencode_install import executable as managed_executable
+    return managed_executable()
 
 
 def available() -> bool:

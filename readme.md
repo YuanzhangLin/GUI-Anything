@@ -147,6 +147,8 @@ docker compose up -d --build
 The system will be accessible at `http://your-server-ip:3001`. The frontend sends API requests to the same origin at `/api`.
 If you created `backend/.env` for Deep analysis, launch with `docker compose --env-file backend/.env up -d --build` instead.
 The backend image installs OpenCode. An administrator can open **Management Console → Model Service**, choose a provider, save its API key and test one model. The key is sent to the local OpenCode service, never returned to the browser, and never written into this repository. See `agent-skills/gui-anything/SKILL.md` for the project Agent guide.
+
+For native OpenCode, Android SDK and virtual-device setup, see [Local setup](docs/local-setup.md).
 You can also set `OPENCODE_MODEL=provider/model` and the provider API key in `backend/.env`, then launch with the `--env-file` command above.
 Other CLI Agents can be connected with `GUI_AGENT_EXECUTABLE` and JSON-array `GUI_AGENT_ARGS`, such as `["--project","{repo}","{prompt}"]`. Install that executable in the backend environment first.
 

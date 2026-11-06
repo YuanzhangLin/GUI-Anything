@@ -140,6 +140,14 @@ async def environment_diagnostics(username: str = Depends(current_user)):
     from app.environment import diagnose
     return await asyncio.to_thread(diagnose)
 
+@app.post("/api/environment/opencode/install")
+async def install_managed_opencode(username: str = Depends(require_admin)):
+    from app.opencode_install import install
+    try:
+        return await asyncio.to_thread(install)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
 @app.get("/api/environment/avds")
 async def avd_inventory(username: str = Depends(current_user)):
     from app.avd_manager import inventory
@@ -240,7 +248,7 @@ async def get_demo_map():
 
 @app.get("/api/issues/{app_id}")
 async def list_cached_issues(app_id: str, username: str = Depends(current_user)):
-    """返回管理台「同步 Issue」后写入本地的缓存列表，供对话区附加引用。"""
+    """Compatibility read path for historical Issue cache data."""
     cache_path = _data_json_path(app_id, "issues_")
     if not os.path.exists(cache_path):
         return []
