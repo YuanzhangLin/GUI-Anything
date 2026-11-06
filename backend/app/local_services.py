@@ -40,8 +40,9 @@ def main():
     if not executable: raise SystemExit('OpenCode executable is not installed')
     config=Path(DATA_DIR)/'runs'/'.opencode-service'
     tools=config/'tools';tools.mkdir(parents=True,exist_ok=True)
-    template=Path(BACKEND_ROOT).parent/'agent-tools'/'opencode'/'gui_device.ts'
-    shutil.copyfile(template,tools/'gui_device.ts')
+    templates=Path(BACKEND_ROOT).parent/'agent-tools'/'opencode'
+    for template in templates.glob('gui_*.ts'):
+        shutil.copyfile(template,tools/template.name)
     env={**os.environ,'GUI_AGENT_BRIDGE_TOKEN':secrets.token_urlsafe(48),
          'OPENCODE_SERVER_PASSWORD':secrets.token_urlsafe(48),
          'OPENCODE_CONFIG_DIR':str(config),'GUI_AGENT_BRIDGE_URL':'http://127.0.0.1:8002',
@@ -68,9 +69,9 @@ def main():
                     schema=client.get('http://127.0.0.1:4096/doc')
                     schema.raise_for_status()
                     (config/'api-schema.json').write_text(json.dumps(schema.json()),encoding='utf-8')
-                    loaded='gui_device' in result.json()
-                    print('OpenCode device tool registered: '+str(loaded),flush=True)
-                    if not loaded: raise RuntimeError('OpenCode did not register the device tool')
+                    loaded=set(result.json());required={'gui_observe','gui_act','gui_verify'}
+                    print('OpenCode device tools registered: '+str(sorted(required & loaded)),flush=True)
+                    if not required <= loaded: raise RuntimeError('OpenCode did not register all device tools')
                     break
             except httpx.ConnectError:
                 time.sleep(1)

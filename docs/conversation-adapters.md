@@ -95,11 +95,10 @@ execution is never silently resubmitted after a restart.
 ## Device tool integration checkpoint
 
 From `backend`, run `python -m app.local_services` to start the paired local
-services. The launcher copies the versioned `agent-tools/opencode/gui_device.ts`
-into an ignored service config directory. It generates separate random OpenCode
+services. The launcher copies the versioned `agent-tools/opencode/gui_*.ts`
+tools into an ignored service config directory. It generates separate random OpenCode
 server and device bridge credentials in process memory and passes them only to
-its children. It verifies `gui_device` through the authenticated tool catalog.
-The installed 1.19.0 service returned the tool in that catalog during acceptance.
+its children. It verifies `gui_observe`, `gui_act`, and `gui_verify` through the authenticated tool catalog.
 
 The right source pane lets the user choose a line range and bind it with the
 selected device. The composer displays the explicit per-message device task and

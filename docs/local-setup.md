@@ -28,4 +28,4 @@ Windows is supported directly with the Android SDK installed by Android Studio o
 - **Port already in use:** stop the process occupying the configured local port before starting the paired services.
 - **Insufficient resources:** keep at least 12 GiB free disk space and 8 GiB physical memory; running two AVDs may require more.
 
-The paired launcher is `python -m app.local_services` from `backend/`. It generates temporary local service credentials, registers the GUI device tool, starts OpenCode and the backend together, verifies the OpenCode API and tool registration, and stops the other process if either service exits.
+The paired launcher is `python -m app.local_services` from `backend/`. It generates temporary local service credentials, registers the GUI observe/action/verification tools, starts OpenCode and the backend together, verifies the OpenCode API and tool registration, and stops the other process if either service exits.
